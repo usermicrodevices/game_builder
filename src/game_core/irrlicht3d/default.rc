@@ -1,0 +1,56 @@
+#include <windows.h>
+
+#ifdef _WIN32
+//LANGUAGE 0x419, 0x19
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+#endif
+
+#ifndef _MAC
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION %s
+ PRODUCTVERSION %s
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "00000000"
+        BEGIN
+            VALUE "Comments", "%s\0"
+            VALUE "CompanyName", "%s\0"
+            VALUE "FileDescription", "%s\0"
+            VALUE "InternalName", "%s\0"
+            VALUE "LegalCopyright", "%s\0"
+            VALUE "LegalTrademarks", "%s\0"
+            VALUE "OriginalFilename", "%s\0"
+            VALUE "PrivateBuild", "%s\0"
+            VALUE "ProductName", "%s\0"
+            VALUE "SpecialBuild", "%s\0"
+            VALUE "FileVersion", "%s\0"
+            VALUE "ProductVersion", "%s\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 0x0
+    END
+END
+#endif
+
+#ifdef _WIN32
+//LANGUAGE 0x0C09, 0x09
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif
+
+#define IDI_ICON1 1
+IDI_ICON1 ICON DISCARDABLE "%s"
+//IDI_APPLICATION ICON "s"
