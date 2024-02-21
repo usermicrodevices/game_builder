@@ -1,5 +1,5 @@
-# game_builder
-GameBuilder: map and logic editor.
+# GameBuilder
+Map and logic editor.
 Create game without programming, but optional you always can replace core engine (source code included).
 
 # Dependencies
