@@ -19,11 +19,7 @@ bool GBApp::OnInit()
     wxImage::AddHandler( new wxPNGHandler );
 #endif
 
-    wxFrame* frame = new GBFrame(nullptr,
-                                 wxID_ANY,
-                                 "Game Builder Application",
-                                 wxDefaultPosition,
-                                 wxWindow::FromDIP(wxSize(800, 600), nullptr));
+    wxFrame* frame = new GBFrame(nullptr, wxID_ANY, "Game Builder Application", wxDefaultPosition, wxWindow::FromDIP(wxSize(800, 600), nullptr));
     frame->Show();
 
     return true;
@@ -36,7 +32,7 @@ wxBEGIN_EVENT_TABLE(GBFrame, wxFrame)
     EVT_MENU(GBFrame::ID_CreateGrid, GBFrame::OnCreateGrid)
     EVT_MENU(GBFrame::ID_CreateText, GBFrame::OnCreateText)
     EVT_MENU(GBFrame::ID_CreateHTML, GBFrame::OnCreateHTML)
-    EVT_MENU(GBFrame::ID_CreateSizeReport, GBFrame::OnCreateSizeReport)
+    EVT_MENU(GBFrame::ID_CreateSizeReport, GBFrame::OnCreateMapBoardCtrl)
     EVT_MENU(GBFrame::ID_CreateNotebook, GBFrame::OnCreateNotebook)
     EVT_MENU(GBFrame::ID_CreatePerspective, GBFrame::OnCreatePerspective)
     EVT_MENU(GBFrame::ID_CopyPerspectiveCode, GBFrame::OnCopyPerspectiveCode)
@@ -114,13 +110,8 @@ wxBEGIN_EVENT_TABLE(GBFrame, wxFrame)
 wxEND_EVENT_TABLE()
 
 
-GBFrame::GBFrame(wxWindow* parent,
-                 wxWindowID id,
-                 const wxString& title,
-                 const wxPoint& pos,
-                 const wxSize& size,
-                 long style)
-        : wxFrame(parent, id, title, pos, size, style)
+GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
+: wxFrame(parent, id, title, pos, size, style)
 {
     m_mgr.SetManagedWindow(this);
 
@@ -239,7 +230,7 @@ GBFrame::GBFrame(wxWindow* parent,
     tb1->Realize();
 
     wxAuiToolBar* tb2 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                                         wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_HORIZONTAL);
+        wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_HORIZONTAL);
 
     wxBitmapBundle tb2_bmp1 = wxArtProvider::GetBitmapBundle(wxART_QUESTION, wxART_OTHER, wxSize(16,16));
     tb2->AddTool(ID_SampleItem+6, "Disabled", tb2_bmp1);
@@ -302,7 +293,7 @@ GBFrame::GBFrame(wxWindow* parent,
     tb4->Realize();
 
     wxAuiToolBar* tb5 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                                         wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_VERTICAL);
+        wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_VERTICAL);
     tb5->AddTool(ID_SampleItem+30, "Test", wxArtProvider::GetBitmapBundle(wxART_ERROR));
     tb5->AddSeparator();
     tb5->AddTool(ID_SampleItem+31, "Test", wxArtProvider::GetBitmapBundle(wxART_QUESTION));
@@ -312,34 +303,33 @@ GBFrame::GBFrame(wxWindow* parent,
     tb5->SetCustomOverflowItems(prepend_items, append_items);
     tb5->Realize();
 
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
-                  Name("test1").Caption("Pane Caption").
-                  Top());
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
+                  Name("test1").Caption("Pane Caption"). Top());
 
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
                   Name("test2").Caption("Client Size Reporter").
                   Bottom().Position(1).
                   CloseButton(true).MaximizeButton(true));
 
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
                   Name("test3").Caption("Client Size Reporter").
                   Bottom().
                   CloseButton(true).MaximizeButton(true));
 
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
                   Name("test4").Caption("Pane Caption").
                   Left());
 
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
                   Name("test5").Caption("No Close Button").
                   Right().CloseButton(false));
 
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
                   Name("test6").Caption("Client Size Reporter").
                   Right().Row(1).
                   CloseButton(true).MaximizeButton(true));
 
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
                   Name("test7").Caption("Client Size Reporter").
                   Left().Layer(1).
                   CloseButton(true).MaximizeButton(true));
@@ -349,7 +339,7 @@ GBFrame::GBFrame(wxWindow* parent,
                   Left().Layer(1).Position(1).
                   CloseButton(true).MaximizeButton(true));
 
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
                   Name("test9").Caption("Min Size 200x100").
                   BestSize(FromDIP(wxSize(200,100))).MinSize(FromDIP(wxSize(200,100))).
                   Bottom().Layer(1).
@@ -362,13 +352,12 @@ GBFrame::GBFrame(wxWindow* parent,
     iconSize &= ~1;
 
     m_mgr.AddPane(wnd10, wxAuiPaneInfo().
-                  Name("test10").Caption("Text Pane with Hide Prompt").
-                  Bottom().Layer(1).Position(1).
-                  Icon(wxArtProvider::GetBitmapBundle(wxART_WARNING,
-                                                      wxART_OTHER,
-                                                      wxSize(iconSize, iconSize))));
+        Name("test10").Caption("Text Pane with Hide Prompt").
+        Bottom().Layer(1).Position(1).
+        Icon(wxArtProvider::GetBitmapBundle(wxART_WARNING,
+        wxART_OTHER, wxSize(iconSize, iconSize))));
 
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
                   Name("test11").Caption("Fixed Pane").
                   Bottom().Layer(1).Position(2).Fixed());
 
@@ -385,7 +374,7 @@ GBFrame::GBFrame(wxWindow* parent,
     m_mgr.AddPane(CreateTreeCtrl(), wxAuiPaneInfo().Name("tree_content").
                   CenterPane().Hide());
 
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().Name("sizereport_content").
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().Name("sizereport_content").
                   CenterPane().Hide());
 
     m_mgr.AddPane(CreateTextCtrl(), wxAuiPaneInfo().Name("text_content").
@@ -743,10 +732,8 @@ void GBFrame::OnNotebookNewTab(wxCommandEvent& WXUNUSED(evt))
         wxCheckCast<wxAuiNotebook>(m_mgr.GetPane("notebook_content").window);
 
     book->AddPage(new wxTextCtrl(book, wxID_ANY, "New Tab",
-                                 wxDefaultPosition, wxDefaultSize,
-                                 wxTE_MULTILINE | wxNO_BORDER),
-                  wxString::Format("Tab %zu", book->GetPageCount() + 1),
-                  true /* select */);
+        wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxNO_BORDER),
+        wxString::Format("Tab %zu", book->GetPageCount() + 1), true /* select */);
 }
 
 
@@ -781,8 +768,7 @@ void GBFrame::OnPaneClose(wxAuiManagerEvent& evt)
 
 void GBFrame::OnCreatePerspective(wxCommandEvent& WXUNUSED(event))
 {
-    wxTextEntryDialog dlg(this, "Enter a name for the new perspective:",
-                          "wxAUI Test");
+    wxTextEntryDialog dlg(this, "Enter a name for the new perspective:", "wxAUI perspective");
 
     dlg.SetValue(wxString::Format("Perspective %u", unsigned(m_perspectives.GetCount() + 1)));
     if (dlg.ShowModal() != wxID_OK)
@@ -821,9 +807,7 @@ void GBFrame::OnNotebookPageClose(wxAuiNotebookEvent& evt)
     if (ctrl->GetPage(evt.GetSelection())->IsKindOf(CLASSINFO(wxHtmlWindow)))
     {
         int res = wxMessageBox("Are you sure you want to close/hide this notebook page?",
-                       "wxAUI",
-                       wxYES_NO,
-                       this);
+            "wxAUI", wxYES_NO, this);
         if (res != wxYES)
             evt.Veto();
     }
@@ -836,9 +820,8 @@ void GBFrame::OnNotebookPageClosed(wxAuiNotebookEvent& evt)
 
     // selection should always be a valid index
     wxASSERT_MSG( ctrl->GetSelection() < (int)ctrl->GetPageCount(),
-                  wxString::Format("Invalid selection %d, only %d pages left",
-                                   ctrl->GetSelection(),
-                                   (int)ctrl->GetPageCount()) );
+        wxString::Format("Invalid selection %d, only %d pages left",
+        ctrl->GetSelection(), (int)ctrl->GetPageCount()) );
 
     evt.Skip();
 }
@@ -847,11 +830,7 @@ void GBFrame::OnNotebookPageChanging(wxAuiNotebookEvent& evt)
 {
     if ( evt.GetOldSelection() == 3 )
     {
-        if ( wxMessageBox( "Are you sure you want to leave this page?\n"
-                           "(This demonstrates veto-ing)",
-                           "wxAUI",
-                           wxICON_QUESTION | wxYES_NO,
-                           this ) != wxYES )
+        if ( wxMessageBox( "Are you sure you want to leave this page?\n(This demonstrates veto-ing)", "wxAUI", wxICON_QUESTION | wxYES_NO, this ) != wxYES )
         {
             evt.Veto();
         }
@@ -917,9 +896,9 @@ void GBFrame::OnCreateText(wxCommandEvent& WXUNUSED(event))
     m_mgr.Update();
 }
 
-void GBFrame::OnCreateSizeReport(wxCommandEvent& WXUNUSED(event))
+void GBFrame::OnCreateMapBoardCtrl(wxCommandEvent& WXUNUSED(event))
 {
-    m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
+    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
                   Caption("Client Size Reporter").
                   Float().FloatingPosition(GetStartPosition()).
                   CloseButton(true).MaximizeButton(true));
@@ -1023,28 +1002,20 @@ wxTextCtrl* GBFrame::CreateTextCtrl(const wxString& ctrl_text)
     else
         text.Printf("This is text box %d", ++n);
 
-    return new wxTextCtrl(this,wxID_ANY, text,
-                          wxPoint(0,0), FromDIP(wxSize(150,90)),
-                          wxNO_BORDER | wxTE_MULTILINE);
+    return new wxTextCtrl(this,wxID_ANY, text, wxPoint(0,0), FromDIP(wxSize(150,90)), wxNO_BORDER | wxTE_MULTILINE);
 }
 
 
 wxGrid* GBFrame::CreateGrid()
 {
-    wxGrid* grid = new wxGrid(this, wxID_ANY,
-                              wxPoint(0,0),
-                              FromDIP(wxSize(150,250)),
-                              wxNO_BORDER | wxWANTS_CHARS);
+    wxGrid* grid = new wxGrid(this, wxID_ANY, wxPoint(0,0), FromDIP(wxSize(150,250)), wxNO_BORDER | wxWANTS_CHARS);
     grid->CreateGrid(50, 20);
     return grid;
 }
 
 wxTreeCtrl* GBFrame::CreateTreeCtrl()
 {
-    wxTreeCtrl* tree = new wxTreeCtrl(this, wxID_ANY,
-                                      wxPoint(0,0),
-                                      FromDIP(wxSize(160,250)),
-                                      wxTR_DEFAULT_STYLE | wxNO_BORDER);
+    wxTreeCtrl* tree = new wxTreeCtrl(this, wxID_ANY, wxPoint(0,0), FromDIP(wxSize(160,250)), wxTR_DEFAULT_STYLE | wxNO_BORDER);
 
     wxSize size(16, 16);
     wxVector<wxBitmapBundle> images;
@@ -1077,11 +1048,9 @@ wxTreeCtrl* GBFrame::CreateTreeCtrl()
     return tree;
 }
 
-wxSizeReportCtrl* GBFrame::CreateSizeReportCtrl(const wxSize& size)
+MapBoardCtrl* GBFrame::CreateMapBoardCtrl(const wxSize& size)
 {
-    wxSizeReportCtrl* ctrl = new wxSizeReportCtrl(this, wxID_ANY,
-                                   wxDefaultPosition,
-                                   size, &m_mgr);
+    MapBoardCtrl* ctrl = new MapBoardCtrl(this, wxID_ANY, wxDefaultPosition, size, &m_mgr);
     return ctrl;
 }
 
@@ -1090,9 +1059,7 @@ wxHtmlWindow* GBFrame::CreateHTMLCtrl(wxWindow* parent)
     if (!parent)
         parent = this;
 
-    wxHtmlWindow* ctrl = new wxHtmlWindow(parent, wxID_ANY,
-                                   wxDefaultPosition,
-                                   FromDIP(wxSize(400,300)));
+    wxHtmlWindow* ctrl = new wxHtmlWindow(parent, wxID_ANY, wxDefaultPosition, FromDIP(wxSize(400,300)));
     ctrl->SetPage(GetIntroText());
     return ctrl;
 }
@@ -1102,15 +1069,12 @@ wxAuiNotebook* GBFrame::CreateNotebook()
    // create the notebook off-window to avoid flicker
    wxSize client_size = GetClientSize();
 
-   wxAuiNotebook* ctrl = new wxAuiNotebook(this, wxID_ANY,
-                                    wxPoint(client_size.x, client_size.y),
-                                    FromDIP(wxSize(430,200)),
-                                    m_notebook_style);
+   wxAuiNotebook* ctrl = new wxAuiNotebook(this, wxID_ANY, wxPoint(client_size.x, client_size.y), FromDIP(wxSize(430,200)), m_notebook_style);
    ctrl->Freeze();
 
    wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
 
-   wxSizeReportCtrl* rep_ctrl = new wxSizeReportCtrl(ctrl, wxID_ANY, wxDefaultPosition, client_size, &m_mgr);
+   MapBoardCtrl* rep_ctrl = new MapBoardCtrl(ctrl, wxID_ANY, wxDefaultPosition, client_size, &m_mgr);
    
    ctrl->AddPage(rep_ctrl, "Welcome to Game Builder" , false, page_bmp);
    ctrl->SetPageToolTip(0, "Welcome to Game Builder (this is a page tooltip)");
