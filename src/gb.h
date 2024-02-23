@@ -108,12 +108,12 @@ class GBFrame : public wxFrame
 		ID_NotebookAlignBottom,
 		ID_NotebookNewTab,
 		ID_NotebookDeleteTab,
-		
+
 		ID_SampleItem,
-		
+
 		ID_FirstPerspective = ID_CreatePerspective+1000
 	};
-	
+
 public:
 	GBFrame(wxWindow* parent,
 			wxWindowID id,
@@ -121,10 +121,10 @@ public:
 		 const wxPoint& pos = wxDefaultPosition,
 		 const wxSize& size = wxDefaultSize,
 		 long style = wxDEFAULT_FRAME_STYLE | wxSUNKEN_BORDER);
-	
+
 	wxAuiDockArt* GetDockArt();
 	void DoUpdate();
-	
+
 private:
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
 	wxGrid* CreateGrid();
@@ -133,14 +133,14 @@ private:
 	wxPoint GetStartPosition();
 	wxHtmlWindow* CreateHTMLCtrl(wxWindow* parent = nullptr);
 	wxAuiNotebook* CreateNotebook();
-	
+
 	wxString GetIntroText();
-	
+
 private:
-	
+
 	void OnEraseBackground(wxEraseEvent& evt);
 	void OnSize(wxSizeEvent& evt);
-	
+
 	void OnCreateTree(wxCommandEvent& evt);
 	void OnCreateGrid(wxCommandEvent& evt);
 	void OnCreateHTML(wxCommandEvent& evt);
@@ -161,26 +161,26 @@ private:
 	void OnExit(wxCommandEvent& evt);
 	void OnAbout(wxCommandEvent& evt);
 	void OnTabAlignment(wxCommandEvent &evt);
-	
+
 	void OnGradient(wxCommandEvent& evt);
 	void OnToolbarResizing(wxCommandEvent& evt);
 	void OnManagerFlag(wxCommandEvent& evt);
 	void OnNotebookFlag(wxCommandEvent& evt);
 	void OnUpdateUI(wxUpdateUIEvent& evt);
-	
+
 	void OnNotebookNewTab(wxCommandEvent& evt);
 	void OnNotebookDeleteTab(wxCommandEvent& evt);
-	
+
 	void OnPaneClose(wxAuiManagerEvent& evt);
-	
+
 private:
-	
+
 	wxAuiManager m_mgr;
 	wxArrayString m_perspectives;
 	wxMenu* m_perspectives_menu;
 	long m_notebook_style;
 	long m_notebook_theme;
-	
+
 	wxDECLARE_EVENT_TABLE();
 };
 
@@ -189,62 +189,62 @@ private:
 class wxSizeReportCtrl : public wxScrolledWindow
 {
 public:
-	
+
 	wxSizeReportCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, wxAuiManager* mgr = nullptr)
 	: wxScrolledWindow(parent, id, pos, size, wxNO_BORDER)
 	{
 		m_mgr = mgr;
 	}
-	
+
 private:
-	
+
 	void OnPaint(wxPaintEvent& WXUNUSED(evt))
 	{
 		wxPaintDC dc(this);
 		wxSize size = GetClientSize();
 		wxString s;
 		int h, w, height;
-		
+
 		s.Printf("Size: %d x %d", size.x, size.y);
-		
+
 		dc.SetFont(*wxNORMAL_FONT);
 		dc.GetTextExtent(s, &w, &height);
 		height += FromDIP(3);
-		dc.SetBrush(*wxWHITE_BRUSH);
-		dc.SetPen(*wxWHITE_PEN);
+		dc.SetBrush(wxBrush(wxColour(255, 0, 0, 50)));
+		dc.SetPen(wxPen(wxColour(0, 0, 255, 128), 10));
 		dc.DrawRectangle(0, 0, size.x, size.y);
-		dc.SetPen(*wxLIGHT_GREY_PEN);
+		dc.SetPen(wxPen(wxColour(0, 255, 0, 128), 10));
 		dc.DrawLine(0, 0, size.x, size.y);
 		dc.DrawLine(0, size.y, size.x, 0);
 		dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2));
-		
+
 		if (m_mgr)
 		{
 			wxAuiPaneInfo pi = m_mgr->GetPane(this);
-			
+
 			s.Printf("Layer: %d", pi.dock_layer);
 			dc.GetTextExtent(s, &w, &h);
 			dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2)+(height*1));
-			
+
 			s.Printf("Dock: %d Row: %d", pi.dock_direction, pi.dock_row);
 			dc.GetTextExtent(s, &w, &h);
 			dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2)+(height*2));
-			
+
 			s.Printf("Position: %d", pi.dock_pos);
 			dc.GetTextExtent(s, &w, &h);
 			dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2)+(height*3));
-			
+
 			s.Printf("Proportion: %d", pi.dock_proportion);
 			dc.GetTextExtent(s, &w, &h);
 			dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2)+(height*4));
 		}
 	}
-	
+
 	void OnEraseBackground(wxEraseEvent& WXUNUSED(evt))
 	{
 		// intentionally empty
 	}
-	
+
 	void OnSize(wxSizeEvent& WXUNUSED(evt))
 	{
 		Refresh();

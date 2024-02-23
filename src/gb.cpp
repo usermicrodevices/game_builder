@@ -14,11 +14,11 @@ bool GBApp::OnInit()
 {
     if ( !wxApp::OnInit() )
         return false;
-    
+
 #if wxUSE_LIBPNG
     wxImage::AddHandler( new wxPNGHandler );
 #endif
-    
+
     wxFrame* frame = new GBFrame(nullptr,
                                  wxID_ANY,
                                  "Game Builder Application",
