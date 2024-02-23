@@ -37,6 +37,12 @@
 
 #include "gb.xpm"
 
+#if defined(__WXOSX__) || defined(__WXGTK3__)
+#define wxDRAWING_DC_SUPPORTS_ALPHA 1
+#else
+#define wxDRAWING_DC_SUPPORTS_ALPHA 0
+#endif // __WXOSX__ || __WXGTK3__
+
 
 class GBApp : public wxApp
 {
@@ -179,18 +185,13 @@ private:
 };
 
 
-// -- wxSizeReportCtrl --
-// (a utility control that always reports it's client size)
-
-class wxSizeReportCtrl : public wxControl
+//class wxSizeReportCtrl : public wxControl
+class wxSizeReportCtrl : public wxScrolledWindow
 {
 public:
 	
-	wxSizeReportCtrl(wxWindow* parent, wxWindowID id = wxID_ANY,
-					 const wxPoint& pos = wxDefaultPosition,
-				  const wxSize& size = wxDefaultSize,
-				  wxAuiManager* mgr = nullptr)
-	: wxControl(parent, id, pos, size, wxNO_BORDER)
+	wxSizeReportCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, wxAuiManager* mgr = nullptr)
+	: wxScrolledWindow(parent, id, pos, size, wxNO_BORDER)
 	{
 		m_mgr = mgr;
 	}

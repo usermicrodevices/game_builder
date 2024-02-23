@@ -14,7 +14,11 @@ bool GBApp::OnInit()
 {
     if ( !wxApp::OnInit() )
         return false;
-
+    
+#if wxUSE_LIBPNG
+    wxImage::AddHandler( new wxPNGHandler );
+#endif
+    
     wxFrame* frame = new GBFrame(nullptr,
                                  wxID_ANY,
                                  "Game Builder Application",
@@ -118,17 +122,13 @@ GBFrame::GBFrame(wxWindow* parent,
                  long style)
         : wxFrame(parent, id, title, pos, size, style)
 {
-    // tell wxAuiManager to manage this frame
     m_mgr.SetManagedWindow(this);
 
-    // set frame icon
     SetIcon(wxIcon(sample_xpm));
 
-    // set up default notebook style
     m_notebook_style = wxAUI_NB_DEFAULT_STYLE | wxAUI_NB_TAB_EXTERNAL_MOVE | wxNO_BORDER;
     m_notebook_theme = 0;
 
-    // create menu
     wxMenuBar* mb = new wxMenuBar;
 
     wxMenu* file_menu = new wxMenu;
@@ -160,7 +160,6 @@ GBFrame::GBFrame(wxWindow* parent,
     options_menu->AppendCheckItem(ID_NoVenetianFade, _("Disable Venetian Blinds Hint Fade-in"));
     options_menu->AppendCheckItem(ID_TransparentDrag, _("Transparent Drag"));
     options_menu->AppendCheckItem(ID_AllowActivePane, _("Allow Active Pane"));
-    // Only show "live resize" toggle if it's actually functional.
     if ( !wxAuiManager::AlwaysUsesLiveResize() )
         options_menu->AppendCheckItem(ID_LiveUpdate, _("Live Resize Update"));
     options_menu->AppendSeparator();
@@ -216,15 +215,7 @@ GBFrame::GBFrame(wxWindow* parent,
     CreateStatusBar();
     GetStatusBar()->SetStatusText(_("Ready"));
 
-
-    // min size for the frame itself isn't completely done.
-    // see the end up wxAuiManager::Update() for the test
-    // code. For now, just hard code a frame minimum size
     SetMinSize(FromDIP(wxSize(400,300)));
-
-
-
-    // prepare a few custom overflow elements for the toolbars' overflow buttons
 
     wxAuiToolBarItemArray prepend_items;
     wxAuiToolBarItemArray append_items;
@@ -236,8 +227,6 @@ GBFrame::GBFrame(wxWindow* parent,
     item.SetLabel(_("Customize..."));
     append_items.Add(item);
 
-
-    // create some toolbars
     wxAuiToolBar* tb1 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                          wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW);
     tb1->AddTool(ID_SampleItem+1, "Test", wxArtProvider::GetBitmapBundle(wxART_ERROR));
@@ -248,7 +237,6 @@ GBFrame::GBFrame(wxWindow* parent,
     tb1->AddTool(ID_SampleItem+5, "Test", wxArtProvider::GetBitmapBundle(wxART_MISSING_IMAGE));
     tb1->SetCustomOverflowItems(prepend_items, append_items);
     tb1->Realize();
-
 
     wxAuiToolBar* tb2 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                          wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_HORIZONTAL);
@@ -270,7 +258,6 @@ GBFrame::GBFrame(wxWindow* parent,
     tb2->EnableTool(ID_SampleItem+6, false);
     tb2->Realize();
 
-
     wxAuiToolBar* tb3 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                          wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW);
     wxBitmapBundle tb3_bmp1 = wxArtProvider::GetBitmapBundle(wxART_FOLDER, wxART_OTHER, wxSize(16,16));
@@ -288,7 +275,6 @@ GBFrame::GBFrame(wxWindow* parent,
     tb3->AddTool(ID_SampleItem+25, "Radio 3 (Group 2)", tb3_bmp1, "Radio 3 (Group 2)", wxITEM_RADIO);
     tb3->SetCustomOverflowItems(prepend_items, append_items);
     tb3->Realize();
-
 
     wxAuiToolBar* tb4 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                          wxAUI_TB_DEFAULT_STYLE |
@@ -315,7 +301,6 @@ GBFrame::GBFrame(wxWindow* parent,
     tb4->AddControl(choice);
     tb4->Realize();
 
-
     wxAuiToolBar* tb5 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
                                          wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW | wxAUI_TB_VERTICAL);
     tb5->AddTool(ID_SampleItem+30, "Test", wxArtProvider::GetBitmapBundle(wxART_ERROR));
@@ -327,7 +312,6 @@ GBFrame::GBFrame(wxWindow* parent,
     tb5->SetCustomOverflowItems(prepend_items, append_items);
     tb5->Realize();
 
-    // add a bunch of panes
     m_mgr.AddPane(CreateSizeReportCtrl(), wxAuiPaneInfo().
                   Name("test1").Caption("Pane Caption").
                   Top());
@@ -373,10 +357,8 @@ GBFrame::GBFrame(wxWindow* parent,
 
     wxWindow* wnd10 = CreateTextCtrl("This pane will prompt the user before hiding.");
 
-    // Give this pane an icon, too, just for testing.
     int iconSize = m_mgr.GetArtProvider()->GetMetric(wxAUI_DOCKART_CAPTION_SIZE);
 
-    // Make it even to use 16 pixel icons with default 17 caption height.
     iconSize &= ~1;
 
     m_mgr.AddPane(wnd10, wxAuiPaneInfo().
@@ -461,7 +443,6 @@ GBFrame::GBFrame(wxWindow* parent,
     m_perspectives.Add(perspective_default);
     m_perspectives.Add(perspective_all);
 
-    // "commit" all changes made to wxAuiManager
     m_mgr.Update();
 }
 
@@ -487,7 +468,6 @@ void GBFrame::OnSize(wxSizeEvent& event)
 
 void GBFrame::OnSettings(wxCommandEvent& WXUNUSED(evt))
 {
-    // show the settings pane, and float it
     wxAuiPaneInfo& floating_pane = m_mgr.GetPane("settings").Float().Show();
 
     if (floating_pane.floating_pos == wxDefaultPosition)
@@ -650,13 +630,10 @@ void GBFrame::OnNotebookFlag(wxCommandEvent& event)
                 m_notebook_theme = 1;
             }
 
-
             nb->SetWindowStyleFlag(m_notebook_style);
             nb->Refresh();
         }
     }
-
-
 }
 
 
@@ -756,7 +733,6 @@ void GBFrame::OnUpdateUI(wxUpdateUIEvent& event)
         case ID_NotebookArtSimple:
             event.Check(m_notebook_style == 1);
             break;
-
     }
 }
 
@@ -884,8 +860,7 @@ void GBFrame::OnNotebookPageChanging(wxAuiNotebookEvent& evt)
 
 void GBFrame::OnAllowNotebookDnD(wxAuiNotebookEvent& evt)
 {
-    // for the purpose of this test application, explicitly
-    // allow all notebook drag and drop events
+    // explicitly allow all notebook drag and drop events
     evt.Allow();
 }
 
@@ -970,7 +945,6 @@ void GBFrame::OnDropDownToolbarItem(wxAuiToolBarEvent& evt)
 
         tb->SetToolSticky(evt.GetId(), true);
 
-        // create the popup menu
         wxMenu menuPopup;
 
         // TODO: Use GetBitmapBundle() when wxMenuItem is updated to use it too.
@@ -997,9 +971,7 @@ void GBFrame::OnDropDownToolbarItem(wxAuiToolBarEvent& evt)
         wxPoint pt = tb->ClientToScreen(rect.GetBottomLeft());
         pt = ScreenToClient(pt);
 
-
         PopupMenu(&menuPopup, pt);
-
 
         // make sure the button is "un-stuck"
         tb->SetToolSticky(evt.GetId(), false);
@@ -1083,14 +1055,11 @@ wxTreeCtrl* GBFrame::CreateTreeCtrl()
     wxTreeItemId root = tree->AddRoot("Game Builder Project", 0);
     wxArrayTreeItemIds items;
 
-
-
     items.Add(tree->AppendItem(root, "Item 1", 0));
     items.Add(tree->AppendItem(root, "Item 2", 0));
     items.Add(tree->AppendItem(root, "Item 3", 0));
     items.Add(tree->AppendItem(root, "Item 4", 0));
     items.Add(tree->AppendItem(root, "Item 5", 0));
-
 
     int i, count;
     for (i = 0, count = items.Count(); i < count; ++i)
@@ -1102,7 +1071,6 @@ wxTreeCtrl* GBFrame::CreateTreeCtrl()
         tree->AppendItem(id, "Subitem 4", 1);
         tree->AppendItem(id, "Subitem 5", 1);
     }
-
 
     tree->Expand(root);
 
@@ -1142,51 +1110,12 @@ wxAuiNotebook* GBFrame::CreateNotebook()
 
    wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
 
-   ctrl->AddPage(CreateHTMLCtrl(ctrl), "Welcome to Game Builder" , false, page_bmp);
+   wxSizeReportCtrl* rep_ctrl = new wxSizeReportCtrl(ctrl, wxID_ANY, wxDefaultPosition, client_size, &m_mgr);
+   
+   ctrl->AddPage(rep_ctrl, "Welcome to Game Builder" , false, page_bmp);
    ctrl->SetPageToolTip(0, "Welcome to Game Builder (this is a page tooltip)");
 
-   wxPanel *panel = new wxPanel( ctrl, wxID_ANY );
-   wxFlexGridSizer *flex = new wxFlexGridSizer( 4, 2, 0, 0 );
-   flex->AddGrowableRow( 0 );
-   flex->AddGrowableRow( 3 );
-   flex->AddGrowableCol( 1 );
-   flex->Add( FromDIP(5), FromDIP(5) );   flex->Add( FromDIP(5), FromDIP(5) );
-   flex->Add( new wxStaticText( panel, -1, "wxTextCtrl:" ), 0, wxALL|wxALIGN_CENTRE, FromDIP(5) );
-   flex->Add( new wxTextCtrl( panel, -1, "", wxDefaultPosition, FromDIP(wxSize(100,-1))),
-                1, wxALL|wxALIGN_CENTRE, FromDIP(5) );
-   flex->Add( new wxStaticText( panel, -1, "wxSpinCtrl:" ), 0, wxALL|wxALIGN_CENTRE, FromDIP(5) );
-   flex->Add( new wxSpinCtrl( panel, -1, "5", wxDefaultPosition, wxDefaultSize,
-                wxSP_ARROW_KEYS, 5, 50, 5 ), 0, wxALL|wxALIGN_CENTRE, FromDIP(5) );
-   flex->Add( FromDIP(5), FromDIP(5) );   flex->Add( FromDIP(5), FromDIP(5) );
-   panel->SetSizer( flex );
-   ctrl->AddPage( panel, "wxPanel", false, page_bmp );
-
-
-   ctrl->AddPage( new wxTextCtrl( ctrl, wxID_ANY, "Some text",
-                wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxNO_BORDER) , "wxTextCtrl 1", false, page_bmp );
-
-   ctrl->AddPage( new wxTextCtrl( ctrl, wxID_ANY, "Some more text",
-                wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxNO_BORDER) , "wxTextCtrl 2" );
-
-   ctrl->AddPage( new wxTextCtrl( ctrl, wxID_ANY, "Some more text",
-                wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxNO_BORDER) , "wxTextCtrl 3" );
-
-   ctrl->AddPage( new wxTextCtrl( ctrl, wxID_ANY, "Some more text",
-                wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxNO_BORDER) , "wxTextCtrl 4" );
-
-   ctrl->AddPage( new wxTextCtrl( ctrl, wxID_ANY, "Some more text",
-                wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxNO_BORDER) , "wxTextCtrl 5" );
-
-   ctrl->AddPage( new wxTextCtrl( ctrl, wxID_ANY, "Some more text",
-                wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxNO_BORDER) , "wxTextCtrl 6" );
-
-   ctrl->AddPage( new wxTextCtrl( ctrl, wxID_ANY, "Some more text",
-                wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxNO_BORDER) , "wxTextCtrl 7 (longer title)" );
-   ctrl->SetPageToolTip(ctrl->GetPageCount()-1,
-                        "wxTextCtrl 7: and the tooltip message can be even longer!");
-
-   ctrl->AddPage( new wxTextCtrl( ctrl, wxID_ANY, "Some more text",
-                wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE|wxNO_BORDER) , "wxTextCtrl 8" );
+   //ctrl->SetPageToolTip(ctrl->GetPageCount()-1, "and the tooltip message can be even longer!");
 
    ctrl->Thaw();
    return ctrl;
@@ -1200,7 +1129,7 @@ wxString GBFrame::GetIntroText()
         "<br/><b>Overview</b><br/>"
         "<p>create game quickly and easily.</p>"
         "<p><b>Features</b></p>"
-        "<p>map editing</p>"
+        "<p>map and logic editing</p>"
         "</body></html>";
 
     return wxString::FromAscii(text);
