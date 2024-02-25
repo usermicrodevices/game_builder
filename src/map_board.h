@@ -18,9 +18,6 @@ class MapBoardCtrl : public wxScrolledWindow
 
 		void OnPaint(wxPaintEvent& WXUNUSED(evt))
 		{
-			//wxString s;
-			//int h, w, height;
-
 			size_t mapInPx = FromDIP(MapInDIPs);
 			size_t cellSideInPx = FromDIP(CellSideInDIPs);
 
@@ -30,24 +27,28 @@ class MapBoardCtrl : public wxScrolledWindow
 			size_t x_cell_selected = (current_mouse_position.x < (int)cellSideInPx) ? 0 : abs(current_mouse_position.x / (int)cellSideInPx) * (int)cellSideInPx;
 			size_t y_cell_selected = (current_mouse_position.y < (int)cellSideInPx) ? 0 : abs(current_mouse_position.y / (int)cellSideInPx) * (int)cellSideInPx;
 
+			dc.SetPen(wxPen(wxColour(0, 0, 255, 128), 5));
+
 			wxRect cellSelected(wxSize(cellSideInPx, cellSideInPx));
 			cellSelected.SetLeft(0);
 			cellSelected.Offset(x_cell_selected, y_cell_selected);
 			dc.DrawRectangle(cellSelected);
 
 			dc.SetBrush(wxBrush(wxColour(200, 0, 0, 50)));
-			dc.SetPen(wxPen(wxColour(0, 0, 255, 128), 10));
 			dc.DrawRectangle(0, 0, size.x, size.y);
 
-			//dc.SetPen(wxPen(wxColour(0, 200, 0, 128), 5));
-			//dc.DrawLine(0, 0, size.x, size.y);
-			//dc.DrawLine(0, size.y, size.x, 0);
-
-			dc.SetPen(wxPen(wxColour(0, 255, 0, 128), 10));
+			dc.SetPen(wxPen(wxColour(0, 255, 0, 128), 5));
 			for(size_t xpos = cellSideInPx; xpos < mapInPx; xpos+=CellSideInDIPs)
 				dc.DrawLine(xpos, 0, xpos, mapInPx);
 			for(size_t ypos = cellSideInPx; ypos < mapInPx; ypos+=CellSideInDIPs)
 				dc.DrawLine(0, ypos, mapInPx, ypos);
+
+			//wxString s;
+			//int h, w, height;
+			
+			//dc.SetPen(wxPen(wxColour(0, 200, 0, 128), 5));
+			//dc.DrawLine(0, 0, size.x, size.y);
+			//dc.DrawLine(0, size.y, size.x, 0);
 
 			//s.Printf("Size: %d x %d", size.x, size.y);
 
