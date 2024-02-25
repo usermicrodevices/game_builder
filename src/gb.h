@@ -115,16 +115,24 @@ class GBFrame : public wxFrame
 
 public:
 	GBFrame(wxWindow* parent,
-			wxWindowID id,
-		 const wxString& title,
-		 const wxPoint& pos = wxDefaultPosition,
-		 const wxSize& size = wxDefaultSize,
-		 long style = wxDEFAULT_FRAME_STYLE | wxSUNKEN_BORDER);
+		wxWindowID id,
+		const wxString& title,
+		const wxPoint& pos = wxDefaultPosition,
+		const wxSize& size = wxDefaultSize,
+		long style = wxDEFAULT_FRAME_STYLE | wxSUNKEN_BORDER);
 
 	wxAuiDockArt* GetDockArt();
 	void DoUpdate();
 
+
 private:
+
+	long m_notebook_style;
+	long m_notebook_theme;
+	wxArrayString m_perspectives;
+	wxMenu* m_perspectives_menu;
+	wxAuiManager m_mgr;
+
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
 	wxGrid* CreateGrid();
 	wxTreeCtrl* CreateTreeCtrl();
@@ -170,12 +178,6 @@ private:
 
 	void OnPaneClose(wxAuiManagerEvent& evt);
 
-	wxAuiManager m_mgr;
-	wxArrayString m_perspectives;
-	wxMenu* m_perspectives_menu;
-	long m_notebook_style;
-	long m_notebook_theme;
-
 	wxDECLARE_EVENT_TABLE();
 };
 
@@ -198,17 +200,17 @@ class SettingsPanel : public wxPanel
 		ID_BorderColor,
 		ID_GripperColor
 	};
-	
+
 public:
-	
+
 	SettingsPanel(wxWindow* parent, GBFrame* frame)
 	: wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize),
 	m_frame(frame)
 	{
 		//wxBoxSizer* vert = new wxBoxSizer(wxVERTICAL);
-		
+
 		//vert->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
-		
+
 		wxBoxSizer* s1 = new wxBoxSizer(wxHORIZONTAL);
 		m_border_size = new wxSpinCtrl(this, ID_PaneBorderSize, wxString::Format("%d", frame->GetDockArt()->GetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE)), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, FromDIP(100), frame->GetDockArt()->GetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE));
 		s1->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -217,7 +219,7 @@ public:
 		s1->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s1->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
 		//vert->Add(s1, 0, wxEXPAND | wxLEFT | wxBOTTOM, FromDIP(5));
-		
+
 		wxBoxSizer* s2 = new wxBoxSizer(wxHORIZONTAL);
 		m_sash_size = new wxSpinCtrl(this, ID_SashSize, wxString::Format("%d", frame->GetDockArt()->GetMetric(wxAUI_DOCKART_SASH_SIZE)), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, FromDIP(100), frame->GetDockArt()->GetMetric(wxAUI_DOCKART_SASH_SIZE));
 		s2->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -226,7 +228,7 @@ public:
 		s2->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s2->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
 		//vert->Add(s2, 0, wxEXPAND | wxLEFT | wxBOTTOM, FromDIP(5));
-		
+
 		wxBoxSizer* s3 = new wxBoxSizer(wxHORIZONTAL);
 		m_caption_size = new wxSpinCtrl(this, ID_CaptionSize, wxString::Format("%d", frame->GetDockArt()->GetMetric(wxAUI_DOCKART_CAPTION_SIZE)), wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, FromDIP(100), frame->GetDockArt()->GetMetric(wxAUI_DOCKART_CAPTION_SIZE));
 		s3->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -235,12 +237,12 @@ public:
 		s3->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s3->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
 		//vert->Add(s3, 0, wxEXPAND | wxLEFT | wxBOTTOM, FromDIP(5));
-		
+
 		//vert->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
-		
-		
+
+
 		wxBitmap b = CreateColorBitmap(*wxBLACK);
-		
+
 		wxBoxSizer* s4 = new wxBoxSizer(wxHORIZONTAL);
 		m_background_color = new wxBitmapButton(this, ID_BackgroundColor, b, wxDefaultPosition, FromDIP(wxSize(50,25)));
 		s4->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -248,7 +250,7 @@ public:
 		s4->Add(m_background_color);
 		s4->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s4->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
-		
+
 		wxBoxSizer* s5 = new wxBoxSizer(wxHORIZONTAL);
 		m_sash_color = new wxBitmapButton(this, ID_SashColor, b, wxDefaultPosition, wxSize(50,25));
 		s5->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -256,7 +258,7 @@ public:
 		s5->Add(m_sash_color);
 		s5->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s5->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
-		
+
 		wxBoxSizer* s6 = new wxBoxSizer(wxHORIZONTAL);
 		m_inactive_caption_color = new wxBitmapButton(this, ID_InactiveCaptionColor, b, wxDefaultPosition, wxSize(50,25));
 		s6->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -264,7 +266,7 @@ public:
 		s6->Add(m_inactive_caption_color);
 		s6->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s6->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
-		
+
 		wxBoxSizer* s7 = new wxBoxSizer(wxHORIZONTAL);
 		m_inactive_caption_gradient_color = new wxBitmapButton(this, ID_InactiveCaptionGradientColor, b, wxDefaultPosition, wxSize(50,25));
 		s7->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -272,7 +274,7 @@ public:
 		s7->Add(m_inactive_caption_gradient_color);
 		s7->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s7->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
-		
+
 		wxBoxSizer* s8 = new wxBoxSizer(wxHORIZONTAL);
 		m_inactive_caption_text_color = new wxBitmapButton(this, ID_InactiveCaptionTextColor, b, wxDefaultPosition, wxSize(50,25));
 		s8->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -280,7 +282,7 @@ public:
 		s8->Add(m_inactive_caption_text_color);
 		s8->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s8->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
-		
+
 		wxBoxSizer* s9 = new wxBoxSizer(wxHORIZONTAL);
 		m_active_caption_color = new wxBitmapButton(this, ID_ActiveCaptionColor, b, wxDefaultPosition, wxSize(50,25));
 		s9->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -288,7 +290,7 @@ public:
 		s9->Add(m_active_caption_color);
 		s9->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s9->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
-		
+
 		wxBoxSizer* s10 = new wxBoxSizer(wxHORIZONTAL);
 		m_active_caption_gradient_color = new wxBitmapButton(this, ID_ActiveCaptionGradientColor, b, wxDefaultPosition, wxSize(50,25));
 		s10->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -296,7 +298,7 @@ public:
 		s10->Add(m_active_caption_gradient_color);
 		s10->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s10->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
-		
+
 		wxBoxSizer* s11 = new wxBoxSizer(wxHORIZONTAL);
 		m_active_caption_text_color = new wxBitmapButton(this, ID_ActiveCaptionTextColor, b, wxDefaultPosition, wxSize(50,25));
 		s11->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -304,7 +306,7 @@ public:
 		s11->Add(m_active_caption_text_color);
 		s11->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s11->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
-		
+
 		wxBoxSizer* s12 = new wxBoxSizer(wxHORIZONTAL);
 		m_border_color = new wxBitmapButton(this, ID_BorderColor, b, wxDefaultPosition, wxSize(50,25));
 		s12->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -312,7 +314,7 @@ public:
 		s12->Add(m_border_color);
 		s12->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s12->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
-		
+
 		wxBoxSizer* s13 = new wxBoxSizer(wxHORIZONTAL);
 		m_gripper_color = new wxBitmapButton(this, ID_GripperColor, b, wxDefaultPosition, wxSize(50,25));
 		s13->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -320,7 +322,7 @@ public:
 		s13->Add(m_gripper_color);
 		s13->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s13->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
-		
+
 		wxGridSizer* grid_sizer = new wxGridSizer(2);
 		grid_sizer->SetHGap(FromDIP(5));
 		grid_sizer->Add(s1);  grid_sizer->Add(s4);
@@ -330,21 +332,21 @@ public:
 		grid_sizer->Add(s6);  grid_sizer->Add(s9);
 		grid_sizer->Add(s7);  grid_sizer->Add(s10);
 		grid_sizer->Add(s8);  grid_sizer->Add(s11);
-		
+
 		wxBoxSizer* cont_sizer = new wxBoxSizer(wxVERTICAL);
 		cont_sizer->Add(grid_sizer, 1, wxEXPAND | wxALL, FromDIP(5));
 		SetSizer(cont_sizer);
 		GetSizer()->SetSizeHints(this);
-		
+
 		m_border_size->SetValue(frame->GetDockArt()->GetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE));
 		m_sash_size->SetValue(frame->GetDockArt()->GetMetric(wxAUI_DOCKART_SASH_SIZE));
 		m_caption_size->SetValue(frame->GetDockArt()->GetMetric(wxAUI_DOCKART_CAPTION_SIZE));
-		
+
 		UpdateColors();
 	}
-	
+
 private:
-	
+
 	wxBitmap CreateColorBitmap(const wxColour& c)
 	{
 		wxImage image;
@@ -367,56 +369,56 @@ private:
 	{
 		wxColour bk = m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_BACKGROUND_COLOUR);
 		m_background_color->SetBitmapLabel(CreateColorBitmap(bk));
-		
+
 		wxColour cap = m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_INACTIVE_CAPTION_COLOUR);
 		m_inactive_caption_color->SetBitmapLabel(CreateColorBitmap(cap));
-		
+
 		wxColour capgrad = m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_INACTIVE_CAPTION_GRADIENT_COLOUR);
 		m_inactive_caption_gradient_color->SetBitmapLabel(CreateColorBitmap(capgrad));
-		
+
 		wxColour captxt = m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR);
 		m_inactive_caption_text_color->SetBitmapLabel(CreateColorBitmap(captxt));
-		
+
 		wxColour acap = m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_ACTIVE_CAPTION_COLOUR);
 		m_active_caption_color->SetBitmapLabel(CreateColorBitmap(acap));
-		
+
 		wxColour acapgrad = m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_ACTIVE_CAPTION_GRADIENT_COLOUR);
 		m_active_caption_gradient_color->SetBitmapLabel(CreateColorBitmap(acapgrad));
-		
+
 		wxColour acaptxt = m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_ACTIVE_CAPTION_TEXT_COLOUR);
 		m_active_caption_text_color->SetBitmapLabel(CreateColorBitmap(acaptxt));
-		
+
 		wxColour sash = m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_SASH_COLOUR);
 		m_sash_color->SetBitmapLabel(CreateColorBitmap(sash));
-		
+
 		wxColour border = m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_BORDER_COLOUR);
 		m_border_color->SetBitmapLabel(CreateColorBitmap(border));
-		
+
 		wxColour gripper = m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_GRIPPER_COLOUR);
 		m_gripper_color->SetBitmapLabel(CreateColorBitmap(gripper));
 	}
-	
+
 	void OnPaneBorderSize(wxSpinEvent& event)
 	{
 		m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE,
 										 event.GetPosition());
 		m_frame->DoUpdate();
 	}
-	
+
 	void OnSashSize(wxSpinEvent& event)
 	{
 		m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_SASH_SIZE,
 										 event.GetPosition());
 		m_frame->DoUpdate();
 	}
-	
+
 	void OnCaptionSize(wxSpinEvent& event)
 	{
 		m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_CAPTION_SIZE,
 										 event.GetPosition());
 		m_frame->DoUpdate();
 	}
-	
+
 	void OnSetColor(wxCommandEvent& event)
 	{
 		wxColourDialog dlg(m_frame);
