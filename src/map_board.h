@@ -1,3 +1,21 @@
+#if defined(__WXX11__)
+#define USE_CONTEXT_MENU 0
+#else
+#define USE_CONTEXT_MENU 1
+#endif
+
+#include "data.h"
+
+enum
+{
+	Menu_Popup_ToBeDeleted = 2000,
+	Menu_Popup_ToBeGreyed,
+	Menu_Popup_ToBeChecked,
+	Menu_Popup_Submenu,
+
+	Menu_PopupChoice
+};
+
 class MapBoardCtrl : public wxScrolledWindow
 {
 	public:
@@ -98,12 +116,74 @@ class MapBoardCtrl : public wxScrolledWindow
 			Refresh();
 		}
 
+		void ShowContextMenu(const wxPoint& pos)
+		{
+			wxString s;
+			wxMenu menu;
+
+			s.Printf("Position: (%d,%d)", current_mouse_position.x, current_mouse_position.y);
+			wxLogMessage(s);
+
+			if ( wxGetKeyState(WXK_CONTROL) )
+			{
+				menu.SetTitle("Choose one of:");
+				static const char *choices[] = { "Apple", "Banana", "Cherry" };
+				for ( size_t n = 0; n < WXSIZEOF(choices); n++ )
+					menu.Append(Menu_PopupChoice + n, choices[n]);
+
+				const int rc = GetPopupMenuSelectionFromUser(menu, pos);
+				if ( rc == wxID_NONE )
+				{
+					wxLogMessage("No selection");
+				}
+				else
+				{
+					wxLogMessage("You have selected \"%s\"", choices[rc - Menu_PopupChoice]);
+				}
+			}
+			else // normal case, control not pressed
+			{
+				menu.Append(Menu_Popup_ToBeGreyed, s, "This menu item should be initially greyed out");
+				menu.AppendCheckItem(Menu_Popup_ToBeChecked, "To be &checked");
+				menu.AppendSeparator();
+
+				menu.Enable(Menu_Popup_ToBeGreyed, false);
+				menu.Check(Menu_Popup_ToBeChecked, true);
+
+				PopupMenu(&menu, pos);
+			}
+		}
+
+#if USE_CONTEXT_MENU
+		void OnContextMenu(wxContextMenuEvent& event)
+		{
+			wxPoint point = event.GetPosition();
+			// If from keyboard
+			if (point.x == -1 && point.y == -1) {
+				wxSize size = GetSize();
+				point.x = size.x / 2;
+				point.y = size.y / 2;
+			} else {
+				point = ScreenToClient(point);
+			}
+			ShowContextMenu(point);
+		}
+		#else
+		void OnRightUp(wxMouseEvent& event)
+		{ ShowContextMenu(event.GetPosition()); }
+#endif
+
 		wxDECLARE_EVENT_TABLE();
 };
 
 wxBEGIN_EVENT_TABLE(MapBoardCtrl, wxScrolledWindow)
-EVT_PAINT(MapBoardCtrl::OnPaint)
-EVT_SIZE(MapBoardCtrl::OnSize)
-EVT_ERASE_BACKGROUND(MapBoardCtrl::OnEraseBackground)
-EVT_MOTION(MapBoardCtrl::OnMotion)
-wxEND_EVENT_TABLE()
+	EVT_PAINT(MapBoardCtrl::OnPaint)
+	EVT_SIZE(MapBoardCtrl::OnSize)
+	EVT_ERASE_BACKGROUND(MapBoardCtrl::OnEraseBackground)
+	EVT_MOTION(MapBoardCtrl::OnMotion)
+#if USE_CONTEXT_MENU
+	EVT_CONTEXT_MENU(MapBoardCtrl::OnContextMenu)
+#else
+	EVT_RIGHT_UP(MapBoardCtrl::OnRightUp)
+#endif
+	wxEND_EVENT_TABLE()

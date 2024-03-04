@@ -345,17 +345,13 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
                   Bottom().Layer(1).
                   CloseButton(true).MaximizeButton(true));
 
-    wxWindow* wnd10 = CreateTextCtrl("This pane will prompt the user before hiding.");
-
     int iconSize = m_mgr.GetArtProvider()->GetMetric(wxAUI_DOCKART_CAPTION_SIZE);
-
     iconSize &= ~1;
 
-    m_mgr.AddPane(wnd10, wxAuiPaneInfo().
-        Name("test10").Caption("Text Pane with Hide Prompt").
-        Bottom().Layer(1).Position(1).
-        Icon(wxArtProvider::GetBitmapBundle(wxART_WARNING,
-        wxART_OTHER, wxSize(iconSize, iconSize))));
+    wxTextCtrl* m_logTextCtrl = CreateTextCtrl("Start...\n");
+    m_log = wxLog::SetActiveTarget(new wxLogTextCtrl(m_logTextCtrl));
+
+    m_mgr.AddPane(m_logTextCtrl, wxAuiPaneInfo().Name("log").Caption("Log").Bottom().Layer(1).Position(1).Icon(wxArtProvider::GetBitmapBundle(wxART_WARNING, wxART_OTHER, wxSize(iconSize, iconSize))));
 
     m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
                   Name("test11").Caption("Fixed Pane").
@@ -425,7 +421,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     m_mgr.GetPane("tb1").Hide();
     m_mgr.GetPane("tb6").Hide();
     m_mgr.GetPane("test8").Show().Left().Layer(0).Row(0).Position(0);
-    m_mgr.GetPane("test10").Show().Bottom().Layer(0).Row(0).Position(0);
+    m_mgr.GetPane("log").Show().Bottom().Layer(0).Row(0).Position(0);
     m_mgr.GetPane("notebook_content").Show();
     wxString perspective_default = m_mgr.SavePerspective();
 
@@ -994,14 +990,7 @@ void GBFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 
 wxTextCtrl* GBFrame::CreateTextCtrl(const wxString& ctrl_text)
 {
-    static int n = 0;
-
-    wxString text;
-    if ( !ctrl_text.empty() )
-        text = ctrl_text;
-    else
-        text.Printf("This is text box %d", ++n);
-
+    wxString text = ctrl_text.empty() ? "\n" : ctrl_text;
     return new wxTextCtrl(this,wxID_ANY, text, wxPoint(0,0), FromDIP(wxSize(150,90)), wxNO_BORDER | wxTE_MULTILINE);
 }
 

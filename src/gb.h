@@ -131,6 +131,8 @@ private:
 	long m_notebook_theme;
 	wxArrayString m_perspectives;
 	wxMenu* m_perspectives_menu;
+	wxLog *m_log;
+	wxTextCtrl* m_logTextCtrl;
 	wxAuiManager m_mgr;
 
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
