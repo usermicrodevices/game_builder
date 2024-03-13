@@ -10,7 +10,6 @@
 // For compilers that support precompilation, includes "wx/wx.h".
 #include "wx/wxprec.h"
 
-
 #include "wx/app.h"
 #include "wx/grid.h"
 #include "wx/treectrl.h"
@@ -32,6 +31,7 @@
 #include "wx/msgdlg.h"
 #include "wx/textdlg.h"
 #include "wx/stattext.h"
+#include <wx/filedlg.h>
 
 #include "wx/aui/aui.h"
 
@@ -61,7 +61,6 @@ class GBFrame : public wxFrame
 	enum
 	{
 		ID_CreateTree = wxID_HIGHEST,
-		ID_CreateGrid,
 		ID_CreateText,
 		ID_CreateHTML,
 		ID_CreateNotebook,
@@ -71,7 +70,6 @@ class GBFrame : public wxFrame
 		ID_TreeContent,
 		ID_HTMLContent,
 		ID_NotebookContent,
-		ID_SizeReportContent,
 		ID_CreatePerspective,
 		ID_CopyPerspectiveCode,
 		ID_AllowFloating,
@@ -136,7 +134,6 @@ private:
 	wxAuiManager m_mgr;
 
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
-	wxGrid* CreateGrid();
 	wxTreeCtrl* CreateTreeCtrl();
 	MapBoardCtrl* CreateMapBoardCtrl(const wxSize &size = wxWindow::FromDIP(wxSize(80, 80), nullptr));
 	wxPoint GetStartPosition();
@@ -145,11 +142,12 @@ private:
 
 	wxString GetIntroText();
 
+	void OnSave(wxCommandEvent& event);
+
 	void OnEraseBackground(wxEraseEvent& evt);
 	void OnSize(wxSizeEvent& evt);
 
 	void OnCreateTree(wxCommandEvent& evt);
-	void OnCreateGrid(wxCommandEvent& evt);
 	void OnCreateHTML(wxCommandEvent& evt);
 	void OnCreateNotebook(wxCommandEvent& evt);
 	void OnCreateText(wxCommandEvent& evt);

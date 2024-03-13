@@ -29,7 +29,6 @@ wxBEGIN_EVENT_TABLE(GBFrame, wxFrame)
     EVT_ERASE_BACKGROUND(GBFrame::OnEraseBackground)
     EVT_SIZE(GBFrame::OnSize)
     EVT_MENU(GBFrame::ID_CreateTree, GBFrame::OnCreateTree)
-    EVT_MENU(GBFrame::ID_CreateGrid, GBFrame::OnCreateGrid)
     EVT_MENU(GBFrame::ID_CreateText, GBFrame::OnCreateText)
     EVT_MENU(GBFrame::ID_CreateHTML, GBFrame::OnCreateHTML)
     EVT_MENU(GBFrame::ID_CreateSizeReport, GBFrame::OnCreateMapBoardCtrl)
@@ -71,9 +70,9 @@ wxBEGIN_EVENT_TABLE(GBFrame, wxFrame)
     EVT_MENU(ID_GridContent, GBFrame::OnChangeContentPane)
     EVT_MENU(ID_TreeContent, GBFrame::OnChangeContentPane)
     EVT_MENU(ID_TextContent, GBFrame::OnChangeContentPane)
-    EVT_MENU(ID_SizeReportContent, GBFrame::OnChangeContentPane)
     EVT_MENU(ID_HTMLContent, GBFrame::OnChangeContentPane)
     EVT_MENU(ID_NotebookContent, GBFrame::OnChangeContentPane)
+    EVT_MENU(wxID_SAVE, GBFrame::OnSave)
     EVT_MENU(wxID_EXIT, GBFrame::OnExit)
     EVT_MENU(wxID_ABOUT, GBFrame::OnAbout)
     EVT_UPDATE_UI(ID_NotebookTabFixedWidth, GBFrame::OnUpdateUI)
@@ -123,13 +122,13 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     wxMenuBar* mb = new wxMenuBar;
 
     wxMenu* file_menu = new wxMenu;
+    file_menu->Append(wxID_SAVE);
     file_menu->Append(wxID_EXIT);
 
     wxMenu* view_menu = new wxMenu;
     view_menu->Append(ID_CreateText, _("Create Text Control"));
     view_menu->Append(ID_CreateHTML, _("Create HTML Control"));
     view_menu->Append(ID_CreateTree, _("Create Tree"));
-    view_menu->Append(ID_CreateGrid, _("Create Grid"));
     view_menu->Append(ID_CreateNotebook, _("Create Notebook"));
     view_menu->Append(ID_CreateSizeReport, _("Create Size Reporter"));
     view_menu->AppendSeparator();
@@ -138,7 +137,6 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     view_menu->Append(ID_HTMLContent, _("Use an HTML Control for the Content Pane"));
     view_menu->Append(ID_TreeContent, _("Use a Tree Control for the Content Pane"));
     view_menu->Append(ID_NotebookContent, _("Use a wxAuiNotebook control for the Content Pane"));
-    view_menu->Append(ID_SizeReportContent, _("Use a Size Reporter for the Content Pane"));
 
     wxMenu* options_menu = new wxMenu;
     options_menu->AppendRadioItem(ID_TransparentHint, _("Transparent Hint"));
@@ -349,6 +347,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     iconSize &= ~1;
 
     wxTextCtrl* m_logTextCtrl = CreateTextCtrl("Start...\n");
+    //wxStreamToTextRedirector redirect(m_logTextCtrl);
     m_log = wxLog::SetActiveTarget(new wxLogTextCtrl(m_logTextCtrl));
 
     m_mgr.AddPane(m_logTextCtrl, wxAuiPaneInfo().Name("log").Caption("Log").Bottom().Layer(1).Position(1).Icon(wxArtProvider::GetBitmapBundle(wxART_WARNING, wxART_OTHER, wxSize(iconSize, iconSize))));
@@ -363,9 +362,6 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
                   Dockable(false).Float().Hide());
 
     // create some center panes
-
-    m_mgr.AddPane(CreateGrid(), wxAuiPaneInfo().Name("grid_content").
-                  CenterPane().Hide());
 
     m_mgr.AddPane(CreateTreeCtrl(), wxAuiPaneInfo().Name("tree_content").
                   CenterPane().Hide());
@@ -856,15 +852,6 @@ void GBFrame::OnCreateTree(wxCommandEvent& WXUNUSED(event))
     m_mgr.Update();
 }
 
-void GBFrame::OnCreateGrid(wxCommandEvent& WXUNUSED(event))
-{
-    m_mgr.AddPane(CreateGrid(), wxAuiPaneInfo().
-                  Caption("Grid").
-                  Float().FloatingPosition(GetStartPosition()).
-                  FloatingSize(FromDIP(wxSize(300,200))));
-    m_mgr.Update();
-}
-
 void GBFrame::OnCreateHTML(wxCommandEvent& WXUNUSED(event))
 {
     m_mgr.AddPane(CreateHTMLCtrl(), wxAuiPaneInfo().
@@ -894,19 +881,16 @@ void GBFrame::OnCreateText(wxCommandEvent& WXUNUSED(event))
 
 void GBFrame::OnCreateMapBoardCtrl(wxCommandEvent& WXUNUSED(event))
 {
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
-                  Caption("Client Size Reporter").
-                  Float().FloatingPosition(GetStartPosition()).
-                  CloseButton(true).MaximizeButton(true));
+    wxAuiPaneInfo pi = wxAuiPaneInfo();
+    pi.name = "level-0";
+    m_mgr.AddPane(CreateMapBoardCtrl(), pi.Caption("Level").Dock().CloseButton(true).MaximizeButton(true));
     m_mgr.Update();
 }
 
 void GBFrame::OnChangeContentPane(wxCommandEvent& evt)
 {
-    m_mgr.GetPane("grid_content").Show(evt.GetId() == ID_GridContent);
     m_mgr.GetPane("text_content").Show(evt.GetId() == ID_TextContent);
     m_mgr.GetPane("tree_content").Show(evt.GetId() == ID_TreeContent);
-    m_mgr.GetPane("sizereport_content").Show(evt.GetId() == ID_SizeReportContent);
     m_mgr.GetPane("html_content").Show(evt.GetId() == ID_HTMLContent);
     m_mgr.GetPane("notebook_content").Show(evt.GetId() == ID_NotebookContent);
     m_mgr.Update();
@@ -978,6 +962,18 @@ void GBFrame::OnTabAlignment(wxCommandEvent &evt)
     }
 }
 
+void GBFrame::OnSave(wxCommandEvent& WXUNUSED(event))
+{
+    wxString wildCard = "JSON data (*.json)|*.json;*.JSON";
+    wxFileDialog dlg(this, "Save as JSON", wxEmptyString, wxEmptyString, wildCard, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+    if(dlg.ShowModal() == wxID_OK)
+    {
+        //wxLogMessage(dlg.GetPath());
+        //((MapBoardCtrl*)(m_mgr.GetPane("level-0").window))->LogMessage();
+        ((MapBoardCtrl*)(m_mgr.GetPane("level-0").window))->LevelToFile(dlg.GetPath());
+    }
+}
+
 void GBFrame::OnExit(wxCommandEvent& WXUNUSED(event))
 {
     Close(true);
@@ -985,21 +981,15 @@ void GBFrame::OnExit(wxCommandEvent& WXUNUSED(event))
 
 void GBFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
-    wxMessageBox(_("Game Builder\ncreate game without programming, but optional you always can replace core engine (source code included)\n(c) Copyright 2024, Maxim Kolosov"), _("About Game Builder"), wxOK, this);
+    wxString msg;
+    msg.Printf("Game Builder\ncreate game without programming, but optional you always can replace core engine (source code included)\n Build with GCC %s\n(c) Copyright 2024, Maxim Kolosov", __VERSION__);
+    wxMessageBox(msg, _("About Game Builder"), wxOK, this);
 }
 
 wxTextCtrl* GBFrame::CreateTextCtrl(const wxString& ctrl_text)
 {
     wxString text = ctrl_text.empty() ? "\n" : ctrl_text;
     return new wxTextCtrl(this,wxID_ANY, text, wxPoint(0,0), FromDIP(wxSize(150,90)), wxNO_BORDER | wxTE_MULTILINE);
-}
-
-
-wxGrid* GBFrame::CreateGrid()
-{
-    wxGrid* grid = new wxGrid(this, wxID_ANY, wxPoint(0,0), FromDIP(wxSize(150,250)), wxNO_BORDER | wxWANTS_CHARS);
-    grid->CreateGrid(50, 20);
-    return grid;
 }
 
 wxTreeCtrl* GBFrame::CreateTreeCtrl()

@@ -12,7 +12,7 @@ BK_DEPS = ../wxWidgets/bk-deps
 LIBS = -lz -lcurl -lm
 LDFLAGS_GUI = 
 CXX = g++
-CXXFLAGS = 
+CXXFLAGS = -g -std=c++11
 CPPFLAGS = 
 LDFLAGS = 
 USE_DPI_AWARE_MANIFEST = 2
@@ -21,16 +21,14 @@ TOOLKIT = GTK
 TOOLKIT_LOWERCASE = gtk
 TOOLKIT_VERSION = 3
 TOOLCHAIN_FULLNAME = gtk3-unicode-3.3
-EXTRALIBS = -pthread   -Wl,--version-script,$(wx_top_builddir)/version-script -lz -lcurl -lm -lpcre2-32 
-EXTRALIBS_XML =  -lexpat
+EXTRALIBS = -pthread -Wl,--version-script,$(wx_top_builddir)/version-script -lpcre2-32
+EXTRALIBS_XML = -lexpat
 EXTRALIBS_HTML = 
-EXTRALIBS_GUI = -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lX11 -lgthread-2.0 -pthread -lglib-2.0 -lXxf86vm -lSM -lxkbcommon -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -lharfbuzz -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lXtst -lpangoft2-1.0 -lpango-1.0 -lgobject-2.0 -lglib-2.0 -lharfbuzz -lfontconfig -lfreetype -lpng -lz -ljpeg -ltiff -ljbig
+EXTRALIBS_GUI = -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lX11 -lgthread-2.0 -lglib-2.0 -lXxf86vm -lSM -lxkbcommon -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lXtst -lpangoft2-1.0 -lpango-1.0 -lgobject-2.0 -lglib-2.0 -lharfbuzz -lfontconfig -lfreetype -lpng -ljpeg -ltiff -ljbig
 WX_CPPFLAGS = -I${wx_top_builddir}/lib/wx/include/gtk3-unicode-3.3 -I${top_srcdir}/include -D_FILE_OFFSET_BITS=64 -pthread -I/usr/include/gtk-3.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/at-spi-2.0 -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/fribidi -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libpng16 -I/usr/include/x86_64-linux-gnu -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include 
-WX_CXXFLAGS = -pthread -Wall -Wundef -Wunused-parameter -Wno-ctor-dtor-privacy -Woverloaded-virtual -O2 -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/fribidi -I/usr/include/cairo -I/usr/include/pixman-1 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/libpng16 -I/usr/include/gtk-3.0/unix-print -I/usr/include/gtk-3.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/at-spi-2.0 -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/atk-1.0 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/x86_64-linux-gnu -I/usr/include/gstreamer-1.0 -I/usr/include/orc-0.4  -fvisibility=hidden -fvisibility-inlines-hidden
-WX_LDFLAGS = -pthread 
 HOST_SUFFIX = 
-SAMPLES_RPATH_FLAG = -Wl,-rpath,$(wx_top_builddir)/lib
-SAMPLES_CXXFLAGS =  -fPIC -DPIC
+RPATH_FLAG = -Wl,-rpath,$(wx_top_builddir)/lib
+#PIC_CXXFLAGS = -fPIC -DPIC
 
 ### Variables: ###
 
@@ -41,8 +39,8 @@ LIBDIRNAME = $(wx_top_builddir)/lib
 EDITOR_CXXFLAGS = $(WX_CPPFLAGS) -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) \
 	$(__DEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) $(__RTTI_DEFINE_p) \
 	$(__THREAD_DEFINE_p) -I$(srcdir) $(__DLLFLAG_p) \
-	$(WX_CXXFLAGS) $(SAMPLES_CXXFLAGS) $(CPPFLAGS) $(CXXFLAGS)
-EDITOR_OBJECTS =  \
+	$(CPPFLAGS) $(CXXFLAGS)# $(PIC_CXXFLAGS)
+EDITOR_OBJECTS = \
 	$(__gb___win32rc) \
 	gb_gb.o
 
@@ -102,11 +100,11 @@ distclean: clean
 	rm -f config.cache config.log config.status bk-deps bk-make-pch Makefile
 
 gb$(EXEEXT): $(EDITOR_OBJECTS) $(__gb___win32rc)
-	$(CXX) -o $@ $(EDITOR_OBJECTS)    -L$(LIBDIRNAME)  $(LDFLAGS_GUI) $(SAMPLES_RPATH_FLAG) $(LDFLAGS)  $(WX_LDFLAGS) $(__WXLIB_AUI_p)  $(__WXLIB_HTML_p) $(EXTRALIBS_HTML) $(__WXLIB_CORE_p)  $(__WXLIB_XML_p) $(EXTRALIBS_XML) $(__WXLIB_BASE_p)  $(__WXLIB_MONO_p) $(__LIB_SCINTILLA_IF_MONO_p) $(__LIB_LEXILLA_IF_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p)  $(EXTRALIBS_FOR_GUI) $(__LIB_ZLIB_p) $(__LIB_REGEX_p) $(__LIB_EXPAT_p) $(EXTRALIBS_FOR_BASE) $(LIBS)
+	$(CXX) -o $@ $(EDITOR_OBJECTS) -L$(LIBDIRNAME) $(LDFLAGS_GUI) $(LDFLAGS) $(__WXLIB_AUI_p) $(__WXLIB_HTML_p) $(EXTRALIBS_HTML) $(__WXLIB_CORE_p) $(__WXLIB_XML_p) $(EXTRALIBS_XML) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_SCINTILLA_IF_MONO_p) $(__LIB_LEXILLA_IF_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) $(EXTRALIBS_FOR_GUI) $(__LIB_ZLIB_p) $(__LIB_REGEX_p) $(__LIB_EXPAT_p) $(EXTRALIBS_FOR_BASE) $(LIBS) $(RPATH_FLAG)
 	$(__gb___os2_emxbindcmd)
 
 gb_rc.o: gb.rc
-	$(WINDRES) -i$< -o$@    --define __WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p_1) $(__DEBUG_DEFINE_p_1)  $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) --include-dir $(__DLLFLAG_p_1) $(__WIN32_DPI_MANIFEST_p)
+	$(WINDRES) -i$< -o$@ --define __WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p_1) $(__DEBUG_DEFINE_p_1) $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) --include-dir $(__DLLFLAG_p_1) $(__WIN32_DPI_MANIFEST_p)
 
 gb_gb.o: gb.cpp
 	$(CXXC) -c -o $@ $(EDITOR_CXXFLAGS) gb.cpp

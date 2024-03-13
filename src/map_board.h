@@ -24,13 +24,25 @@ class MapBoardCtrl : public wxScrolledWindow
 		: wxScrolledWindow(parent, id, pos, size, wxNO_BORDER)
 		{
 			m_mgr = mgr;
+			m_data = Data();
 		}
 
+		void LevelToFile(const wxString &filename)
+		{
+			try
+			{
+				wxLogMessage(m_data.ToFile(filename));
+			}
+			catch(std::exception& e)
+			{
+				wxLogMessage(e.what());
+			}
+		}
 
 	private:
-
 		static const int CellSideInDIPs = 50;
 		static const int MapInDIPs = 3000;
+		Data m_data;
 		wxPoint current_mouse_position;
 		wxAuiManager* m_mgr;
 
@@ -60,41 +72,6 @@ class MapBoardCtrl : public wxScrolledWindow
 				dc.DrawLine(xpos, 0, xpos, mapInPx);
 			for(size_t ypos = cellSideInPx; ypos < mapInPx; ypos+=CellSideInDIPs)
 				dc.DrawLine(0, ypos, mapInPx, ypos);
-
-			//wxString s;
-			//int h, w, height;
-			
-			//dc.SetPen(wxPen(wxColour(0, 200, 0, 128), 5));
-			//dc.DrawLine(0, 0, size.x, size.y);
-			//dc.DrawLine(0, size.y, size.x, 0);
-
-			//s.Printf("Size: %d x %d", size.x, size.y);
-
-			//dc.SetFont(*wxNORMAL_FONT);
-			//dc.GetTextExtent(s, &w, &height);
-			//height += FromDIP(3);
-			//dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2));
-
-			//if (m_mgr)
-			//{
-				//wxAuiPaneInfo pi = m_mgr->GetPane(this);
-
-				//s.Printf("Layer: %d", pi.dock_layer);
-				//dc.GetTextExtent(s, &w, &h);
-				//dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2)+(height*1));
-
-				//s.Printf("Dock: %d Row: %d", pi.dock_direction, pi.dock_row);
-				//dc.GetTextExtent(s, &w, &h);
-				//dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2)+(height*2));
-
-				//s.Printf("Position: %d", pi.dock_pos);
-				//dc.GetTextExtent(s, &w, &h);
-				//dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2)+(height*3));
-
-				//s.Printf("Proportion: %d", pi.dock_proportion);
-				//dc.GetTextExtent(s, &w, &h);
-				//dc.DrawText(s, (size.x-w)/2, ((size.y-(height*5))/2)+(height*4));
-			//}
 		}
 
 		void OnEraseBackground(wxEraseEvent& WXUNUSED(evt))
@@ -168,7 +145,7 @@ class MapBoardCtrl : public wxScrolledWindow
 			}
 			ShowContextMenu(point);
 		}
-		#else
+#else
 		void OnRightUp(wxMouseEvent& event)
 		{ ShowContextMenu(event.GetPosition()); }
 #endif
