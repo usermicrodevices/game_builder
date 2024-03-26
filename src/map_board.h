@@ -18,13 +18,30 @@ enum
 
 class MapBoardCtrl : public wxScrolledWindow
 {
-	public:
+	wxDECLARE_DYNAMIC_CLASS(MapBoardCtrl);
+
+public:
+		MapBoardCtrl(){}//wxDECLARE_DYNAMIC_CLASS
 
 		MapBoardCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, wxAuiManager* mgr = nullptr)
 		: wxScrolledWindow(parent, id, pos, size, wxNO_BORDER)
 		{
 			m_mgr = mgr;
 			m_data = Data();
+			std::cout << "textures count " << m_data.count_textures() << std::endl;
+			std::cout << "cells count " << m_data.count_cells() << std::endl;
+		}
+
+		void LogMessage(const wxString &value)
+		{
+			try
+			{
+				wxLogMessage(value);
+			}
+			catch(std::exception& e)
+			{
+				wxLogMessage(e.what());
+			}
 		}
 
 		void LevelToFile(const wxString &filename)
@@ -152,6 +169,8 @@ class MapBoardCtrl : public wxScrolledWindow
 
 		wxDECLARE_EVENT_TABLE();
 };
+
+wxIMPLEMENT_DYNAMIC_CLASS(MapBoardCtrl, wxScrolledWindow);
 
 wxBEGIN_EVENT_TABLE(MapBoardCtrl, wxScrolledWindow)
 	EVT_PAINT(MapBoardCtrl::OnPaint)

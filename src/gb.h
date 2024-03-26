@@ -10,6 +10,8 @@
 // For compilers that support precompilation, includes "wx/wx.h".
 #include "wx/wxprec.h"
 
+#include <wx/debug.h>
+
 #include "wx/app.h"
 #include "wx/grid.h"
 #include "wx/treectrl.h"
@@ -38,6 +40,8 @@
 #include "gb.xpm"
 
 #include "map_board.h"
+
+typedef std::unordered_map<wxString, MapBoardCtrl*> LevelContainer;
 
 #if defined(__WXOSX__) || defined(__WXGTK3__)
 #define wxDRAWING_DC_SUPPORTS_ALPHA 1
@@ -132,10 +136,10 @@ private:
 	wxLog *m_log;
 	wxTextCtrl* m_logTextCtrl;
 	wxAuiManager m_mgr;
+	LevelContainer levels = {};
 
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
 	wxTreeCtrl* CreateTreeCtrl();
-	MapBoardCtrl* CreateMapBoardCtrl(const wxSize &size = wxWindow::FromDIP(wxSize(80, 80), nullptr));
 	wxPoint GetStartPosition();
 	wxHtmlWindow* CreateHTMLCtrl(wxWindow* parent = nullptr);
 	wxAuiNotebook* CreateNotebook();

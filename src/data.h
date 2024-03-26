@@ -29,7 +29,7 @@ public:
 	wxBitmap image;
 };
 
-typedef std::unordered_map<int, int> TextureContainer;
+typedef std::unordered_map<int, Texture> TextureContainer;
 
 class Cell
 {
@@ -67,8 +67,8 @@ typedef std::unordered_map<wxPoint, Cell, wxPointHash> CellContainer;
 class Data
 {
 private:
-	TextureContainer textures;
-	CellContainer cells;
+	TextureContainer textures = {};
+	CellContainer cells = {};
 
 public:
 	Data(int cell_side_size=50, int count_x=100, int count_y=100)
@@ -88,26 +88,31 @@ public:
 		cells.clear();
 	}
 
-	// wxString To_File(const wxString &filename)
-	// {
-	// 	return filename;
-	// }
-
+	int count_textures()
+	{
+		return textures.size();
+	}
+	
+	int count_cells()
+	{
+		return cells.size();
+	}
+	
 	wxString ToFile(const wxString &filename)
 	{
 		wxFile f(filename, wxFile::write);
-		std::cout << filename << std::endl;
+		//std::cout << filename << std::endl;
 		//auto tex = textures.cbegin();
-		std::cout << cells.size() << std::endl;
+		//std::cout << cells.size() << std::endl;
 		//std::cout << tex->second;
-		try
-		{
-			textures.clear();
-		}
-		catch(std::exception& e)
-		{
-			std::cout << e.what();
-		}
+		// try
+		// {
+		// 	textures.clear();
+		// }
+		// catch(std::exception& e)
+		// {
+		// 	std::cout << e.what();
+		// }
 		if(f.IsOpened())
 		{
 			f.Write("{\n");
@@ -124,29 +129,29 @@ public:
 			}
 			//f.Flush();
 
-			//if(cells.size())
-			//{
-				//f.Write("""cells"":\n");
-				//f.Write(wxString("{\n"));
-				// for(const auto& [k, v] : cells)
-				// {
-				// 	f.Write(wxString::Format("""%d-%d"":\n", k.x, k.y));
-				// 	f.Write("{\n");
-				// 	f.Write(wxString::Format("""side"":%d,\n", v.side));
-				// 	if(v.texture_floor)
-				// 		f.Write(wxString::Format("""floor"":%d,\n", v.texture_floor));
-				// 	if(v.texture_ceiling)
-				// 		f.Write(wxString::Format("""ceiling"":%d,\n", v.texture_ceiling));
-				// 	if(v.texture_wall)
-				// 		f.Write(wxString::Format("""wall"":%d,\n", v.texture_wall));
-				// 	if(v.texture_wall)
-				// 		f.Write(wxString::Format("""wall"":%d,\n", v.texture_wall));
-				// 	if(v.ctp != CT_WALL)
-				// 		f.Write(wxString::Format("""type"":%d,\n", (int)v.ctp));
-				// 	f.Write("},\n");
-				// }
-				//f.Write(wxString("},\n"));
-			//}
+			if(cells.size())
+			{
+				f.Write("""cells"":\n");
+				f.Write(wxString("{\n"));
+				for(const auto& [k, v] : cells)
+				{
+					f.Write(wxString::Format("""%d-%d"":\n", k.x, k.y));
+					f.Write("{\n");
+					f.Write(wxString::Format("""side"":%d,\n", v.side));
+					if(v.texture_floor)
+						f.Write(wxString::Format("""floor"":%d,\n", v.texture_floor));
+					if(v.texture_ceiling)
+						f.Write(wxString::Format("""ceiling"":%d,\n", v.texture_ceiling));
+					if(v.texture_wall)
+						f.Write(wxString::Format("""wall"":%d,\n", v.texture_wall));
+					if(v.texture_wall)
+						f.Write(wxString::Format("""wall"":%d,\n", v.texture_wall));
+					if(v.ctp != CT_WALL)
+						f.Write(wxString::Format("""type"":%d,\n", (int)v.ctp));
+					f.Write("},\n");
+				}
+				f.Write(wxString("},\n"));
+			}
 
 			f.Write("}");
 			//f.Flush();
@@ -155,3 +160,5 @@ public:
 		return filename;
 	}
 };
+
+//wxIMPLEMENT_DYNAMIC_CLASS(Data, wxObject);

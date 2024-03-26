@@ -247,8 +247,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     tb2->EnableTool(ID_SampleItem+6, false);
     tb2->Realize();
 
-    wxAuiToolBar* tb3 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                                         wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW);
+    wxAuiToolBar* tb3 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW);
     wxBitmapBundle tb3_bmp1 = wxArtProvider::GetBitmapBundle(wxART_FOLDER, wxART_OTHER, wxSize(16,16));
     tb3->AddTool(ID_SampleItem+16, "Check 1", tb3_bmp1, "Check 1", wxITEM_CHECK);
     tb3->AddTool(ID_SampleItem+17, "Check 2", tb3_bmp1, "Check 2", wxITEM_CHECK);
@@ -265,11 +264,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     tb3->SetCustomOverflowItems(prepend_items, append_items);
     tb3->Realize();
 
-    wxAuiToolBar* tb4 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                                         wxAUI_TB_DEFAULT_STYLE |
-                                         wxAUI_TB_OVERFLOW |
-                                         wxAUI_TB_TEXT |
-                                         wxAUI_TB_HORZ_TEXT);
+    wxAuiToolBar* tb4 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxAUI_TB_DEFAULT_STYLE|wxAUI_TB_OVERFLOW|wxAUI_TB_TEXT|wxAUI_TB_HORZ_TEXT);
     wxBitmapBundle tb4_bmp1 = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
     tb4->AddTool(ID_DropDownToolbarItem, "Item 1", tb4_bmp1);
     tb4->AddTool(ID_SampleItem+23, "Item 2", tb4_bmp1);
@@ -301,47 +296,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     tb5->SetCustomOverflowItems(prepend_items, append_items);
     tb5->Realize();
 
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
-                  Name("test1").Caption("Pane Caption"). Top());
-
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
-                  Name("test2").Caption("Client Size Reporter").
-                  Bottom().Position(1).
-                  CloseButton(true).MaximizeButton(true));
-
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
-                  Name("test3").Caption("Client Size Reporter").
-                  Bottom().
-                  CloseButton(true).MaximizeButton(true));
-
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
-                  Name("test4").Caption("Pane Caption").
-                  Left());
-
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
-                  Name("test5").Caption("No Close Button").
-                  Right().CloseButton(false));
-
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
-                  Name("test6").Caption("Client Size Reporter").
-                  Right().Row(1).
-                  CloseButton(true).MaximizeButton(true));
-
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
-                  Name("test7").Caption("Client Size Reporter").
-                  Left().Layer(1).
-                  CloseButton(true).MaximizeButton(true));
-
-    m_mgr.AddPane(CreateTreeCtrl(), wxAuiPaneInfo().
-                  Name("test8").Caption("Tree Pane").
-                  Left().Layer(1).Position(1).
-                  CloseButton(true).MaximizeButton(true));
-
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
-                  Name("test9").Caption("Min Size 200x100").
-                  BestSize(FromDIP(wxSize(200,100))).MinSize(FromDIP(wxSize(200,100))).
-                  Bottom().Layer(1).
-                  CloseButton(true).MaximizeButton(true));
+    m_mgr.AddPane(CreateTreeCtrl(), wxAuiPaneInfo().Name("test8").Caption("Tree Pane").Left().Layer(1).Position(1).CloseButton(true).MaximizeButton(true));
 
     int iconSize = m_mgr.GetArtProvider()->GetMetric(wxAUI_DOCKART_CAPTION_SIZE);
     iconSize &= ~1;
@@ -352,58 +307,30 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
 
     m_mgr.AddPane(m_logTextCtrl, wxAuiPaneInfo().Name("log").Caption("Log").Bottom().Layer(1).Position(1).Icon(wxArtProvider::GetBitmapBundle(wxART_WARNING, wxART_OTHER, wxSize(iconSize, iconSize))));
 
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().
-                  Name("test11").Caption("Fixed Pane").
-                  Bottom().Layer(1).Position(2).Fixed());
-
-
-    m_mgr.AddPane(new SettingsPanel(this,this), wxAuiPaneInfo().
-                  Name("settings").Caption("Dock Manager Settings").
-                  Dockable(false).Float().Hide());
+    //m_mgr.AddPane(new SettingsPanel(this,this), wxAuiPaneInfo().Name("settings").Caption("Dock Manager Settings").Dockable(false).Float().Hide());
 
     // create some center panes
 
-    m_mgr.AddPane(CreateTreeCtrl(), wxAuiPaneInfo().Name("tree_content").
-                  CenterPane().Hide());
+    m_mgr.AddPane(CreateTreeCtrl(), wxAuiPaneInfo().Name("tree_content").CenterPane().Hide());
 
-    m_mgr.AddPane(CreateMapBoardCtrl(), wxAuiPaneInfo().Name("sizereport_content").
-                  CenterPane().Hide());
+    m_mgr.AddPane(CreateTextCtrl(), wxAuiPaneInfo().Name("text_content").CenterPane().Hide());
 
-    m_mgr.AddPane(CreateTextCtrl(), wxAuiPaneInfo().Name("text_content").
-                  CenterPane().Hide());
+    m_mgr.AddPane(CreateHTMLCtrl(), wxAuiPaneInfo().Name("html_content").CenterPane().Hide());
 
-    m_mgr.AddPane(CreateHTMLCtrl(), wxAuiPaneInfo().Name("html_content").
-                  CenterPane().Hide());
-
-    m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().Name("notebook_content").
-                  CenterPane().PaneBorder(false));
+    m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().Name("notebook_content").CenterPane().PaneBorder(false));
 
     // add the toolbars to the manager
-    m_mgr.AddPane(tb1, wxAuiPaneInfo().
-                  Name("tb1").Caption("Big Toolbar").
-                  ToolbarPane().Top());
+    m_mgr.AddPane(tb1, wxAuiPaneInfo().Name("tb1").Caption("Big Toolbar").ToolbarPane().Top());
 
-    m_mgr.AddPane(tb2, wxAuiPaneInfo().
-                  Name("tb2").Caption("Toolbar 2 (Horizontal)").
-                  ToolbarPane().Top().Row(1));
+    m_mgr.AddPane(tb2, wxAuiPaneInfo().Name("tb2").Caption("Toolbar 2 (Horizontal)").ToolbarPane().Top().Row(1));
 
-    m_mgr.AddPane(tb3, wxAuiPaneInfo().
-                  Name("tb3").Caption("Toolbar 3").
-                  ToolbarPane().Top().Row(1).Position(1));
+    m_mgr.AddPane(tb3, wxAuiPaneInfo().Name("tb3").Caption("Toolbar 3").ToolbarPane().Top().Row(1).Position(1));
 
-    m_mgr.AddPane(tb4, wxAuiPaneInfo().
-                  Name("tb4").Caption("Sample Bookmark Toolbar").
-                  ToolbarPane().Top().Row(2));
+    m_mgr.AddPane(tb4, wxAuiPaneInfo().Name("tb4").Caption("Sample Bookmark Toolbar").ToolbarPane().Top().Row(2));
 
-    m_mgr.AddPane(tb5, wxAuiPaneInfo().
-                  Name("tb5").Caption("Sample Vertical Toolbar").
-                  ToolbarPane().Left().
-                  GripperTop());
+    m_mgr.AddPane(tb5, wxAuiPaneInfo().Name("tb5").Caption("Sample Vertical Toolbar").ToolbarPane().Left().GripperTop());
 
-    m_mgr.AddPane(new wxButton(this, wxID_ANY, _("Test Button")),
-                  wxAuiPaneInfo().Name("tb6").
-                  ToolbarPane().Top().Row(2).Position(1).
-                  LeftDockable(false).RightDockable(false));
+    m_mgr.AddPane(new wxButton(this, wxID_ANY, _("Test Button")),wxAuiPaneInfo().Name("tb6").ToolbarPane().Top().Row(2).Position(1).LeftDockable(false).RightDockable(false));
 
     // make some default perspectives
 
@@ -883,7 +810,8 @@ void GBFrame::OnCreateMapBoardCtrl(wxCommandEvent& WXUNUSED(event))
 {
     wxAuiPaneInfo pi = wxAuiPaneInfo();
     pi.name = "level-0";
-    m_mgr.AddPane(CreateMapBoardCtrl(), pi.Caption("Level").Dock().CloseButton(true).MaximizeButton(true));
+    MapBoardCtrl* ctrl = new MapBoardCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, &m_mgr);
+    m_mgr.AddPane(ctrl, pi.Caption("Level").Dock().CloseButton(true).MaximizeButton(true));
     m_mgr.Update();
 }
 
@@ -969,8 +897,11 @@ void GBFrame::OnSave(wxCommandEvent& WXUNUSED(event))
     if(dlg.ShowModal() == wxID_OK)
     {
         //wxLogMessage(dlg.GetPath());
-        //((MapBoardCtrl*)(m_mgr.GetPane("level-0").window))->LogMessage();
-        ((MapBoardCtrl*)(m_mgr.GetPane("level-0").window))->LevelToFile(dlg.GetPath());
+        //MapBoardCtrl* map_board = ((MapBoardCtrl*)(m_mgr.GetPane("level-0").window));//SEGFAULT
+        //MapBoardCtrl* map_board = wxDynamicCast(m_mgr.GetPane("level-0").window, MapBoardCtrl);//SEGFAULT
+        MapBoardCtrl* map_board = levels[wxT("level-0")];
+        //map_board->LogMessage(dlg.GetPath());
+        map_board->LevelToFile(dlg.GetPath());
     }
 }
 
@@ -982,7 +913,7 @@ void GBFrame::OnExit(wxCommandEvent& WXUNUSED(event))
 void GBFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
     wxString msg;
-    msg.Printf("Game Builder\ncreate game without programming, but optional you always can replace core engine (source code included)\n Build with GCC %s\n(c) Copyright 2024, Maxim Kolosov", __VERSION__);
+    msg.Printf("Game Builder\ncreate game without programming, but optional you always can replace core engine (source code included)\nBuild with GCC %s\nRun under %s\n(c) Copyright 2024, Maxim Kolosov", __VERSION__, wxPlatformInfo::Get().GetOperatingSystemIdName());
     wxMessageBox(msg, _("About Game Builder"), wxOK, this);
 }
 
@@ -1027,12 +958,6 @@ wxTreeCtrl* GBFrame::CreateTreeCtrl()
     return tree;
 }
 
-MapBoardCtrl* GBFrame::CreateMapBoardCtrl(const wxSize& size)
-{
-    MapBoardCtrl* ctrl = new MapBoardCtrl(this, wxID_ANY, wxDefaultPosition, size, &m_mgr);
-    return ctrl;
-}
-
 wxHtmlWindow* GBFrame::CreateHTMLCtrl(wxWindow* parent)
 {
     if (!parent)
@@ -1053,9 +978,10 @@ wxAuiNotebook* GBFrame::CreateNotebook()
 
    wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
 
-   MapBoardCtrl* rep_ctrl = new MapBoardCtrl(ctrl, wxID_ANY, wxDefaultPosition, client_size, &m_mgr);
-   
-   ctrl->AddPage(rep_ctrl, "Welcome to Game Builder" , false, page_bmp);
+   MapBoardCtrl* map_ctrl = new MapBoardCtrl(ctrl, wxID_ANY, wxDefaultPosition, client_size, &m_mgr);
+   ctrl->AddPage(map_ctrl, "Welcome to Game Builder" , false, page_bmp);
+   levels[wxT("level-0")] = map_ctrl;
+
    ctrl->SetPageToolTip(0, "Welcome to Game Builder (this is a page tooltip)");
 
    //ctrl->SetPageToolTip(ctrl->GetPageCount()-1, "and the tooltip message can be even longer!");

@@ -2,8 +2,6 @@ prefix = /usr/local
 exec_prefix = ${prefix}
 datarootdir = ${prefix}/share
 INSTALL = /usr/bin/install -c
-EXEEXT = 
-WINDRES = 
 NM = nm
 srcdir = .
 top_srcdir = ../wxWidgets
@@ -12,7 +10,7 @@ BK_DEPS = ../wxWidgets/bk-deps
 LIBS = -lz -lcurl -lm
 LDFLAGS_GUI = 
 CXX = g++
-CXXFLAGS = -g -std=c++11
+CXXFLAGS = -ggdb -std=c++17
 CPPFLAGS = 
 LDFLAGS = 
 USE_DPI_AWARE_MANIFEST = 2
@@ -21,7 +19,8 @@ TOOLKIT = GTK
 TOOLKIT_LOWERCASE = gtk
 TOOLKIT_VERSION = 3
 TOOLCHAIN_FULLNAME = gtk3-unicode-3.3
-EXTRALIBS = -pthread -Wl,--version-script,$(wx_top_builddir)/version-script -lpcre2-32
+EXTRALIBS = -pthread -Wl,--version-script,$(wx_top_builddir)/version-script
+# -lpcre2-32
 EXTRALIBS_XML = -lexpat
 EXTRALIBS_HTML = 
 EXTRALIBS_GUI = -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lX11 -lgthread-2.0 -lglib-2.0 -lXxf86vm -lSM -lxkbcommon -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lXtst -lpangoft2-1.0 -lpango-1.0 -lgobject-2.0 -lglib-2.0 -lharfbuzz -lfontconfig -lfreetype -lpng -ljpeg -ltiff -ljbig
@@ -40,9 +39,7 @@ EDITOR_CXXFLAGS = $(WX_CPPFLAGS) -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) \
 	$(__DEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) $(__RTTI_DEFINE_p) \
 	$(__THREAD_DEFINE_p) -I$(srcdir) $(__DLLFLAG_p) \
 	$(CPPFLAGS) $(CXXFLAGS)# $(PIC_CXXFLAGS)
-EDITOR_OBJECTS = \
-	$(__gb___win32rc) \
-	gb_gb.o
+EDITOR_OBJECTS = gb_gb.o
 
 ### Conditionally set variables: ###
 
@@ -52,8 +49,8 @@ EXTRALIBS_FOR_BASE = $(EXTRALIBS)
 EXTRALIBS_FOR_GUI = $(EXTRALIBS_GUI)
 __DLLFLAG_p = -DWXUSINGDLL
 __DLLFLAG_p_1 = --define WXUSINGDLL
-COND_PLATFORM_OS2_1___gb___os2_emxbindcmd = $(NM) gb$(EXEEXT) | if \
-	grep -q pmwin.763 ; then emxbind -ep gb$(EXEEXT) ; fi
+COND_PLATFORM_OS2_1___gb___os2_emxbindcmd = $(NM) gb | if \
+	grep -q pmwin.763 ; then emxbind -ep gb ; fi
 COND_MONOLITHIC_0___WXLIB_AUI_p = \
 	-lwx_$(PORTNAME)$(WXUNIVNAME)u$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_aui-$(WX_RELEASE)$(HOST_SUFFIX)
 __WXLIB_AUI_p = $(COND_MONOLITHIC_0___WXLIB_AUI_p)
@@ -71,18 +68,14 @@ COND_MONOLITHIC_0___WXLIB_BASE_p = \
 __WXLIB_BASE_p = $(COND_MONOLITHIC_0___WXLIB_BASE_p)
 COND_MONOLITHIC_1___WXLIB_MONO_p = \
 	-lwx_$(PORTNAME)$(WXUNIVNAME)u$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)-$(WX_RELEASE)$(HOST_SUFFIX)
-#__WXLIB_MONO_p = $(COND_MONOLITHIC_1___WXLIB_MONO_p)
-#__LIB_SCINTILLA_IF_MONO_p \
-#	= $(__LIB_SCINTILLA_p)
 __LIB_SCINTILLA_p = \
 	-lwxscintilla$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)-$(WX_RELEASE)$(HOST_SUFFIX)
-#__LIB_LEXILLA_IF_MONO_p = $(__LIB_LEXILLA_p)
 __LIB_LEXILLA_p = \
 	-lwxlexilla$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)-$(WX_RELEASE)$(HOST_SUFFIX)
 
 ### Targets: ###
 
-all: gb$(EXEEXT) $(__gb_bundle___depname)
+all: gb $(__gb_bundle___depname)
 
 install: 
 
@@ -93,18 +86,18 @@ install-strip: install
 clean: 
 	rm -rf ./.deps ./.pch
 	rm -f ./*.o
-	rm -f gb$(EXEEXT)
+	rm -f gb
 	rm -rf gb.app
 
 distclean: clean
 	rm -f config.cache config.log config.status bk-deps bk-make-pch Makefile
 
-gb$(EXEEXT): $(EDITOR_OBJECTS) $(__gb___win32rc)
-	$(CXX) -o $@ $(EDITOR_OBJECTS) -L$(LIBDIRNAME) $(LDFLAGS_GUI) $(LDFLAGS) $(__WXLIB_AUI_p) $(__WXLIB_HTML_p) $(EXTRALIBS_HTML) $(__WXLIB_CORE_p) $(__WXLIB_XML_p) $(EXTRALIBS_XML) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_SCINTILLA_IF_MONO_p) $(__LIB_LEXILLA_IF_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) $(EXTRALIBS_FOR_GUI) $(__LIB_ZLIB_p) $(__LIB_REGEX_p) $(__LIB_EXPAT_p) $(EXTRALIBS_FOR_BASE) $(LIBS) $(RPATH_FLAG)
+gb: $(EDITOR_OBJECTS)
+	$(CXX) -o $@ $(EDITOR_OBJECTS) -L$(LIBDIRNAME) $(LDFLAGS_GUI) $(LDFLAGS) $(__WXLIB_AUI_p) $(__WXLIB_HTML_p) $(EXTRALIBS_HTML) $(__WXLIB_CORE_p) $(__WXLIB_XML_p) $(EXTRALIBS_XML) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) $(EXTRALIBS_FOR_GUI) $(__LIB_ZLIB_p) $(__LIB_REGEX_p) $(__LIB_EXPAT_p) $(EXTRALIBS_FOR_BASE) $(LIBS) $(RPATH_FLAG)
 	$(__gb___os2_emxbindcmd)
 
 gb_rc.o: gb.rc
-	$(WINDRES) -i$< -o$@ --define __WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p_1) $(__DEBUG_DEFINE_p_1) $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) --include-dir $(__DLLFLAG_p_1) $(__WIN32_DPI_MANIFEST_p)
+	-i$< -o$@ --define __WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p_1) $(__DEBUG_DEFINE_p_1) $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) --include-dir $(__DLLFLAG_p_1)
 
 gb_gb.o: gb.cpp
 	$(CXXC) -c -o $@ $(EDITOR_CXXFLAGS) gb.cpp
