@@ -67,6 +67,8 @@ typedef std::unordered_map<wxPoint, Cell, wxPointHash> CellContainer;
 class Data
 {
 private:
+	static const int m_CellSideInDIPs = 50;
+	static const int m_MapInDIPs = 3000;
 	TextureContainer textures = {};
 	CellContainer cells = {};
 
@@ -88,73 +90,80 @@ public:
 		cells.clear();
 	}
 
+	int CellSideInDIPs()
+	{
+		return m_CellSideInDIPs;
+	}
+
+	int MapInDIPs()
+	{
+		return m_MapInDIPs;
+	}
+
 	int count_textures()
 	{
 		return textures.size();
 	}
-	
+
 	int count_cells()
 	{
 		return cells.size();
 	}
-	
+
+	auto cells_begin()
+	{
+		return cells.begin();
+	}
+
+	auto cells_end()
+	{
+		return cells.end();
+	}
+
 	wxString ToFile(const wxString &filename)
 	{
 		wxFile f(filename, wxFile::write);
-		//std::cout << filename << std::endl;
-		//auto tex = textures.cbegin();
-		//std::cout << cells.size() << std::endl;
-		//std::cout << tex->second;
-		// try
-		// {
-		// 	textures.clear();
-		// }
-		// catch(std::exception& e)
-		// {
-		// 	std::cout << e.what();
-		// }
 		if(f.IsOpened())
 		{
 			f.Write("{\n");
-
 			f.Write("\t\"textures\":\n\t{\n");
 			if(!textures.empty())
 			{
-				f.Write("\t\"textures\":\n\t{\n");
-				// for(const auto& [k, v] : textures)
-				// {
-				// 	f.Write(wxString::Format("%d:""%s"",\n", k, v.path.GetFullPath()));
-				// }
-				f.Write(wxString("},\n"));
+				for(const auto& [k, v] : textures)
+				{
+					f.Write(wxString::Format("\t\t%d:\n\t\t{\t\t\t\"path\":\"%s\"\n\t\t},\n", k, v.path.GetFullPath()));
+				}
 			}
+			f.Write(wxString("\t},\n"));
 			//f.Flush();
-
 			if(cells.size())
 			{
-				f.Write("""cells"":\n");
-				f.Write(wxString("{\n"));
+				f.Write("\t\"cells\":\n");
+				f.Write(wxString("\t{\n"));
+				bool first_line = true;
 				for(const auto& [k, v] : cells)
 				{
-					f.Write(wxString::Format("""%d-%d"":\n", k.x, k.y));
-					f.Write("{\n");
-					f.Write(wxString::Format("""side"":%d,\n", v.side));
+					if(first_line)
+						first_line = false;
+					else
+						f.Write(",\n");
+					f.Write(wxString::Format("\t\t\"%d-%d\":\n\t\t{\n", k.x, k.y));
+					f.Write(wxString::Format("\t\t\t\"side\":%d,\n", v.side));
 					if(v.texture_floor)
-						f.Write(wxString::Format("""floor"":%d,\n", v.texture_floor));
+						f.Write(wxString::Format("\t\t\t\"floor\":%d,\n", v.texture_floor));
 					if(v.texture_ceiling)
-						f.Write(wxString::Format("""ceiling"":%d,\n", v.texture_ceiling));
+						f.Write(wxString::Format("\t\t\t\"ceiling\":%d,\n", v.texture_ceiling));
 					if(v.texture_wall)
-						f.Write(wxString::Format("""wall"":%d,\n", v.texture_wall));
+						f.Write(wxString::Format("\t\t\t\"wall\":%d,\n", v.texture_wall));
 					if(v.texture_wall)
-						f.Write(wxString::Format("""wall"":%d,\n", v.texture_wall));
+						f.Write(wxString::Format("\t\t\t\"wall\":%d,\n", v.texture_wall));
 					if(v.ctp != CT_WALL)
-						f.Write(wxString::Format("""type"":%d,\n", (int)v.ctp));
-					f.Write("},\n");
+						f.Write(wxString::Format("\t\t\t\"type\":%d,\n", (int)v.ctp));
+					f.Write("\t\t}");
 				}
-				f.Write(wxString("},\n"));
+				f.Write(wxString("\n\t}"));
 			}
-
-			f.Write("}");
-			//f.Flush();
+			f.Write("\n}");
 			f.Close();
 		}
 		return filename;

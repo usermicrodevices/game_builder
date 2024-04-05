@@ -57,16 +57,16 @@ public:
 		}
 
 	private:
-		static const int CellSideInDIPs = 50;
-		static const int MapInDIPs = 3000;
+		//static const int CellSideInDIPs = 50;
+		//static const int MapInDIPs = 3000;
 		Data m_data;
 		wxPoint current_mouse_position;
 		wxAuiManager* m_mgr;
 
 		void OnPaint(wxPaintEvent& WXUNUSED(evt))
 		{
-			size_t mapInPx = FromDIP(MapInDIPs);
-			size_t cellSideInPx = FromDIP(CellSideInDIPs);
+			size_t mapInPx = FromDIP(m_data.MapInDIPs());
+			size_t cellSideInPx = FromDIP(m_data.CellSideInDIPs());
 
 			wxPaintDC dc(this);
 			wxSize size = GetClientSize();
@@ -85,10 +85,25 @@ public:
 			dc.DrawRectangle(0, 0, size.x, size.y);
 
 			dc.SetPen(wxPen(wxColour(0, 255, 0, 128), 5));
-			for(size_t xpos = cellSideInPx; xpos < mapInPx; xpos+=CellSideInDIPs)
+
+			for(size_t xpos = cellSideInPx; xpos < mapInPx; xpos+=m_data.CellSideInDIPs())
 				dc.DrawLine(xpos, 0, xpos, mapInPx);
-			for(size_t ypos = cellSideInPx; ypos < mapInPx; ypos+=CellSideInDIPs)
+			for(size_t ypos = cellSideInPx; ypos < mapInPx; ypos+=m_data.CellSideInDIPs())
 				dc.DrawLine(0, ypos, mapInPx, ypos);
+
+			wxString s;
+			int h, w;
+			dc.SetFont(*wxNORMAL_FONT);
+			for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
+			{
+				auto point = iter->first;
+				if(point.x < size.x && point.y < size.y)
+				{
+					s.Printf("%d\n%d", point.x, point.y);
+					dc.GetTextExtent(s, &w, &h);
+					dc.DrawText(s, point.x+w/2, point.y+h/4);
+				}
+			}
 		}
 
 		void OnEraseBackground(wxEraseEvent& WXUNUSED(evt))
@@ -137,12 +152,13 @@ public:
 			}
 			else // normal case, control not pressed
 			{
-				menu.Append(Menu_Popup_ToBeGreyed, s, "This menu item should be initially greyed out");
-				menu.AppendCheckItem(Menu_Popup_ToBeChecked, "To be &checked");
-				menu.AppendSeparator();
+				menu.Append(wxID_OPEN, "Open image");
+				//menu.Append(Menu_Popup_ToBeGreyed, s, "This menu item should be initially greyed out");
+				//menu.AppendCheckItem(Menu_Popup_ToBeChecked, "To be &checked");
+				//menu.AppendSeparator();
 
-				menu.Enable(Menu_Popup_ToBeGreyed, false);
-				menu.Check(Menu_Popup_ToBeChecked, true);
+				//menu.Enable(Menu_Popup_ToBeGreyed, false);
+				//menu.Check(Menu_Popup_ToBeChecked, true);
 
 				PopupMenu(&menu, pos);
 			}
