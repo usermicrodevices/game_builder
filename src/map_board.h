@@ -23,13 +23,18 @@ class MapBoardCtrl : public wxScrolledWindow
 public:
 		MapBoardCtrl(){}//wxDECLARE_DYNAMIC_CLASS
 
-		MapBoardCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, wxAuiManager* mgr = nullptr)
-		: wxScrolledWindow(parent, id, pos, size, wxNO_BORDER)
+		MapBoardCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxHSCROLL | wxVSCROLL, const wxString& name = "scrolledWindow", wxAuiManager* mgr = nullptr)
+		: wxScrolledWindow(parent, id, pos, size, wxHSCROLL | wxVSCROLL)
 		{
 			m_mgr = mgr;
 			m_data = Data();
-			std::cout << "textures count " << m_data.count_textures() << std::endl;
-			std::cout << "cells count " << m_data.count_cells() << std::endl;
+			wxSize virtual_size = m_data.virtual_size();
+			int cell_side = m_data.cell_side_size();
+			SetVirtualSize(virtual_size);
+			SetScrollbars(cell_side, cell_side, cell_side*2, cell_side*2);
+			//SetTargetWindow(parent);
+			//std::cout << "textures count " << m_data.count_textures() << std::endl;
+			//std::cout << "cells count " << m_data.count_cells() << std::endl;
 		}
 
 		void LogMessage(const wxString &value)
@@ -57,22 +62,27 @@ public:
 		}
 
 	private:
-		//static const int CellSideInDIPs = 50;
-		//static const int MapInDIPs = 3000;
 		Data m_data;
 		wxPoint current_mouse_position;
 		wxAuiManager* m_mgr;
 
 		void OnPaint(wxPaintEvent& WXUNUSED(evt))
 		{
-			size_t mapInPx = FromDIP(m_data.MapInDIPs());
-			size_t cellSideInPx = FromDIP(m_data.CellSideInDIPs());
+			int cell_side = m_data.cell_side_size();
+			size_t cellSideInPx = FromDIP(cell_side);
+			wxSize virtual_size = m_data.virtual_size();
+			size_t mapxInPx = FromDIP(virtual_size.x);
+			size_t mapyInPx = FromDIP(virtual_size.y);
 
 			wxPaintDC dc(this);
+			DoPrepareDC(dc);
 			wxSize size = GetClientSize();
 
-			size_t x_cell_selected = (current_mouse_position.x < (int)cellSideInPx) ? 0 : abs(current_mouse_position.x / (int)cellSideInPx) * (int)cellSideInPx;
-			size_t y_cell_selected = (current_mouse_position.y < (int)cellSideInPx) ? 0 : abs(current_mouse_position.y / (int)cellSideInPx) * (int)cellSideInPx;
+			int view_x, view_y;
+			GetViewStart(&view_x, &view_y);
+
+			size_t x_cell_selected = current_mouse_position.x < (int)cellSideInPx ? 0 : abs((current_mouse_position.x + view_x) / (int)cellSideInPx) * (int)cellSideInPx;
+			size_t y_cell_selected = current_mouse_position.y < (int)cellSideInPx ? 0 : abs((current_mouse_position.y + view_y) / (int)cellSideInPx) * (int)cellSideInPx;
 
 			dc.SetPen(wxPen(wxColour(0, 0, 255, 128), 5));
 
@@ -81,29 +91,30 @@ public:
 			cellSelected.Offset(x_cell_selected, y_cell_selected);
 			dc.DrawRectangle(cellSelected);
 
-			dc.SetBrush(wxBrush(wxColour(200, 0, 0, 50)));
-			dc.DrawRectangle(0, 0, size.x, size.y);
-
 			dc.SetPen(wxPen(wxColour(0, 255, 0, 128), 5));
 
-			for(size_t xpos = cellSideInPx; xpos < mapInPx; xpos+=m_data.CellSideInDIPs())
-				dc.DrawLine(xpos, 0, xpos, mapInPx);
-			for(size_t ypos = cellSideInPx; ypos < mapInPx; ypos+=m_data.CellSideInDIPs())
-				dc.DrawLine(0, ypos, mapInPx, ypos);
+			for(size_t xpos = cellSideInPx; xpos < mapxInPx; xpos+=cell_side)
+				dc.DrawLine(xpos, 0, xpos, mapxInPx);
+			for(size_t ypos = cellSideInPx; ypos < mapyInPx; ypos+=cell_side)
+				dc.DrawLine(0, ypos, mapyInPx, ypos);
 
 			wxString s;
 			int h, w;
 			dc.SetFont(*wxNORMAL_FONT);
+			wxRect rect(view_x, view_y, size.x, size.y);
 			for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
 			{
 				auto point = iter->first;
-				if(point.x < size.x && point.y < size.y)
+				if(rect.Contains(point))
 				{
 					s.Printf("%d\n%d", point.x, point.y);
 					dc.GetTextExtent(s, &w, &h);
 					dc.DrawText(s, point.x+w/2, point.y+h/4);
 				}
 			}
+
+			dc.SetBrush(wxBrush(wxColour(200, 0, 0, 50)));
+			dc.DrawRectangle(0, 0, size.x, size.y);
 		}
 
 		void OnEraseBackground(wxEraseEvent& WXUNUSED(evt))

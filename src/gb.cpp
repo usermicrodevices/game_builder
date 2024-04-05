@@ -810,7 +810,7 @@ void GBFrame::OnCreateMapBoardCtrl(wxCommandEvent& WXUNUSED(event))
 {
     wxAuiPaneInfo pi = wxAuiPaneInfo();
     pi.name = "level-0";
-    MapBoardCtrl* ctrl = new MapBoardCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, &m_mgr);
+    MapBoardCtrl* ctrl = new MapBoardCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL, pi.name, &m_mgr);
     m_mgr.AddPane(ctrl, pi.Caption("Level").Dock().CloseButton(true).MaximizeButton(true));
     m_mgr.Update();
 }
@@ -978,7 +978,7 @@ wxAuiNotebook* GBFrame::CreateNotebook()
 
    wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
 
-   MapBoardCtrl* map_ctrl = new MapBoardCtrl(ctrl, wxID_ANY, wxDefaultPosition, client_size, &m_mgr);
+   MapBoardCtrl* map_ctrl = new MapBoardCtrl(ctrl, wxID_ANY, wxDefaultPosition, client_size, wxHSCROLL | wxVSCROLL, "level-0", &m_mgr);
    ctrl->AddPage(map_ctrl, "Welcome to Game Builder" , false, page_bmp);
    levels[wxT("level-0")] = map_ctrl;
 

@@ -67,14 +67,15 @@ typedef std::unordered_map<wxPoint, Cell, wxPointHash> CellContainer;
 class Data
 {
 private:
-	static const int m_CellSideInDIPs = 50;
-	static const int m_MapInDIPs = 3000;
+	int m_cell_side;//cell side size in DIPs
+	wxSize m_virtual_size;
 	TextureContainer textures = {};
 	CellContainer cells = {};
 
 public:
 	Data(int cell_side_size=50, int count_x=100, int count_y=100)
 	{
+		m_cell_side = cell_side_size;
 		for(int i=0; i<count_x; ++i)
 		{
 			for(int j=0; j<count_y; ++j)
@@ -82,6 +83,7 @@ public:
 				cells[wxPoint(i * cell_side_size, j * cell_side_size)] = Cell(cell_side_size);
 			}
 		}
+		m_virtual_size = wxSize(count_x*cell_side_size, count_y*cell_side_size);
 	};
 
 	~Data()
@@ -90,14 +92,9 @@ public:
 		cells.clear();
 	}
 
-	int CellSideInDIPs()
+	int cell_side_size()
 	{
-		return m_CellSideInDIPs;
-	}
-
-	int MapInDIPs()
-	{
-		return m_MapInDIPs;
+		return m_cell_side;
 	}
 
 	int count_textures()
@@ -118,6 +115,11 @@ public:
 	auto cells_end()
 	{
 		return cells.end();
+	}
+
+	wxSize virtual_size()
+	{
+		return m_virtual_size;
 	}
 
 	wxString ToFile(const wxString &filename)
