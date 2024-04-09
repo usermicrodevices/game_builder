@@ -31,8 +31,11 @@ public:
 			wxSize virtual_size = m_data.virtual_size();
 			int cell_side = m_data.cell_side_size();
 			SetVirtualSize(virtual_size);
-			SetScrollbars(cell_side, cell_side, cell_side*2, cell_side*2);
+			SetScrollbars(cell_side, cell_side, virtual_size.x/cell_side, virtual_size.y/cell_side);
+			//FitInside();
 			//SetTargetWindow(parent);
+			LogMessage(wxString::Format("cells count %d", m_data.count_cells()));
+			LogMessage(wxString::Format("virtual_size %dx%d", virtual_size.x, virtual_size.y));
 			//std::cout << "textures count " << m_data.count_textures() << std::endl;
 			//std::cout << "cells count " << m_data.count_cells() << std::endl;
 		}
@@ -61,12 +64,27 @@ public:
 			}
 		}
 
+		//void FillTreeCtrl(wxDataViewTreeCtrl* tree = nullptr)
+		void FillTreeCtrl(wxTreeCtrl* tree = nullptr)
+		{
+			if(tree)
+			{
+				wxTreeItemId level0 = tree->AppendItem(tree->GetRootItem(), "Level 0", 0);
+				for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
+				{
+					auto point = iter->first;
+					tree->AppendItem(level0, wxString::Format("%d-%d", point.x, point.y), 1);
+				}
+				tree->Expand(level0);
+			}
+		}
+		
 	private:
 		Data m_data;
 		wxPoint current_mouse_position;
 		wxAuiManager* m_mgr;
 
-		void OnPaint(wxPaintEvent& WXUNUSED(evt))
+		void OnPaint(wxPaintEvent& event)
 		{
 			int cell_side = m_data.cell_side_size();
 			size_t cellSideInPx = FromDIP(cell_side);
@@ -76,10 +94,12 @@ public:
 
 			wxPaintDC dc(this);
 			DoPrepareDC(dc);
+			//PrepareDC(dc);
+
 			wxSize size = GetClientSize();
 
-			int view_x, view_y;
-			GetViewStart(&view_x, &view_y);
+			int view_x=0, view_y=0;
+			CalcUnscrolledPosition(view_x, view_y, &view_x, &view_y);
 
 			size_t x_cell_selected = current_mouse_position.x < (int)cellSideInPx ? 0 : abs((current_mouse_position.x + view_x) / (int)cellSideInPx) * (int)cellSideInPx;
 			size_t y_cell_selected = current_mouse_position.y < (int)cellSideInPx ? 0 : abs((current_mouse_position.y + view_y) / (int)cellSideInPx) * (int)cellSideInPx;
@@ -113,8 +133,8 @@ public:
 				}
 			}
 
-			dc.SetBrush(wxBrush(wxColour(200, 0, 0, 50)));
-			dc.DrawRectangle(0, 0, size.x, size.y);
+			//dc.SetBrush(wxBrush(wxColour(200, 0, 0, 50)));
+			//dc.DrawRectangle(view_x, view_y, size.x, size.y);
 		}
 
 		void OnEraseBackground(wxEraseEvent& WXUNUSED(evt))

@@ -139,10 +139,15 @@ private:
 	LevelContainer levels = {};
 
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
+
 	wxTreeCtrl* CreateTreeCtrl();
+	//wxDataViewTreeCtrl* CreateTreeCtrl();
+
 	wxPoint GetStartPosition();
 	wxHtmlWindow* CreateHTMLCtrl(wxWindow* parent = nullptr);
-	wxAuiNotebook* CreateNotebook();
+
+	//wxAuiNotebook* CreateNotebook(wxDataViewTreeCtrl* tree = nullptr);
+	wxAuiNotebook* CreateNotebook(wxTreeCtrl* tree = nullptr);
 
 	wxString GetIntroText();
 

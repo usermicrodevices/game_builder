@@ -296,7 +296,8 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     tb5->SetCustomOverflowItems(prepend_items, append_items);
     tb5->Realize();
 
-    m_mgr.AddPane(CreateTreeCtrl(), wxAuiPaneInfo().Name("test8").Caption("Tree Pane").Left().Layer(1).Position(1).CloseButton(true).MaximizeButton(true));
+    wxTreeCtrl* tree_ctrl = CreateTreeCtrl();
+    m_mgr.AddPane(tree_ctrl, wxAuiPaneInfo().Name("test8").Caption("Tree Pane").Left().Layer(1).Position(1).CloseButton(true).MaximizeButton(true));
 
     int iconSize = m_mgr.GetArtProvider()->GetMetric(wxAUI_DOCKART_CAPTION_SIZE);
     iconSize &= ~1;
@@ -311,13 +312,13 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
 
     // create some center panes
 
-    m_mgr.AddPane(CreateTreeCtrl(), wxAuiPaneInfo().Name("tree_content").CenterPane().Hide());
+    //m_mgr.AddPane(CreateTreeCtrl(), wxAuiPaneInfo().Name("tree_content").CenterPane().Hide());
 
-    m_mgr.AddPane(CreateTextCtrl(), wxAuiPaneInfo().Name("text_content").CenterPane().Hide());
+    //m_mgr.AddPane(CreateTextCtrl(), wxAuiPaneInfo().Name("text_content").CenterPane().Hide());
 
-    m_mgr.AddPane(CreateHTMLCtrl(), wxAuiPaneInfo().Name("html_content").CenterPane().Hide());
+    //m_mgr.AddPane(CreateHTMLCtrl(), wxAuiPaneInfo().Name("html_content").CenterPane().Hide());
 
-    m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().Name("notebook_content").CenterPane().PaneBorder(false));
+    m_mgr.AddPane(CreateNotebook(tree_ctrl), wxAuiPaneInfo().Name("notebook_content").CenterPane().PaneBorder(false));
 
     // add the toolbars to the manager
     m_mgr.AddPane(tb1, wxAuiPaneInfo().Name("tb1").Caption("Big Toolbar").ToolbarPane().Top());
@@ -791,10 +792,10 @@ void GBFrame::OnCreateHTML(wxCommandEvent& WXUNUSED(event))
 void GBFrame::OnCreateNotebook(wxCommandEvent& WXUNUSED(event))
 {
     m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().
-                  Caption("Notebook").
-                  Float().FloatingPosition(GetStartPosition()).
-                  //FloatingSize(FromDIP(wxSize(300,200))).
-                  CloseButton(true).MaximizeButton(true));
+        Caption("Notebook").
+        Float().FloatingPosition(GetStartPosition()).
+        //FloatingSize(FromDIP(wxSize(300,200))).
+        CloseButton(true).MaximizeButton(true));
     m_mgr.Update();
 }
 
@@ -934,25 +935,6 @@ wxTreeCtrl* GBFrame::CreateTreeCtrl()
     tree->SetImages(images);
 
     wxTreeItemId root = tree->AddRoot("Game Builder Project", 0);
-    wxArrayTreeItemIds items;
-
-    items.Add(tree->AppendItem(root, "Item 1", 0));
-    items.Add(tree->AppendItem(root, "Item 2", 0));
-    items.Add(tree->AppendItem(root, "Item 3", 0));
-    items.Add(tree->AppendItem(root, "Item 4", 0));
-    items.Add(tree->AppendItem(root, "Item 5", 0));
-
-    int i, count;
-    for (i = 0, count = items.Count(); i < count; ++i)
-    {
-        wxTreeItemId id = items.Item(i);
-        tree->AppendItem(id, "Subitem 1", 1);
-        tree->AppendItem(id, "Subitem 2", 1);
-        tree->AppendItem(id, "Subitem 3", 1);
-        tree->AppendItem(id, "Subitem 4", 1);
-        tree->AppendItem(id, "Subitem 5", 1);
-    }
-
     tree->Expand(root);
 
     return tree;
@@ -968,26 +950,24 @@ wxHtmlWindow* GBFrame::CreateHTMLCtrl(wxWindow* parent)
     return ctrl;
 }
 
-wxAuiNotebook* GBFrame::CreateNotebook()
+wxAuiNotebook* GBFrame::CreateNotebook(wxTreeCtrl* tree)
 {
-   // create the notebook off-window to avoid flicker
-   wxSize client_size = GetClientSize();
+    wxSize client_size = GetClientSize();
 
-   wxAuiNotebook* ctrl = new wxAuiNotebook(this, wxID_ANY, wxPoint(client_size.x, client_size.y), FromDIP(wxSize(430,200)), m_notebook_style);
-   ctrl->Freeze();
+    wxAuiNotebook* ctrl = new wxAuiNotebook(this, wxID_ANY, wxPoint(client_size.x, client_size.y), FromDIP(wxSize(430,200)), m_notebook_style);
+    ctrl->Freeze();
 
-   wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
+    wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
 
-   MapBoardCtrl* map_ctrl = new MapBoardCtrl(ctrl, wxID_ANY, wxDefaultPosition, client_size, wxHSCROLL | wxVSCROLL, "level-0", &m_mgr);
-   ctrl->AddPage(map_ctrl, "Welcome to Game Builder" , false, page_bmp);
-   levels[wxT("level-0")] = map_ctrl;
+    MapBoardCtrl* map_ctrl = new MapBoardCtrl(ctrl, wxID_ANY, wxDefaultPosition, client_size, wxHSCROLL | wxVSCROLL, "level-0", &m_mgr);
+    ctrl->AddPage(map_ctrl, "Welcome to Game Builder" , false, page_bmp);
+    levels[wxT("level-0")] = map_ctrl;
+    map_ctrl->FillTreeCtrl(tree);
 
-   ctrl->SetPageToolTip(0, "Welcome to Game Builder (this is a page tooltip)");
+    ctrl->SetPageToolTip(ctrl->GetPageCount()-1, "Welcome to Game Builder (this is a page tooltip)");
 
-   //ctrl->SetPageToolTip(ctrl->GetPageCount()-1, "and the tooltip message can be even longer!");
-
-   ctrl->Thaw();
-   return ctrl;
+    ctrl->Thaw();
+    return ctrl;
 }
 
 wxString GBFrame::GetIntroText()
