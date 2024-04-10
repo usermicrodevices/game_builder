@@ -10,7 +10,7 @@ BK_DEPS = ../wxWidgets/bk-deps
 LIBS = -lz -lcurl -lm
 LDFLAGS_GUI = 
 CXX = g++
-CXXFLAGS = -ggdb -std=c++17
+CXXFLAGS = -ggdb -std=c++20
 CPPFLAGS = 
 LDFLAGS = 
 USE_DPI_AWARE_MANIFEST = 2

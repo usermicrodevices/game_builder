@@ -1,3 +1,5 @@
+#pragma once
+
 #if defined(__WXX11__)
 #define USE_CONTEXT_MENU 0
 #else
@@ -16,18 +18,21 @@ enum
 	Menu_PopupChoice
 };
 
+
 class MapBoardCtrl : public wxScrolledWindow
 {
 	wxDECLARE_DYNAMIC_CLASS(MapBoardCtrl);
 
 public:
-		MapBoardCtrl(){}//wxDECLARE_DYNAMIC_CLASS
+		MapBoardCtrl(){};//wxDECLARE_DYNAMIC_CLASS
 
-		MapBoardCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxHSCROLL | wxVSCROLL, const wxString& name = "scrolledWindow", wxAuiManager* mgr = nullptr)
+		MapBoardCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxHSCROLL | wxVSCROLL, const wxString& name = "scrolledWindow", wxAuiManager* mgr = nullptr, wxTreeCtrl* tree = nullptr)
 		: wxScrolledWindow(parent, id, pos, size, wxHSCROLL | wxVSCROLL)
 		{
 			m_mgr = mgr;
-			m_data = Data();
+			m_tree = tree;
+			level_tree_item = tree->AppendItem(m_tree->GetRootItem(), "Level 0", 0);
+			m_data = Data(m_tree, level_tree_item);
 			wxSize virtual_size = m_data.virtual_size();
 			int cell_side = m_data.cell_side_size();
 			SetVirtualSize(virtual_size);
@@ -63,26 +68,14 @@ public:
 				wxLogMessage(e.what());
 			}
 		}
-
-		//void FillTreeCtrl(wxDataViewTreeCtrl* tree = nullptr)
-		void FillTreeCtrl(wxTreeCtrl* tree = nullptr)
-		{
-			if(tree)
-			{
-				wxTreeItemId level0 = tree->AppendItem(tree->GetRootItem(), "Level 0", 0);
-				for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
-				{
-					auto point = iter->first;
-					tree->AppendItem(level0, wxString::Format("%d-%d", point.x, point.y), 1);
-				}
-				tree->Expand(level0);
-			}
-		}
 		
 	private:
 		Data m_data;
+		wxTreeItemId level_tree_item;
 		wxPoint current_mouse_position;
+		wxPoint current_cell_position;
 		wxAuiManager* m_mgr;
+		wxTreeCtrl* m_tree;
 
 		void OnPaint(wxPaintEvent& event)
 		{
@@ -101,14 +94,14 @@ public:
 			int view_x=0, view_y=0;
 			CalcUnscrolledPosition(view_x, view_y, &view_x, &view_y);
 
-			size_t x_cell_selected = current_mouse_position.x < (int)cellSideInPx ? 0 : abs((current_mouse_position.x + view_x) / (int)cellSideInPx) * (int)cellSideInPx;
-			size_t y_cell_selected = current_mouse_position.y < (int)cellSideInPx ? 0 : abs((current_mouse_position.y + view_y) / (int)cellSideInPx) * (int)cellSideInPx;
+			current_cell_position.x = current_mouse_position.x < (int)cellSideInPx ? 0 : abs((current_mouse_position.x + view_x) / (int)cellSideInPx) * (int)cellSideInPx;
+			current_cell_position.y = current_mouse_position.y < (int)cellSideInPx ? 0 : abs((current_mouse_position.y + view_y) / (int)cellSideInPx) * (int)cellSideInPx;
 
 			dc.SetPen(wxPen(wxColour(0, 0, 255, 128), 5));
 
 			wxRect cellSelected(wxSize(cellSideInPx, cellSideInPx));
 			cellSelected.SetLeft(0);
-			cellSelected.Offset(x_cell_selected, y_cell_selected);
+			cellSelected.Offset(current_cell_position.x, current_cell_position.y);
 			dc.DrawRectangle(cellSelected);
 
 			dc.SetPen(wxPen(wxColour(0, 255, 0, 128), 5));
@@ -214,6 +207,17 @@ public:
 		{ ShowContextMenu(event.GetPosition()); }
 #endif
 
+		void OnLeftUp(wxMouseEvent& event)
+		{
+			wxTreeItemId id = m_data.cell_tree_item(current_cell_position);
+			if(id)
+			{
+				m_tree->EnsureVisible(id);
+				m_tree->ScrollTo(id);
+				m_tree->SelectItem(id);
+			}
+		}
+
 		wxDECLARE_EVENT_TABLE();
 };
 
@@ -229,4 +233,5 @@ wxBEGIN_EVENT_TABLE(MapBoardCtrl, wxScrolledWindow)
 #else
 	EVT_RIGHT_UP(MapBoardCtrl::OnRightUp)
 #endif
-	wxEND_EVENT_TABLE()
+	EVT_LEFT_UP(MapBoardCtrl::OnLeftUp)
+wxEND_EVENT_TABLE()

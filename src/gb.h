@@ -7,6 +7,8 @@
 // Licence:     MIT Licence
 ///////////////////////////////////////////////////////////////////////////////
 
+#pragma once
+
 // For compilers that support precompilation, includes "wx/wx.h".
 #include "wx/wxprec.h"
 
@@ -42,6 +44,7 @@
 #include "map_board.h"
 
 typedef std::unordered_map<wxString, MapBoardCtrl*> LevelContainer;
+//typedef std::map<wxString, MapBoardCtrl*> LevelContainer;
 
 #if defined(__WXOSX__) || defined(__WXGTK3__)
 #define wxDRAWING_DC_SUPPORTS_ALPHA 1
@@ -125,6 +128,7 @@ public:
 
 	wxAuiDockArt* GetDockArt();
 	void DoUpdate();
+	//void ActivateTreeItem(wxTreeItemId p);
 
 
 private:
@@ -133,9 +137,11 @@ private:
 	long m_notebook_theme;
 	wxArrayString m_perspectives;
 	wxMenu* m_perspectives_menu;
-	wxLog *m_log;
+	wxTreeCtrl* m_tree_ctrl;
+	wxLog* m_log;
 	wxTextCtrl* m_logTextCtrl;
 	wxAuiManager m_mgr;
+	wxAuiNotebook* m_notebook_ctrl;
 	LevelContainer levels = {};
 
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
@@ -146,8 +152,8 @@ private:
 	wxPoint GetStartPosition();
 	wxHtmlWindow* CreateHTMLCtrl(wxWindow* parent = nullptr);
 
-	//wxAuiNotebook* CreateNotebook(wxDataViewTreeCtrl* tree = nullptr);
-	wxAuiNotebook* CreateNotebook(wxTreeCtrl* tree = nullptr);
+	//wxAuiNotebook* CreateNotebook();
+	wxAuiNotebook* CreateNotebook();
 
 	wxString GetIntroText();
 
