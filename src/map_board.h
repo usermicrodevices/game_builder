@@ -160,7 +160,7 @@ public:
 			if ( wxGetKeyState(WXK_CONTROL) )
 			{
 				menu.SetTitle("Choose one of:");
-				static const char *choices[] = { "Apple", "Banana", "Cherry" };
+				static const char *choices[] = { "First", "Second", "Therch" };
 				for ( size_t n = 0; n < WXSIZEOF(choices); n++ )
 					menu.Append(Menu_PopupChoice + n, choices[n]);
 
@@ -174,16 +174,9 @@ public:
 					wxLogMessage("You have selected \"%s\"", choices[rc - Menu_PopupChoice]);
 				}
 			}
-			else // normal case, control not pressed
+			else
 			{
 				menu.Append(wxID_OPEN, "Open image");
-				//menu.Append(Menu_Popup_ToBeGreyed, s, "This menu item should be initially greyed out");
-				//menu.AppendCheckItem(Menu_Popup_ToBeChecked, "To be &checked");
-				//menu.AppendSeparator();
-
-				//menu.Enable(Menu_Popup_ToBeGreyed, false);
-				//menu.Check(Menu_Popup_ToBeChecked, true);
-
 				PopupMenu(&menu, pos);
 			}
 		}
@@ -207,7 +200,7 @@ public:
 		{ ShowContextMenu(event.GetPosition()); }
 #endif
 
-		void OnLeftUp(wxMouseEvent& event)
+		void OnLeftUp(wxMouseEvent& WXUNUSED(event))
 		{
 			wxTreeItemId id = m_data.cell_tree_item(current_cell_position);
 			if(id)
@@ -215,6 +208,18 @@ public:
 				m_tree->EnsureVisible(id);
 				m_tree->ScrollTo(id);
 				m_tree->SelectItem(id);
+			}
+		}
+
+		void OnFileOpen(wxCommandEvent& WXUNUSED(event))
+		{
+			wxFileDialog dialog(this, "Please choose image", wxEmptyString, wxEmptyString, "*.jpg;*.png;*.*", wxFD_OPEN);
+			if (dialog.ShowModal() == wxID_OK)
+			{
+				wxString filename(dialog.GetPath());
+				m_data.add_texture_floor(current_cell_position, filename);
+				//wxLogError();
+				wxLogMessage(filename);
 			}
 		}
 
@@ -234,4 +239,5 @@ wxBEGIN_EVENT_TABLE(MapBoardCtrl, wxScrolledWindow)
 	EVT_RIGHT_UP(MapBoardCtrl::OnRightUp)
 #endif
 	EVT_LEFT_UP(MapBoardCtrl::OnLeftUp)
+	EVT_MENU(wxID_OPEN, MapBoardCtrl::OnFileOpen)
 wxEND_EVENT_TABLE()

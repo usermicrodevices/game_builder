@@ -28,6 +28,12 @@ enum CellType
 class Texture
 {
 public:
+	Texture(){};
+	Texture(const wxString& fullpath)
+	{
+		path = fullpath;
+		image = wxBitmap(fullpath);
+	}
 	wxFileName path;
 	wxBitmap image;
 };
@@ -166,7 +172,14 @@ public:
 			return tree_items.Item(cells[p].id);
 		return nullptr;
 	}
-
+	
+	void add_texture_floor(wxPoint p, const wxString &name)
+	{
+		int texid = textures.size();
+		textures[texid] = Texture(name);
+		cells[p].texture_floor = texid;
+	}
+	
 	wxString ToFile(const wxString &filename)
 	{
 		wxFile f(filename, wxFile::write);
@@ -178,7 +191,7 @@ public:
 			{
 				for(const auto& [k, v] : textures)
 				{
-					f.Write(wxString::Format("\t\t%d:\n\t\t{\t\t\t\"path\":\"%s\"\n\t\t},\n", k, v.path.GetFullPath()));
+					f.Write(wxString::Format("\t\t%d:\n\t\t{\n\t\t\t\"path\":\"%s\"\n\t\t},\n", k, v.path.GetFullPath()));
 				}
 			}
 			f.Write(wxString("\t},\n"));
