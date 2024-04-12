@@ -124,6 +124,13 @@ public:
 					dc.GetTextExtent(s, &w, &h);
 					dc.DrawText(s, point.x+w/2, point.y+h/4);
 				}
+				auto cell = iter->second;
+				if(cell.texture_floor)
+				{
+					wxBitmap bitmap = m_data.get_texture_bitmap(cell.texture_floor);
+					if(bitmap.IsOk())
+						dc.DrawBitmap(bitmap, point);
+				}
 			}
 
 			//dc.SetBrush(wxBrush(wxColour(200, 0, 0, 50)));
@@ -217,7 +224,7 @@ public:
 			if (dialog.ShowModal() == wxID_OK)
 			{
 				wxString filename(dialog.GetPath());
-				m_data.add_texture_floor(current_cell_position, filename);
+				m_data.add_texture_floor(current_cell_position, wxFileName(filename));
 				//wxLogError();
 				wxLogMessage(filename);
 			}

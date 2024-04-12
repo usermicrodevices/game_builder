@@ -29,13 +29,22 @@ class Texture
 {
 public:
 	Texture(){};
-	Texture(const wxString& fullpath)
+	Texture(const wxFileName& fullpath, const wxSize& size)
 	{
 		path = fullpath;
-		image = wxBitmap(fullpath);
+		//wxImage image(path.GetFullPath());//LOSS ALPHA
+		bitmap = wxBitmap(path.GetFullPath());
+		if(bitmap.IsOk())
+		{
+			wxImage image = bitmap.ConvertToImage();
+			if(image.IsOk())
+			{
+				bitmap = wxBitmap(image.Rescale(size.GetWidth(), size.GetHeight()));
+			}
+		}
 	}
 	wxFileName path;
-	wxBitmap image;
+	wxBitmap bitmap;
 };
 
 typedef std::unordered_map<int, Texture> TextureContainer;
@@ -99,6 +108,7 @@ class Data
 {
 private:
 	int m_cell_side;//cell side size in DIPs
+	wxSize m_cell_size;
 	wxSize m_virtual_size;
 	wxArrayTreeItemIds tree_items;
 	TextureContainer textures = {};
@@ -109,6 +119,7 @@ public:
 	Data(wxTreeCtrl* tree, wxTreeItemId level_tree_item, int cell_side_size=50, int count_x=100, int count_y=100)
 	{
 		m_cell_side = cell_side_size;
+		m_cell_size = wxSize(m_cell_side, m_cell_side);
 		size_t idx = 0;
 		int x = 0, y = 0;
 		for(int i=0; i<count_x; ++i)
@@ -172,12 +183,35 @@ public:
 			return tree_items.Item(cells[p].id);
 		return nullptr;
 	}
-	
-	void add_texture_floor(wxPoint p, const wxString &name)
+
+	void add_texture_floor(wxPoint p, const wxFileName& path)
 	{
+		bool texture_exists = false;
 		int texid = textures.size();
-		textures[texid] = Texture(name);
+		if(texid)
+		{
+			for(const auto& [k, v] : textures)
+			{
+				if(v.path == path)
+				{
+					texid = k;
+					texture_exists = true;
+				}
+			}
+		}
+		if(!texture_exists)
+			textures[texid] = Texture(path, m_cell_size);
 		cells[p].texture_floor = texid;
+	}
+
+	const Texture& get_texture(int id)
+	{
+		return textures[id];
+	}
+	
+	const wxBitmap& get_texture_bitmap(int id)
+	{
+		return textures[id].bitmap;
 	}
 	
 	wxString ToFile(const wxString &filename)
@@ -191,7 +225,8 @@ public:
 			{
 				for(const auto& [k, v] : textures)
 				{
-					f.Write(wxString::Format("\t\t%d:\n\t\t{\n\t\t\t\"path\":\"%s\"\n\t\t},\n", k, v.path.GetFullPath()));
+					if(!v.path.GetFullPath().IsEmpty())
+						f.Write(wxString::Format("\t\t%d:\n\t\t{\n\t\t\t\"path\":\"%s\"\n\t\t},\n", k, v.path.GetFullPath()));
 				}
 			}
 			f.Write(wxString("\t},\n"));
