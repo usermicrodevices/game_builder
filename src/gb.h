@@ -39,9 +39,19 @@
 
 #include "wx/aui/aui.h"
 
+#include "wx/translation.h"
+#include "wx/uilocale.h"
+
 #include "gb.xpm"
 
 #include "map_board.h"
+
+// Under Linux we demonstrate loading an existing message catalog using
+// coreutils package (which is always installed) as an example.
+#ifdef __LINUX__
+#define USE_COREUTILS_MO
+static bool g_loadedCoreutilsMO = false;
+#endif // __LINUX__
 
 typedef std::unordered_map<wxString, MapBoardCtrl*> LevelContainer;
 //typedef std::map<wxString, MapBoardCtrl*> LevelContainer;
@@ -67,16 +77,10 @@ class GBFrame : public wxFrame
 {
 	enum
 	{
-		ID_CreateTree = wxID_HIGHEST,
-		ID_CreateText,
-		ID_CreateHTML,
-		ID_CreateNotebook,
-		ID_CreateSizeReport,
-		ID_GridContent,
-		ID_TextContent,
-		ID_TreeContent,
-		ID_HTMLContent,
-		ID_NotebookContent,
+		ID_AddLevel = wxID_HIGHEST,
+		ID_ShowLog,
+		ID_ShowTree,
+		ID_ShowNotebook,
 		ID_CreatePerspective,
 		ID_CopyPerspectiveCode,
 		ID_AllowFloating,
@@ -110,10 +114,6 @@ class GBFrame : public wxFrame
 		ID_NotebookArtSimple,
 		ID_NotebookAlignTop,
 		ID_NotebookAlignBottom,
-		ID_NotebookNewTab,
-		ID_NotebookDeleteTab,
-
-		ID_SampleItem,
 
 		ID_FirstPerspective = ID_CreatePerspective+1000
 	};
@@ -150,24 +150,18 @@ private:
 	//wxDataViewTreeCtrl* CreateTreeCtrl();
 
 	wxPoint GetStartPosition();
-	wxHtmlWindow* CreateHTMLCtrl(wxWindow* parent = nullptr);
 
-	//wxAuiNotebook* CreateNotebook();
 	wxAuiNotebook* CreateNotebook();
-
-	wxString GetIntroText();
 
 	void OnSave(wxCommandEvent& event);
 
 	void OnEraseBackground(wxEraseEvent& evt);
 	void OnSize(wxSizeEvent& evt);
 
-	void OnCreateTree(wxCommandEvent& evt);
-	void OnCreateHTML(wxCommandEvent& evt);
-	void OnCreateNotebook(wxCommandEvent& evt);
-	void OnCreateText(wxCommandEvent& evt);
-	void OnCreateMapBoardCtrl(wxCommandEvent& evt);
-	void OnChangeContentPane(wxCommandEvent& evt);
+	void OnShowLog(wxCommandEvent& event);
+	void OnShowTree(wxCommandEvent& event);
+	void OnShowNotebook(wxCommandEvent& event);
+	void OnAddLevel(wxCommandEvent& event);
 	void OnDropDownToolbarItem(wxAuiToolBarEvent& evt);
 	void OnCreatePerspective(wxCommandEvent& evt);
 	void OnCopyPerspectiveCode(wxCommandEvent& evt);
@@ -188,10 +182,8 @@ private:
 	void OnNotebookFlag(wxCommandEvent& evt);
 	void OnUpdateUI(wxUpdateUIEvent& evt);
 
-	void OnNotebookNewTab(wxCommandEvent& evt);
-	void OnNotebookDeleteTab(wxCommandEvent& evt);
-
-	void OnPaneClose(wxAuiManagerEvent& evt);
+	//void OnNotebookDeleteTab(wxCommandEvent& evt);
+	//void OnPaneClose(wxAuiManagerEvent& evt);
 
 	wxDECLARE_EVENT_TABLE();
 };

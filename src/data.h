@@ -208,12 +208,12 @@ public:
 	{
 		return textures[id];
 	}
-	
+
 	const wxBitmap& get_texture_bitmap(int id)
 	{
 		return textures[id].bitmap;
 	}
-	
+
 	wxString ToFile(const wxString &filename)
 	{
 		wxFile f(filename, wxFile::write);
