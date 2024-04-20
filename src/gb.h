@@ -42,6 +42,10 @@
 #include "wx/translation.h"
 #include "wx/uilocale.h"
 
+#include "wx/propgrid/propgrid.h"
+#include "wx/propgrid/advprops.h"
+#include "wx/propgrid/manager.h"
+
 #include "gb.xpm"
 
 #include "map_board.h"
@@ -143,7 +147,9 @@ private:
 	wxAuiManager m_mgr;
 	wxAuiNotebook* m_notebook_ctrl;
 	LevelContainer levels = {};
-
+	wxPropertyGridManager* m_propGridManager;
+	wxPropertyGrid* m_propGrid;
+	
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
 
 	wxTreeCtrl* CreateTreeCtrl();

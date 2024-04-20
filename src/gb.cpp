@@ -301,6 +301,14 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
 
     m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().Name("notebook").CenterPane().PaneBorder(false).Caption("notebook").Dock().CloseButton(true).MaximizeButton(true));
 
+    m_propGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_AUTO_SORT | wxPG_BOLD_MODIFIED | wxPG_SPLITTER_AUTO_CENTER | wxPG_TOOLBAR | wxPG_DESCRIPTION | wxPGMAN_DEFAULT_STYLE);
+    m_propGrid = m_propGridManager->GetGrid();
+    m_propGridManager->SetExtraStyle(wxPG_EX_MODE_BUTTONS | wxPG_EX_NATIVE_DOUBLE_BUFFERING | wxPG_EX_MULTIPLE_SELECTION);
+
+    wxPropertyGridPage* page = m_propGridManager->AddPage("Texture");
+    page->Append( new wxPropertyCategory("texture path") );
+    m_mgr.AddPane(m_propGridManager, wxAuiPaneInfo().Name("property-grid").Right().PaneBorder(false).Caption("properties").Dock().CloseButton(true));
+    
     // add the toolbars to the manager
     m_mgr.AddPane(tb1, wxAuiPaneInfo().Name("tb1").Caption("Toolbar").ToolbarPane().Top());
 

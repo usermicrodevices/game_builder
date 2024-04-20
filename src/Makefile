@@ -51,6 +51,9 @@ __DLLFLAG_p = -DWXUSINGDLL
 __DLLFLAG_p_1 = --define WXUSINGDLL
 COND_PLATFORM_OS2_1___gb___os2_emxbindcmd = $(NM) gb | if \
 	grep -q pmwin.763 ; then emxbind -ep gb ; fi
+COND_MONOLITHIC_0___WXLIB_PROPGRID_p = \
+	-lwx_$(PORTNAME)$(WXUNIVNAME)u$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_propgrid-$(WX_RELEASE)$(HOST_SUFFIX)
+__WXLIB_PROPGRID_p = $(COND_MONOLITHIC_0___WXLIB_PROPGRID_p)
 COND_MONOLITHIC_0___WXLIB_AUI_p = \
 	-lwx_$(PORTNAME)$(WXUNIVNAME)u$(WXDEBUGFLAG)$(WX_LIB_FLAVOUR)_aui-$(WX_RELEASE)$(HOST_SUFFIX)
 __WXLIB_AUI_p = $(COND_MONOLITHIC_0___WXLIB_AUI_p)
@@ -93,7 +96,7 @@ distclean: clean
 	rm -f config.cache config.log config.status bk-deps bk-make-pch Makefile
 
 gb: $(EDITOR_OBJECTS)
-	$(CXX) -o $@ $(EDITOR_OBJECTS) -L$(LIBDIRNAME) $(LDFLAGS_GUI) $(LDFLAGS) $(__WXLIB_AUI_p) $(__WXLIB_HTML_p) $(EXTRALIBS_HTML) $(__WXLIB_CORE_p) $(__WXLIB_XML_p) $(EXTRALIBS_XML) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) $(EXTRALIBS_FOR_GUI) $(__LIB_ZLIB_p) $(__LIB_REGEX_p) $(__LIB_EXPAT_p) $(EXTRALIBS_FOR_BASE) $(LIBS) $(RPATH_FLAG)
+	$(CXX) -o $@ $(EDITOR_OBJECTS) -L$(LIBDIRNAME) $(LDFLAGS_GUI) $(LDFLAGS) $(__WXLIB_PROPGRID_p) $(__WXLIB_AUI_p) $(__WXLIB_HTML_p) $(EXTRALIBS_HTML) $(__WXLIB_CORE_p) $(__WXLIB_XML_p) $(EXTRALIBS_XML) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) $(EXTRALIBS_FOR_GUI) $(__LIB_ZLIB_p) $(__LIB_REGEX_p) $(__LIB_EXPAT_p) $(EXTRALIBS_FOR_BASE) $(LIBS) $(RPATH_FLAG)
 	$(__gb___os2_emxbindcmd)
 
 gb_rc.o: gb.rc
