@@ -70,6 +70,7 @@ public:
 		}
 		
 	private:
+		Texture current_texture = Texture();
 		Data m_data;
 		wxTreeItemId level_tree_item;
 		wxPoint current_mouse_position;
@@ -216,6 +217,10 @@ public:
 				m_tree->ScrollTo(id);
 				m_tree->SelectItem(id);
 			}
+			if(current_texture.IsOk())
+			{
+				m_data.set_texture_floor(current_cell_position, current_texture);
+			}
 		}
 
 		void OnFileOpen(wxCommandEvent& WXUNUSED(event))
@@ -224,7 +229,9 @@ public:
 			if (dialog.ShowModal() == wxID_OK)
 			{
 				wxString filename(dialog.GetPath());
-				m_data.add_texture_floor(current_cell_position, wxFileName(filename));
+				current_texture = m_data.add_texture_floor(current_cell_position, wxFileName(filename));
+				if(current_texture.IsOk())
+					SetCursor(wxCursor(current_texture.thumbnail));
 				//wxLogError();
 				wxLogMessage(filename);
 			}

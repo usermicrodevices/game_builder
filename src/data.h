@@ -29,21 +29,34 @@ class Texture
 {
 public:
 	Texture(){};
-	Texture(const wxFileName& fullpath, const wxSize& size)
+
+	Texture(int index, const wxFileName& fullpath, const wxSize& size)
 	{
+		id = index;
 		path = fullpath;
 		//wxImage image(path.GetFullPath());//LOSS ALPHA
 		bitmap = wxBitmap(path.GetFullPath());
 		if(bitmap.IsOk())
 		{
-			wxImage image = bitmap.ConvertToImage();
-			if(image.IsOk())
+			thumbnail = bitmap.ConvertToImage();
+			if(thumbnail.IsOk())
 			{
-				bitmap = wxBitmap(image.Rescale(size.GetWidth(), size.GetHeight()));
+				thumbnail = thumbnail.Rescale(size.GetWidth(), size.GetHeight());
+				thumbnail.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, size.GetWidth()/2);
+				thumbnail.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, size.GetHeight()/2);
+				bitmap = wxBitmap(thumbnail);
 			}
 		}
 	}
+
+	bool IsOk()
+	{
+		return thumbnail.IsOk();
+	}
+
+	int id;
 	wxFileName path;
+	wxImage thumbnail;// = wxNullImage;
 	wxBitmap bitmap;
 };
 
@@ -184,7 +197,7 @@ public:
 		return nullptr;
 	}
 
-	void add_texture_floor(wxPoint p, const wxFileName& path)
+	const Texture& add_texture_floor(wxPoint p, const wxFileName& path)
 	{
 		bool texture_exists = false;
 		int texid = textures.size();
@@ -200,8 +213,14 @@ public:
 			}
 		}
 		if(!texture_exists)
-			textures[texid] = Texture(path, m_cell_size);
+			textures[texid] = Texture(texid, path, m_cell_size);
 		cells[p].texture_floor = texid;
+		return textures[texid];
+	}
+
+	void set_texture_floor(wxPoint p, const Texture& tex)
+	{
+		cells[p].texture_floor = tex.id;
 	}
 
 	const Texture& get_texture(int id)
