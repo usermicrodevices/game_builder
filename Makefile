@@ -3,10 +3,10 @@ exec_prefix = ${prefix}
 datarootdir = ${prefix}/share
 INSTALL = /usr/bin/install -c
 NM = nm
-srcdir = .
-top_srcdir = ../wxWidgets
-wx_top_builddir = ../wxWidgets
-BK_DEPS = ../wxWidgets/bk-deps
+srcdir = src
+top_srcdir = wxWidgets
+wx_top_builddir = wxWidgets
+BK_DEPS = wxWidgets/bk-deps
 LIBS = -lz -lcurl -lm
 LDFLAGS_GUI = 
 CXX = g++
@@ -39,7 +39,7 @@ EDITOR_CXXFLAGS = $(WX_CPPFLAGS) -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) \
 	$(__DEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) $(__RTTI_DEFINE_p) \
 	$(__THREAD_DEFINE_p) -I$(srcdir) $(__DLLFLAG_p) \
 	$(CPPFLAGS) $(CXXFLAGS)# $(PIC_CXXFLAGS)
-EDITOR_OBJECTS = gb_gb.o
+EDITOR_OBJECTS = build/gb_gb.o
 
 ### Conditionally set variables: ###
 
@@ -78,7 +78,7 @@ __LIB_LEXILLA_p = \
 
 ### Targets: ###
 
-all: gb $(__gb_bundle___depname)
+all: bin/gb $(__gb_bundle___depname)
 
 install: 
 
@@ -89,21 +89,23 @@ install-strip: install
 clean: 
 	rm -rf ./.deps ./.pch
 	rm -f ./*.o
-	rm -f gb
-	rm -rf gb.app
+	rm -f bin/gb
+	rm -rf bin/gb.app
 
 distclean: clean
-	rm -f config.cache config.log config.status bk-deps bk-make-pch Makefile
+	rm -f config.cache config.log config.status bk-deps bk-make-pch
 
-gb: $(EDITOR_OBJECTS)
-	$(CXX) -o $@ $(EDITOR_OBJECTS) -L$(LIBDIRNAME) $(LDFLAGS_GUI) $(LDFLAGS) $(__WXLIB_PROPGRID_p) $(__WXLIB_AUI_p) $(__WXLIB_HTML_p) $(EXTRALIBS_HTML) $(__WXLIB_CORE_p) $(__WXLIB_XML_p) $(EXTRALIBS_XML) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) $(EXTRALIBS_FOR_GUI) $(__LIB_ZLIB_p) $(__LIB_REGEX_p) $(__LIB_EXPAT_p) $(EXTRALIBS_FOR_BASE) $(LIBS) $(RPATH_FLAG)
-	$(__gb___os2_emxbindcmd)
+bin/gb: $(EDITOR_OBJECTS)
+	@mkdir -p $(@D)
+	$(CXX) -o $@ $(EDITOR_OBJECTS) -L$(LIBDIRNAME) $(LDFLAGS_GUI) $(LDFLAGS) $(__WXLIB_PROPGRID_p) $(__WXLIB_AUI_p) $(__WXLIB_HTML_p) $(EXTRALIBS_HTML) $(__WXLIB_CORE_p) $(__WXLIB_XML_p) $(EXTRALIBS_XML) $(__WXLIB_BASE_p) $(__WXLIB_MONO_p) $(__LIB_TIFF_p) $(__LIB_JPEG_p) $(__LIB_PNG_p) $(EXTRALIBS_FOR_GUI) $(__LIB_ZLIB_p) $(__LIB_REGEX_p) $(__LIB_EXPAT_p) $(EXTRALIBS_FOR_BASE) $(LIBS) $(RPATH_FLAG) $(__gb___os2_emxbindcmd)
 
-gb_rc.o: gb.rc
-	-i$< -o$@ --define __WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p_1) $(__DEBUG_DEFINE_p_1) $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) --include-dir $(__DLLFLAG_p_1)
+build/gb_rc.o: $(srcdir)/gb.rc
+	@mkdir -p $(@D)
+	-i$< -o $@ --define __WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p_1) $(__DEBUG_DEFINE_p_1) $(__EXCEPTIONS_DEFINE_p_1) $(__RTTI_DEFINE_p_1) $(__THREAD_DEFINE_p_1) --include-dir $(__DLLFLAG_p_1)
 
-gb_gb.o: gb.cpp
-	$(CXXC) -c -o $@ $(EDITOR_CXXFLAGS) gb.cpp
+build/gb_gb.o: $(srcdir)/gb.cpp
+	@mkdir -p $(@D)
+	$(CXXC) -c -o $@ $(EDITOR_CXXFLAGS) $(srcdir)/gb.cpp
 
 
 # Include dependency info, if present:

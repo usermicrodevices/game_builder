@@ -37,3 +37,5 @@ gb
 .deps/
 wxWidgets/
 json/
+build/
+bin/

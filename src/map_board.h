@@ -225,7 +225,7 @@ public:
 
 		void OnFileOpen(wxCommandEvent& WXUNUSED(event))
 		{
-			wxFileDialog dialog(this, "Please choose image", wxEmptyString, wxEmptyString, "*.jpg;*.png;*.*", wxFD_OPEN);
+			wxFileDialog dialog(this, _("Please choose floor image"), wxEmptyString, wxEmptyString, "*.jpg;*.png;*.*", wxFD_OPEN);
 			if (dialog.ShowModal() == wxID_OK)
 			{
 				wxString filename(dialog.GetPath());

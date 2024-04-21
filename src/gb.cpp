@@ -93,8 +93,17 @@ bool GBApp::OnInit()
     g_loadedCoreutilsMO = trans->AddCatalog("coreutils");
 #endif // USE_COREUTILS_MO
 
-    wxFrame* frame = new GBFrame(nullptr, wxID_ANY, _("Game Builder Application"), wxDefaultPosition, wxWindow::FromDIP(wxSize(800, 600), nullptr));
+    GBFrame* frame = new GBFrame(nullptr, wxID_ANY, _("Game Builder Application"), wxDefaultPosition, wxWindow::FromDIP(wxSize(800, 600), nullptr));
     frame->Show();
+
+    wxString projects(wxGetCwd()+"/projects");
+    if(!wxFileName::DirExists(projects))
+    {
+        if(wxFileName::Mkdir(projects))
+            wxLogMessage("✅"+projects);
+        else
+            wxLogMessage("❌"+projects);
+    }
 
     return true;
 }
@@ -139,7 +148,6 @@ wxBEGIN_EVENT_TABLE(GBFrame, wxFrame)
     EVT_MENU(ID_HorizontalGradient, GBFrame::OnGradient)
     EVT_MENU(ID_AllowToolbarResizing, GBFrame::OnToolbarResizing)
     EVT_MENU(ID_Settings, GBFrame::OnSettings)
-    EVT_MENU(ID_CustomizeToolbar, GBFrame::OnCustomizeToolbar)
     EVT_MENU(wxID_SAVE, GBFrame::OnSave)
     EVT_MENU(wxID_EXIT, GBFrame::OnExit)
     EVT_MENU(wxID_ABOUT, GBFrame::OnAbout)
@@ -173,7 +181,7 @@ wxBEGIN_EVENT_TABLE(GBFrame, wxFrame)
     EVT_AUINOTEBOOK_ALLOW_DND(wxID_ANY, GBFrame::OnAllowNotebookDnD)
     EVT_AUINOTEBOOK_PAGE_CLOSE(wxID_ANY, GBFrame::OnNotebookPageClose)
     EVT_AUINOTEBOOK_PAGE_CLOSED(wxID_ANY, GBFrame::OnNotebookPageClosed)
-    EVT_AUINOTEBOOK_PAGE_CHANGING(wxID_ANY, GBFrame::OnNotebookPageChanging)
+    //EVT_AUINOTEBOOK_PAGE_CHANGING(wxID_ANY, GBFrame::OnNotebookPageChanging)
 wxEND_EVENT_TABLE()
 
 
@@ -265,16 +273,6 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
 
     SetMinSize(FromDIP(wxSize(400,300)));
 
-    wxAuiToolBarItemArray prepend_items;
-    wxAuiToolBarItemArray append_items;
-    wxAuiToolBarItem item;
-    item.SetKind(wxITEM_SEPARATOR);
-    append_items.Add(item);
-    item.SetKind(wxITEM_NORMAL);
-    item.SetId(ID_CustomizeToolbar);
-    item.SetLabel(_("Customize..."));
-    append_items.Add(item);
-
     wxAuiToolBar* tb1 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW);
     tb1->AddTool(wxID_OPEN, "&Open", wxArtProvider::GetBitmapBundle(wxART_FILE_OPEN), "Open another project from file");
     tb1->AddTool(wxID_SAVE, "&Save", wxArtProvider::GetBitmapBundle(wxART_FILE_SAVE), "Save current project to file");
@@ -283,7 +281,6 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     tb1->AddTool(wxID_PASTE, "&Paste", wxArtProvider::GetBitmapBundle(wxART_PASTE), "Paste from buffer");
     tb1->AddSeparator();
     tb1->AddTool(wxID_EXIT, "&Quit", wxArtProvider::GetBitmapBundle(wxART_QUIT), "Quit from app");
-    tb1->SetCustomOverflowItems(prepend_items, append_items);
     tb1->Realize();
 
     m_tree_ctrl = CreateTreeCtrl();
@@ -292,7 +289,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     int iconSize = m_mgr.GetArtProvider()->GetMetric(wxAUI_DOCKART_CAPTION_SIZE);
     iconSize &= ~1;
 
-    wxTextCtrl* m_logTextCtrl = CreateTextCtrl("Start...\n");
+    wxTextCtrl* m_logTextCtrl = CreateTextCtrl("Start from \""+wxGetCwd()+"\"\n");
     m_log = wxLog::SetActiveTarget(new wxLogTextCtrl(m_logTextCtrl));
 
     m_mgr.AddPane(m_logTextCtrl, wxAuiPaneInfo().Name("log").Caption("Log").Bottom().Layer(1).Position(1).Icon(wxArtProvider::GetBitmapBundle(wxART_WARNING, wxART_OTHER, wxSize(iconSize, iconSize))));
@@ -304,11 +301,10 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     m_propGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_AUTO_SORT | wxPG_BOLD_MODIFIED | wxPG_SPLITTER_AUTO_CENTER | wxPG_TOOLBAR | wxPG_DESCRIPTION | wxPGMAN_DEFAULT_STYLE);
     m_propGrid = m_propGridManager->GetGrid();
     m_propGridManager->SetExtraStyle(wxPG_EX_MODE_BUTTONS | wxPG_EX_NATIVE_DOUBLE_BUFFERING | wxPG_EX_MULTIPLE_SELECTION);
-
     wxPropertyGridPage* page = m_propGridManager->AddPage("Texture");
     page->Append( new wxPropertyCategory("texture path") );
     m_mgr.AddPane(m_propGridManager, wxAuiPaneInfo().Name("property-grid").Right().PaneBorder(false).Caption("properties").Dock().CloseButton(true));
-    
+
     // add the toolbars to the manager
     m_mgr.AddPane(tb1, wxAuiPaneInfo().Name("tb1").Caption("Toolbar").ToolbarPane().Top());
 
@@ -360,11 +356,6 @@ void GBFrame::OnSettings(wxCommandEvent& WXUNUSED(evt))
         floating_pane.FloatingPosition(GetStartPosition());
 
     m_mgr.Update();
-}
-
-void GBFrame::OnCustomizeToolbar(wxCommandEvent& WXUNUSED(evt))
-{
-    wxMessageBox(_("Customize Toolbar clicked"));
 }
 
 void GBFrame::OnGradient(wxCommandEvent& event)
@@ -452,15 +443,9 @@ void GBFrame::OnNotebookFlag(wxCommandEvent& event)
 {
     int id = event.GetId();
 
-    if (id == ID_NotebookNoCloseButton ||
-        id == ID_NotebookCloseButton ||
-        id == ID_NotebookCloseButtonAll ||
-        id == ID_NotebookCloseButtonActive)
+    if (id == ID_NotebookNoCloseButton || id == ID_NotebookCloseButton || id == ID_NotebookCloseButtonAll || id == ID_NotebookCloseButtonActive)
     {
-        m_notebook_style &= ~(wxAUI_NB_CLOSE_BUTTON |
-                              wxAUI_NB_CLOSE_ON_ACTIVE_TAB |
-                              wxAUI_NB_CLOSE_ON_ALL_TABS);
-
+        m_notebook_style &= ~(wxAUI_NB_CLOSE_BUTTON | wxAUI_NB_CLOSE_ON_ACTIVE_TAB | wxAUI_NB_CLOSE_ON_ALL_TABS);
         switch (id)
         {
             case ID_NotebookNoCloseButton: break;
@@ -470,31 +455,15 @@ void GBFrame::OnNotebookFlag(wxCommandEvent& event)
         }
     }
 
-    if (id == ID_NotebookAllowTabMove)
+    switch (id)
     {
-        m_notebook_style ^= wxAUI_NB_TAB_MOVE;
+        case ID_NotebookAllowTabMove: m_notebook_style ^= wxAUI_NB_TAB_MOVE;
+        case ID_NotebookAllowTabExternalMove: m_notebook_style ^= wxAUI_NB_TAB_EXTERNAL_MOVE;
+        case ID_NotebookAllowTabSplit: m_notebook_style ^= wxAUI_NB_TAB_SPLIT;
+        case ID_NotebookWindowList: m_notebook_style ^= wxAUI_NB_WINDOWLIST_BUTTON;
+        case ID_NotebookScrollButtons: m_notebook_style ^= wxAUI_NB_SCROLL_BUTTONS;
+        case ID_NotebookTabFixedWidth: m_notebook_style ^= wxAUI_NB_TAB_FIXED_WIDTH;
     }
-    if (id == ID_NotebookAllowTabExternalMove)
-    {
-        m_notebook_style ^= wxAUI_NB_TAB_EXTERNAL_MOVE;
-    }
-     else if (id == ID_NotebookAllowTabSplit)
-    {
-        m_notebook_style ^= wxAUI_NB_TAB_SPLIT;
-    }
-     else if (id == ID_NotebookWindowList)
-    {
-        m_notebook_style ^= wxAUI_NB_WINDOWLIST_BUTTON;
-    }
-     else if (id == ID_NotebookScrollButtons)
-    {
-        m_notebook_style ^= wxAUI_NB_SCROLL_BUTTONS;
-    }
-     else if (id == ID_NotebookTabFixedWidth)
-    {
-        m_notebook_style ^= wxAUI_NB_TAB_FIXED_WIDTH;
-    }
-
 
     size_t i, count;
     wxAuiPaneInfoArray& all_panes = m_mgr.GetAllPanes();
@@ -504,18 +473,16 @@ void GBFrame::OnNotebookFlag(wxCommandEvent& event)
         if (pane.window->IsKindOf(CLASSINFO(wxAuiNotebook)))
         {
             wxAuiNotebook* nb = (wxAuiNotebook*)pane.window;
-
             if (id == ID_NotebookArtGloss)
             {
                 nb->SetArtProvider(new wxAuiDefaultTabArt);
                 m_notebook_theme = 0;
             }
-             else if (id == ID_NotebookArtSimple)
+            else if (id == ID_NotebookArtSimple)
             {
                 nb->SetArtProvider(new wxAuiSimpleTabArt);
                 m_notebook_theme = 1;
             }
-
             nb->SetWindowStyleFlag(m_notebook_style);
             nb->Refresh();
         }
@@ -572,9 +539,7 @@ void GBFrame::OnUpdateUI(wxUpdateUIEvent& event)
             event.Check((flags & wxAUI_MGR_RECTANGLE_HINT) != 0);
             break;
         case ID_NoHint:
-            event.Check(((wxAUI_MGR_TRANSPARENT_HINT |
-                          wxAUI_MGR_VENETIAN_BLINDS_HINT |
-                          wxAUI_MGR_RECTANGLE_HINT) & flags) == 0);
+            event.Check(((wxAUI_MGR_TRANSPARENT_HINT | wxAUI_MGR_VENETIAN_BLINDS_HINT | wxAUI_MGR_RECTANGLE_HINT) & flags) == 0);
             break;
         case ID_HintFade:
             event.Check((flags & wxAUI_MGR_HINT_FADE) != 0);
@@ -708,16 +673,16 @@ void GBFrame::OnNotebookPageClosed(wxAuiNotebookEvent& evt)
     evt.Skip();
 }
 
-void GBFrame::OnNotebookPageChanging(wxAuiNotebookEvent& evt)
-{
-    if ( evt.GetOldSelection() == 3 )
-    {
-        if ( wxMessageBox( "Are you sure you want to leave this page?\n(This demonstrates veto-ing)", "wxAUI", wxICON_QUESTION | wxYES_NO, this ) != wxYES )
-        {
-            evt.Veto();
-        }
-    }
-}
+// void GBFrame::OnNotebookPageChanging(wxAuiNotebookEvent& evt)
+// {
+//     if ( evt.GetOldSelection() == 3 )
+//     {
+//         if ( wxMessageBox( "Are you sure you want to leave this page?\n(This demonstrates veto-ing)", "wxAUI", wxICON_QUESTION | wxYES_NO, this ) != wxYES )
+//         {
+//             evt.Veto();
+//         }
+//     }
+// }
 
 void GBFrame::OnAllowNotebookDnD(wxAuiNotebookEvent& evt)
 {

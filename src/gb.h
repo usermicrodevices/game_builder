@@ -102,7 +102,6 @@ class GBFrame : public wxFrame
 		ID_LiveUpdate,
 		ID_AllowToolbarResizing,
 		ID_Settings,
-		ID_CustomizeToolbar,
 		ID_DropDownToolbarItem,
 		ID_NotebookNoCloseButton,
 		ID_NotebookCloseButton,
@@ -149,7 +148,7 @@ private:
 	LevelContainer levels = {};
 	wxPropertyGridManager* m_propGridManager;
 	wxPropertyGrid* m_propGrid;
-	
+
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
 
 	wxTreeCtrl* CreateTreeCtrl();
@@ -173,11 +172,10 @@ private:
 	void OnCopyPerspectiveCode(wxCommandEvent& evt);
 	void OnRestorePerspective(wxCommandEvent& evt);
 	void OnSettings(wxCommandEvent& evt);
-	void OnCustomizeToolbar(wxCommandEvent& evt);
 	void OnAllowNotebookDnD(wxAuiNotebookEvent& evt);
 	void OnNotebookPageClose(wxAuiNotebookEvent& evt);
 	void OnNotebookPageClosed(wxAuiNotebookEvent& evt);
-	void OnNotebookPageChanging(wxAuiNotebookEvent &evt);
+	//void OnNotebookPageChanging(wxAuiNotebookEvent &evt);
 	void OnExit(wxCommandEvent& evt);
 	void OnAbout(wxCommandEvent& evt);
 	void OnTabAlignment(wxCommandEvent &evt);
@@ -221,7 +219,6 @@ public:
 	m_frame(frame)
 	{
 		//wxBoxSizer* vert = new wxBoxSizer(wxVERTICAL);
-
 		//vert->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 
 		wxBoxSizer* s1 = new wxBoxSizer(wxHORIZONTAL);
@@ -250,9 +247,7 @@ public:
 		s3->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
 		s3->SetItemMinSize((size_t)1, FromDIP(wxSize(180, 20)));
 		//vert->Add(s3, 0, wxEXPAND | wxLEFT | wxBOTTOM, FromDIP(5));
-
 		//vert->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
-
 
 		wxBitmap b = CreateColorBitmap(*wxBLACK);
 
@@ -413,22 +408,19 @@ private:
 
 	void OnPaneBorderSize(wxSpinEvent& event)
 	{
-		m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE,
-										 event.GetPosition());
+		m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE, event.GetPosition());
 		m_frame->DoUpdate();
 	}
 
 	void OnSashSize(wxSpinEvent& event)
 	{
-		m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_SASH_SIZE,
-										 event.GetPosition());
+		m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_SASH_SIZE, event.GetPosition());
 		m_frame->DoUpdate();
 	}
 
 	void OnCaptionSize(wxSpinEvent& event)
 	{
-		m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_CAPTION_SIZE,
-										 event.GetPosition());
+		m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_CAPTION_SIZE, event.GetPosition());
 		m_frame->DoUpdate();
 	}
 
@@ -442,16 +434,16 @@ private:
 		int var = 0;
 		switch (event.GetId())
 		{
-			case ID_BackgroundColor:              var = wxAUI_DOCKART_BACKGROUND_COLOUR; break;
-			case ID_SashColor:                    var = wxAUI_DOCKART_SASH_COLOUR; break;
-			case ID_InactiveCaptionColor:         var = wxAUI_DOCKART_INACTIVE_CAPTION_COLOUR; break;
+			case ID_BackgroundColor: var = wxAUI_DOCKART_BACKGROUND_COLOUR; break;
+			case ID_SashColor: var = wxAUI_DOCKART_SASH_COLOUR; break;
+			case ID_InactiveCaptionColor: var = wxAUI_DOCKART_INACTIVE_CAPTION_COLOUR; break;
 			case ID_InactiveCaptionGradientColor: var = wxAUI_DOCKART_INACTIVE_CAPTION_GRADIENT_COLOUR; break;
-			case ID_InactiveCaptionTextColor:     var = wxAUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR; break;
-			case ID_ActiveCaptionColor:           var = wxAUI_DOCKART_ACTIVE_CAPTION_COLOUR; break;
-			case ID_ActiveCaptionGradientColor:   var = wxAUI_DOCKART_ACTIVE_CAPTION_GRADIENT_COLOUR; break;
-			case ID_ActiveCaptionTextColor:       var = wxAUI_DOCKART_ACTIVE_CAPTION_TEXT_COLOUR; break;
-			case ID_BorderColor:                  var = wxAUI_DOCKART_BORDER_COLOUR; break;
-			case ID_GripperColor:                 var = wxAUI_DOCKART_GRIPPER_COLOUR; break;
+			case ID_InactiveCaptionTextColor: var = wxAUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR; break;
+			case ID_ActiveCaptionColor: var = wxAUI_DOCKART_ACTIVE_CAPTION_COLOUR; break;
+			case ID_ActiveCaptionGradientColor: var = wxAUI_DOCKART_ACTIVE_CAPTION_GRADIENT_COLOUR; break;
+			case ID_ActiveCaptionTextColor: var = wxAUI_DOCKART_ACTIVE_CAPTION_TEXT_COLOUR; break;
+			case ID_BorderColor: var = wxAUI_DOCKART_BORDER_COLOUR; break;
+			case ID_GripperColor: var = wxAUI_DOCKART_GRIPPER_COLOUR; break;
 			default: return;
 		}
 
