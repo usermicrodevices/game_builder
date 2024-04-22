@@ -119,18 +119,18 @@ public:
 			for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
 			{
 				auto point = iter->first;
-				if(rect.Contains(point))
-				{
-					s.Printf("%d\n%d", point.x, point.y);
-					dc.GetTextExtent(s, &w, &h);
-					dc.DrawText(s, point.x+w/2, point.y+h/4);
-				}
 				auto cell = iter->second;
-				if(cell.texture_floor)
+				if(cell.texture_floor > -1)
 				{
 					wxBitmap bitmap = m_data.get_texture_bitmap(cell.texture_floor);
 					if(bitmap.IsOk())
 						dc.DrawBitmap(bitmap, point);
+				}
+				else if(rect.Contains(point))
+				{
+					s.Printf("%d\n%d", point.x, point.y);
+					dc.GetTextExtent(s, &w, &h);
+					dc.DrawText(s, point.x+w/2, point.y+h/4);
 				}
 			}
 
@@ -184,7 +184,7 @@ public:
 			}
 			else
 			{
-				menu.Append(wxID_OPEN, "Open image");
+				menu.Append(wxID_OPEN, _("Open floor image"));
 				PopupMenu(&menu, pos);
 			}
 		}
@@ -225,15 +225,25 @@ public:
 
 		void OnFileOpen(wxCommandEvent& WXUNUSED(event))
 		{
-			wxFileDialog dialog(this, _("Please choose floor image"), wxEmptyString, wxEmptyString, "*.jpg;*.png;*.*", wxFD_OPEN);
+			wxString dir_imgs("assets/images");
+			wxFileDialog dialog(this, _("Please choose floor image"), dir_imgs, wxEmptyString, "*.jpg;*.png;*.*", wxFD_OPEN|wxFD_FILE_MUST_EXIST|wxFD_PREVIEW);
 			if (dialog.ShowModal() == wxID_OK)
 			{
-				wxString filename(dialog.GetPath());
-				current_texture = m_data.add_texture_floor(current_cell_position, wxFileName(filename));
+				wxString filename(dialog.GetFilename());
+				wxString path_from(dialog.GetPath());
+				wxString path_result(dir_imgs+"/"+filename);
+				if (!wxFileExists(path_result))
+				{
+					if (!wxCopyFile(path_from, path_result))
+					{
+						wxLogError(wxT("Could not copy %s to %s !"), path_from.c_str(), path_result.c_str());
+						return;
+					}
+				}
+				current_texture = m_data.add_texture_floor(current_cell_position, wxFileName(path_result));
 				if(current_texture.IsOk())
 					SetCursor(wxCursor(current_texture.thumbnail));
-				//wxLogError();
-				wxLogMessage(filename);
+				wxLogMessage(path_result);
 			}
 		}
 

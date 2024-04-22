@@ -66,11 +66,11 @@ typedef std::unordered_map<int, Texture> TextureContainer;
 class Cell
 {
 public:
-	size_t id;
-	int side;
-	int texture_floor;
-	int texture_ceiling;
-	int texture_wall;
+	size_t id = -1;
+	int side = 50;
+	int texture_floor = -1;
+	int texture_ceiling = -1;
+	int texture_wall = -1;
 	CellType ctp = CT_WALL;
 
 	Cell(size_t idx=0, int side_size=50, int tex_floor=-1, int tex_ceiling=-1, int tex_wall=-1, CellType ct=CT_WALL)

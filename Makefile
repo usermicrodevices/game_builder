@@ -89,6 +89,7 @@ install-strip: install
 clean: 
 	rm -rf ./.deps ./.pch
 	rm -f ./*.o
+	rm -f build/*.o
 	rm -f bin/gb
 	rm -rf bin/gb.app
 

@@ -105,6 +105,24 @@ bool GBApp::OnInit()
             wxLogMessage("❌"+projects);
     }
 
+    wxString assets(wxGetCwd()+"/assets");
+    if(!wxFileName::DirExists(assets))
+    {
+        if(wxFileName::Mkdir(assets))
+            wxLogMessage("✅"+assets);
+        else
+            wxLogMessage("❌"+assets);
+    }
+
+    wxString assets_images(assets+"/images");
+    if(!wxFileName::DirExists(assets_images))
+    {
+        if(wxFileName::Mkdir(assets_images))
+            wxLogMessage("✅"+assets_images);
+        else
+            wxLogMessage("❌"+assets_images);
+    }
+
     return true;
 }
 
