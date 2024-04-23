@@ -147,7 +147,6 @@ private:
 	wxAuiNotebook* m_notebook_ctrl;
 	LevelContainer levels = {};
 	wxPropertyGridManager* m_propGridManager;
-	wxPropertyGrid* m_propGrid;
 
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
 

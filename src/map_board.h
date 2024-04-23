@@ -14,6 +14,8 @@ enum
 	Menu_Popup_ToBeGreyed,
 	Menu_Popup_ToBeChecked,
 	Menu_Popup_Submenu,
+	Menu_Popup_Set_Default_Cursor,
+	Menu_Popup_Open_Floor,
 
 	Menu_PopupChoice
 };
@@ -26,11 +28,12 @@ class MapBoardCtrl : public wxScrolledWindow
 public:
 		MapBoardCtrl(){};//wxDECLARE_DYNAMIC_CLASS
 
-		MapBoardCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxHSCROLL | wxVSCROLL, const wxString& name = "scrolledWindow", wxAuiManager* mgr = nullptr, wxTreeCtrl* tree = nullptr)
+		MapBoardCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxHSCROLL | wxVSCROLL, const wxString& name = "scrolledWindow", wxAuiManager* mgr = nullptr, wxTreeCtrl* tree = nullptr, wxPropertyGridManager* prop_grid_mgr = nullptr)
 		: wxScrolledWindow(parent, id, pos, size, wxHSCROLL | wxVSCROLL)
 		{
 			m_mgr = mgr;
 			m_tree = tree;
+			m_prgrmgr = prop_grid_mgr;
 			level_tree_item = tree->AppendItem(m_tree->GetRootItem(), "Level 0", 0);
 			m_data = Data(m_tree, level_tree_item);
 			wxSize virtual_size = m_data.virtual_size();
@@ -70,13 +73,14 @@ public:
 		}
 		
 	private:
-		Texture current_texture = Texture();
+		Texture m_current_texture = Texture();
 		Data m_data;
 		wxTreeItemId level_tree_item;
 		wxPoint current_mouse_position;
 		wxPoint current_cell_position;
 		wxAuiManager* m_mgr;
 		wxTreeCtrl* m_tree;
+		wxPropertyGridManager* m_prgrmgr;
 
 		void OnPaint(wxPaintEvent& event)
 		{
@@ -184,7 +188,8 @@ public:
 			}
 			else
 			{
-				menu.Append(wxID_OPEN, _("Open floor image"));
+				menu.Append(Menu_Popup_Open_Floor, _("Open floor image"));
+				menu.Append(Menu_Popup_Set_Default_Cursor, _("Empty cursor"));
 				PopupMenu(&menu, pos);
 			}
 		}
@@ -217,13 +222,29 @@ public:
 				m_tree->ScrollTo(id);
 				m_tree->SelectItem(id);
 			}
-			if(current_texture.IsOk())
+			if(m_current_texture.IsOk())
 			{
-				m_data.set_texture_floor(current_cell_position, current_texture);
+				m_data.set_texture_floor(current_cell_position, m_current_texture);
+			}
+			if(!m_prgrmgr)
+				wxLogError(wxT("wxPropertyGridManager error"));
+			else
+			{
+				Texture floor = m_data.get_texture_floor(current_cell_position);
+				if(floor.id > -1)
+				{
+					//wxPropertyGridPage* page = m_prgrmgr->GetPage("Floor Texture");
+					wxPGProperty* path_floor = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetFirst(wxPG_ITERATE_ALL);
+					if(!path_floor)
+						wxLogError(wxT("wxPGProperty error"));
+					path_floor->SetValue(wxVariant(floor.path.GetFullPath().c_str()));
+					//m_prgrmgr->Refresh();
+					//m_prgrmgr->GetPage("Floor Texture")->RefreshProperty(path_floor);
+				}
 			}
 		}
 
-		void OnFileOpen(wxCommandEvent& WXUNUSED(event))
+		void OnOpenFloorFile(wxCommandEvent& WXUNUSED(event))
 		{
 			wxString dir_imgs("assets/images");
 			wxFileDialog dialog(this, _("Please choose floor image"), dir_imgs, wxEmptyString, "*.jpg;*.png;*.*", wxFD_OPEN|wxFD_FILE_MUST_EXIST|wxFD_PREVIEW);
@@ -240,11 +261,18 @@ public:
 						return;
 					}
 				}
-				current_texture = m_data.add_texture_floor(current_cell_position, wxFileName(path_result));
-				if(current_texture.IsOk())
-					SetCursor(wxCursor(current_texture.thumbnail));
+				m_current_texture = m_data.add_texture_floor(current_cell_position, wxFileName(path_result));
+				if(m_current_texture.IsOk())
+					SetCursor(wxCursor(m_current_texture.thumbnail));
 				wxLogMessage(path_result);
 			}
+		}
+
+		void OnSetDefaultCursor(wxCommandEvent& WXUNUSED(event))
+		{
+			if(m_current_texture.id > -1)
+				m_current_texture = Texture();
+			SetCursor(*wxSTANDARD_CURSOR);
 		}
 
 		wxDECLARE_EVENT_TABLE();
@@ -263,5 +291,6 @@ wxBEGIN_EVENT_TABLE(MapBoardCtrl, wxScrolledWindow)
 	EVT_RIGHT_UP(MapBoardCtrl::OnRightUp)
 #endif
 	EVT_LEFT_UP(MapBoardCtrl::OnLeftUp)
-	EVT_MENU(wxID_OPEN, MapBoardCtrl::OnFileOpen)
+	EVT_MENU(Menu_Popup_Open_Floor, MapBoardCtrl::OnOpenFloorFile)
+	EVT_MENU(Menu_Popup_Set_Default_Cursor, MapBoardCtrl::OnSetDefaultCursor)
 wxEND_EVENT_TABLE()

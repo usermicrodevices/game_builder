@@ -54,7 +54,7 @@ public:
 		return thumbnail.IsOk();
 	}
 
-	int id;
+	int id = -1;
 	wxFileName path;
 	wxImage thumbnail;// = wxNullImage;
 	wxBitmap bitmap;
@@ -120,6 +120,7 @@ typedef std::unordered_map<wxPoint, Cell, wxPointHash> CellContainer;
 class Data
 {
 private:
+	Texture m_empty_texture;
 	int m_cell_side;//cell side size in DIPs
 	wxSize m_cell_size;
 	wxSize m_virtual_size;
@@ -128,9 +129,10 @@ private:
 	CellContainer cells = {};
 
 public:
-	Data(){};//wxDECLARE_DYNAMIC_CLASS
+	Data(){m_empty_texture = Texture();};//wxDECLARE_DYNAMIC_CLASS
 	Data(wxTreeCtrl* tree, wxTreeItemId level_tree_item, int cell_side_size=50, int count_x=100, int count_y=100)
 	{
+		m_empty_texture = Texture();
 		m_cell_side = cell_side_size;
 		m_cell_size = wxSize(m_cell_side, m_cell_side);
 		size_t idx = 0;
@@ -190,6 +192,11 @@ public:
 		return cells[p].id;
 	}
 
+	Cell cell(wxPoint p)
+	{
+		return cells[p];
+	}
+
 	wxTreeItemId cell_tree_item(wxPoint p)
 	{
 		if(!tree_items.IsEmpty())
@@ -215,6 +222,14 @@ public:
 		if(!texture_exists)
 			textures[texid] = Texture(texid, path, m_cell_size);
 		cells[p].texture_floor = texid;
+		return textures[texid];
+	}
+
+	const Texture& get_texture_floor(wxPoint p)
+	{
+		int texid = cells[p].texture_floor;
+		if(texid < 0)
+			return m_empty_texture;
 		return textures[texid];
 	}
 

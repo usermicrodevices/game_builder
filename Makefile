@@ -78,7 +78,7 @@ __LIB_LEXILLA_p = \
 
 ### Targets: ###
 
-all: bin/gb $(__gb_bundle___depname)
+all: clean bin/gb $(__gb_bundle___depname)
 
 install: 
 
@@ -87,11 +87,8 @@ uninstall:
 install-strip: install
 
 clean: 
-	rm -rf ./.deps ./.pch
-	rm -f ./*.o
 	rm -f build/*.o
 	rm -f bin/gb
-	rm -rf bin/gb.app
 
 distclean: clean
 	rm -f config.cache config.log config.status bk-deps bk-make-pch

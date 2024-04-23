@@ -314,14 +314,15 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
 
     m_mgr.AddPane(new SettingsPanel(this,this), wxAuiPaneInfo().Name("settings").Caption("Dock Manager Settings").Dockable(false).Float().Hide());
 
-    m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().Name("notebook").CenterPane().PaneBorder(false).Caption("notebook").Dock().CloseButton(true).MaximizeButton(true));
-
     m_propGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_AUTO_SORT | wxPG_BOLD_MODIFIED | wxPG_SPLITTER_AUTO_CENTER | wxPG_TOOLBAR | wxPG_DESCRIPTION | wxPGMAN_DEFAULT_STYLE);
-    m_propGrid = m_propGridManager->GetGrid();
     m_propGridManager->SetExtraStyle(wxPG_EX_MODE_BUTTONS | wxPG_EX_NATIVE_DOUBLE_BUFFERING | wxPG_EX_MULTIPLE_SELECTION);
     wxPropertyGridPage* page = m_propGridManager->AddPage("Texture");
-    page->Append( new wxPropertyCategory("texture path") );
+    wxPGProperty* prop = page->Append(new wxPropertyCategory("texture path"));
+    page->SetPropertyCell(prop, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
+    page->Append(new wxStringProperty("path", wxPG_LABEL, ""));
     m_mgr.AddPane(m_propGridManager, wxAuiPaneInfo().Name("property-grid").Right().PaneBorder(false).Caption("properties").Dock().CloseButton(true));
+
+    m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().Name("notebook").CenterPane().PaneBorder(false).Caption("notebook").Dock().CloseButton(true).MaximizeButton(true));
 
     // add the toolbars to the manager
     m_mgr.AddPane(tb1, wxAuiPaneInfo().Name("tb1").Caption("Toolbar").ToolbarPane().Top());
@@ -738,7 +739,7 @@ void GBFrame::OnAddLevel(wxCommandEvent& WXUNUSED(event))
 {
     auto* const book = wxCheckCast<wxAuiNotebook>(m_mgr.GetPane("notebook").window);
     wxString level_name = wxString::Format("level-%zu", book->GetPageCount() + 1);
-    MapBoardCtrl* map_ctrl = new MapBoardCtrl(book, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL, level_name, &m_mgr, m_tree_ctrl);
+    MapBoardCtrl* map_ctrl = new MapBoardCtrl(book, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL, level_name, &m_mgr, m_tree_ctrl, m_propGridManager);
     book->AddPage(map_ctrl, level_name, true);
     levels[level_name] = map_ctrl;
 }
@@ -864,7 +865,7 @@ wxAuiNotebook* GBFrame::CreateNotebook()
 
     wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
 
-    MapBoardCtrl* map_ctrl = new MapBoardCtrl(m_notebook_ctrl, wxID_ANY, wxDefaultPosition, client_size, wxHSCROLL | wxVSCROLL, "level-0", &m_mgr, m_tree_ctrl);
+    MapBoardCtrl* map_ctrl = new MapBoardCtrl(m_notebook_ctrl, wxID_ANY, wxDefaultPosition, client_size, wxHSCROLL | wxVSCROLL, "level-0", &m_mgr, m_tree_ctrl, m_propGridManager);
     m_notebook_ctrl->AddPage(map_ctrl, "level-0" , false, page_bmp);
     levels[wxT("level-0")] = map_ctrl;
 
