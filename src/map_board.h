@@ -73,6 +73,7 @@ public:
 		}
 		
 	private:
+		bool m_togle_mouse = false;
 		Texture m_current_texture = Texture();
 		Data m_data;
 		wxTreeItemId m_level_tree_item;
@@ -102,15 +103,6 @@ public:
 
 			m_current_cell_position.x = m_current_mouse_position.x < (int)cellSideInPx ? 0 : abs((m_current_mouse_position.x + view_x) / (int)cellSideInPx) * (int)cellSideInPx;
 			m_current_cell_position.y = m_current_mouse_position.y < (int)cellSideInPx ? 0 : abs((m_current_mouse_position.y + view_y) / (int)cellSideInPx) * (int)cellSideInPx;
-
-			if(m_current_click_position.x > -1)
-			{
-				dc.SetPen(wxPen(wxColour(0, 255, 0, 200), 5));
-				wxRect cellSelected(wxSize(cellSideInPx, cellSideInPx));
-				cellSelected.SetLeft(0);
-				cellSelected.Offset(m_current_click_position.x, m_current_click_position.y);
-				dc.DrawRectangle(cellSelected);
-			}
 
 			dc.SetPen(wxPen(wxColour(0, 0, 255, 128), 5));
 			wxRect cellSelected(wxSize(cellSideInPx, cellSideInPx));
@@ -146,6 +138,16 @@ public:
 					dc.DrawText(s, point.x+w/2, point.y+h/4);
 				}
 			}
+			
+			if(m_current_click_position.x > -1)
+			{
+				dc.SetBrush(wxBrush(wxColour(0, 0, 0, 0)));
+				dc.SetPen(wxPen(wxColour(0, 0, 255, 128), 5));
+				wxRect cellSelected(wxSize(cellSideInPx, cellSideInPx));
+				cellSelected.SetLeft(0);
+				cellSelected.Offset(m_current_click_position.x, m_current_click_position.y);
+				dc.DrawRoundedRectangle(cellSelected, 5);
+			}
 
 			//dc.SetBrush(wxBrush(wxColour(200, 0, 0, 50)));
 			//dc.DrawRectangle(view_x, view_y, size.x, size.y);
@@ -167,6 +169,8 @@ public:
 			wxString s;
 			s.Printf("Position: (%d,%d)", m_current_mouse_position.x, m_current_mouse_position.y);
 			((wxFrame*)m_mgr->GetManagedWindow())->SetStatusText(s);
+			if(m_togle_mouse && m_current_texture.IsOk())
+				m_data.set_texture_floor(m_current_cell_position, m_current_texture);
 			Refresh();
 		}
 
@@ -225,16 +229,22 @@ public:
 		void refresh_pgproperty(const Texture& texture)
 		{
 			//std::cout << "texture " << texture.id << std::endl;
-			if(texture.id > -1)
+			wxPGProperty* path_floor = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path");
+			if(!path_floor)
+				wxLogError("wxPGProperty path");
+			else
 			{
-				wxPGProperty* path_floor = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path");
-				if(!path_floor)
-					wxLogError("wxPGProperty path");
-				//wxLogMessage("🩸"+texture.path.GetFullPath()+"🩸");
-				//if(!path_floor->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue|wxPGPropValFormatFlags::ReportError))
-					//wxLogError("🩸wxPGProperty.SetValueFromString 🧵" + texture.path.GetFullPath()+"🧵");
-				path_floor->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue);
+				if(texture.id > -1)
+				{
+					//wxLogMessage("🩸"+texture.path.GetFullPath()+"🩸");
+					//if(!path_floor->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue|wxPGPropValFormatFlags::ReportError))
+						//wxLogError("🩸wxPGProperty.SetValueFromString 🧵" + texture.path.GetFullPath()+"🧵");
+					path_floor->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue);
+				}
+				else
+					path_floor->SetValueFromString("", wxPGPropValFormatFlags::FullValue);
 			}
+
 			if(m_current_cell_position.x > -1 && m_current_cell_position.y > -1)
 			{
 				wxPGProperty* coords = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("coords");
@@ -243,10 +253,25 @@ public:
 				coords->SetValueFromString(wxString::Format("%d x %d", m_current_cell_position.x, m_current_cell_position.y));
 			}
 		}
+		
+		void OnLeftDown(wxMouseEvent& WXUNUSED(event))
+		{
+			m_current_click_position = m_current_cell_position;
+			m_togle_mouse = true;
 
+			if(m_current_texture.IsOk())
+				m_data.set_texture_floor(m_current_cell_position, m_current_texture);
+		}
+		
 		void OnLeftUp(wxMouseEvent& WXUNUSED(event))
 		{
 			m_current_click_position = m_current_cell_position;
+
+			if(!m_prgrmgr)
+				wxLogError(wxT("wxPropertyGridManager error"));
+			else
+				refresh_pgproperty(m_data.get_texture_floor(m_current_cell_position));
+
 			wxTreeItemId id = m_data.cell_tree_item(m_current_cell_position);
 			if(id)
 			{
@@ -254,16 +279,8 @@ public:
 				m_tree->ScrollTo(id);
 				m_tree->SelectItem(id);
 			}
-			if(m_current_texture.IsOk())
-			{
-				m_data.set_texture_floor(m_current_cell_position, m_current_texture);
-			}
-			if(!m_prgrmgr)
-				wxLogError(wxT("wxPropertyGridManager error"));
-			else
-			{
-				refresh_pgproperty(m_data.get_texture_floor(m_current_cell_position));
-			}
+
+			m_togle_mouse = false;
 		}
 
 		void OnOpenFloorFile(wxCommandEvent& WXUNUSED(event))
@@ -313,6 +330,7 @@ wxBEGIN_EVENT_TABLE(MapBoardCtrl, wxScrolledWindow)
 #else
 	EVT_RIGHT_UP(MapBoardCtrl::OnRightUp)
 #endif
+	EVT_LEFT_DOWN(MapBoardCtrl::OnLeftDown)
 	EVT_LEFT_UP(MapBoardCtrl::OnLeftUp)
 	EVT_MENU(Menu_Popup_Open_Floor, MapBoardCtrl::OnOpenFloorFile)
 	EVT_MENU(Menu_Popup_Set_Default_Cursor, MapBoardCtrl::OnSetDefaultCursor)
