@@ -316,10 +316,11 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
 
     m_propGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_AUTO_SORT | wxPG_BOLD_MODIFIED | wxPG_SPLITTER_AUTO_CENTER | wxPG_TOOLBAR | wxPG_DESCRIPTION | wxPGMAN_DEFAULT_STYLE);
     m_propGridManager->SetExtraStyle(wxPG_EX_MODE_BUTTONS | wxPG_EX_NATIVE_DOUBLE_BUFFERING | wxPG_EX_MULTIPLE_SELECTION);
-    wxPropertyGridPage* page = m_propGridManager->AddPage("Texture");
-    wxPGProperty* prop = page->Append(new wxPropertyCategory("texture path"));
+    wxPropertyGridPage* page = m_propGridManager->AddPage("Common");
+    page->Append(new wxStringProperty("coords", wxPG_LABEL, ""));
+    wxPGProperty* prop = page->Append(new wxPropertyCategory("Floor"));
     page->SetPropertyCell(prop, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
-    page->Append(new wxStringProperty("path", wxPG_LABEL, ""));
+    page->Append(new wxImageFileProperty("path", wxPG_LABEL, ""));
     m_mgr.AddPane(m_propGridManager, wxAuiPaneInfo().Name("property-grid").Right().PaneBorder(false).Caption("properties").Dock().CloseButton(true));
 
     m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().Name("notebook").CenterPane().PaneBorder(false).Caption("notebook").Dock().CloseButton(true).MaximizeButton(true));

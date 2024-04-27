@@ -34,8 +34,8 @@ public:
 			m_mgr = mgr;
 			m_tree = tree;
 			m_prgrmgr = prop_grid_mgr;
-			level_tree_item = tree->AppendItem(m_tree->GetRootItem(), "Level 0", 0);
-			m_data = Data(m_tree, level_tree_item);
+			m_level_tree_item = tree->AppendItem(m_tree->GetRootItem(), "Level 0", 0);
+			m_data = Data(m_tree, m_level_tree_item);
 			wxSize virtual_size = m_data.virtual_size();
 			int cell_side = m_data.cell_side_size();
 			SetVirtualSize(virtual_size);
@@ -75,14 +75,15 @@ public:
 	private:
 		Texture m_current_texture = Texture();
 		Data m_data;
-		wxTreeItemId level_tree_item;
-		wxPoint current_mouse_position;
-		wxPoint current_cell_position;
+		wxTreeItemId m_level_tree_item;
+		wxPoint m_current_mouse_position = wxDefaultPosition;
+		wxPoint m_current_cell_position = wxDefaultPosition;
+		wxPoint m_current_click_position = wxDefaultPosition;
 		wxAuiManager* m_mgr;
 		wxTreeCtrl* m_tree;
 		wxPropertyGridManager* m_prgrmgr;
 
-		void OnPaint(wxPaintEvent& event)
+		void OnPaint(wxPaintEvent& WXUNUSED(event))
 		{
 			int cell_side = m_data.cell_side_size();
 			size_t cellSideInPx = FromDIP(cell_side);
@@ -99,14 +100,22 @@ public:
 			int view_x=0, view_y=0;
 			CalcUnscrolledPosition(view_x, view_y, &view_x, &view_y);
 
-			current_cell_position.x = current_mouse_position.x < (int)cellSideInPx ? 0 : abs((current_mouse_position.x + view_x) / (int)cellSideInPx) * (int)cellSideInPx;
-			current_cell_position.y = current_mouse_position.y < (int)cellSideInPx ? 0 : abs((current_mouse_position.y + view_y) / (int)cellSideInPx) * (int)cellSideInPx;
+			m_current_cell_position.x = m_current_mouse_position.x < (int)cellSideInPx ? 0 : abs((m_current_mouse_position.x + view_x) / (int)cellSideInPx) * (int)cellSideInPx;
+			m_current_cell_position.y = m_current_mouse_position.y < (int)cellSideInPx ? 0 : abs((m_current_mouse_position.y + view_y) / (int)cellSideInPx) * (int)cellSideInPx;
+
+			if(m_current_click_position.x > -1)
+			{
+				dc.SetPen(wxPen(wxColour(0, 255, 0, 200), 5));
+				wxRect cellSelected(wxSize(cellSideInPx, cellSideInPx));
+				cellSelected.SetLeft(0);
+				cellSelected.Offset(m_current_click_position.x, m_current_click_position.y);
+				dc.DrawRectangle(cellSelected);
+			}
 
 			dc.SetPen(wxPen(wxColour(0, 0, 255, 128), 5));
-
 			wxRect cellSelected(wxSize(cellSideInPx, cellSideInPx));
 			cellSelected.SetLeft(0);
-			cellSelected.Offset(current_cell_position.x, current_cell_position.y);
+			cellSelected.Offset(m_current_cell_position.x, m_current_cell_position.y);
 			dc.DrawRectangle(cellSelected);
 
 			dc.SetPen(wxPen(wxColour(0, 255, 0, 128), 5));
@@ -154,9 +163,9 @@ public:
 
 		void OnMotion(wxMouseEvent& event)
 		{
-			current_mouse_position = event.GetPosition();
+			m_current_mouse_position = event.GetPosition();
 			wxString s;
-			s.Printf("Position: (%d,%d)", current_mouse_position.x, current_mouse_position.y);
+			s.Printf("Position: (%d,%d)", m_current_mouse_position.x, m_current_mouse_position.y);
 			((wxFrame*)m_mgr->GetManagedWindow())->SetStatusText(s);
 			Refresh();
 		}
@@ -166,7 +175,7 @@ public:
 			wxString s;
 			wxMenu menu;
 
-			s.Printf("Position: (%d,%d)", current_mouse_position.x, current_mouse_position.y);
+			s.Printf("Position: (%d,%d)", m_current_mouse_position.x, m_current_mouse_position.y);
 			wxLogMessage(s);
 
 			if ( wxGetKeyState(WXK_CONTROL) )
@@ -213,9 +222,32 @@ public:
 		{ ShowContextMenu(event.GetPosition()); }
 #endif
 
+		void refresh_pgproperty(const Texture& texture)
+		{
+			//std::cout << "texture " << texture.id << std::endl;
+			if(texture.id > -1)
+			{
+				wxPGProperty* path_floor = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path");
+				if(!path_floor)
+					wxLogError("wxPGProperty path");
+				//wxLogMessage("🩸"+texture.path.GetFullPath()+"🩸");
+				//if(!path_floor->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue|wxPGPropValFormatFlags::ReportError))
+					//wxLogError("🩸wxPGProperty.SetValueFromString 🧵" + texture.path.GetFullPath()+"🧵");
+				path_floor->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue);
+			}
+			if(m_current_cell_position.x > -1 && m_current_cell_position.y > -1)
+			{
+				wxPGProperty* coords = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("coords");
+				if(!coords)
+					wxLogError("wxPGProperty coords");
+				coords->SetValueFromString(wxString::Format("%d x %d", m_current_cell_position.x, m_current_cell_position.y));
+			}
+		}
+
 		void OnLeftUp(wxMouseEvent& WXUNUSED(event))
 		{
-			wxTreeItemId id = m_data.cell_tree_item(current_cell_position);
+			m_current_click_position = m_current_cell_position;
+			wxTreeItemId id = m_data.cell_tree_item(m_current_cell_position);
 			if(id)
 			{
 				m_tree->EnsureVisible(id);
@@ -224,23 +256,13 @@ public:
 			}
 			if(m_current_texture.IsOk())
 			{
-				m_data.set_texture_floor(current_cell_position, m_current_texture);
+				m_data.set_texture_floor(m_current_cell_position, m_current_texture);
 			}
 			if(!m_prgrmgr)
 				wxLogError(wxT("wxPropertyGridManager error"));
 			else
 			{
-				Texture floor = m_data.get_texture_floor(current_cell_position);
-				if(floor.id > -1)
-				{
-					//wxPropertyGridPage* page = m_prgrmgr->GetPage("Floor Texture");
-					wxPGProperty* path_floor = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetFirst(wxPG_ITERATE_ALL);
-					if(!path_floor)
-						wxLogError(wxT("wxPGProperty error"));
-					path_floor->SetValue(wxVariant(floor.path.GetFullPath().c_str()));
-					//m_prgrmgr->Refresh();
-					//m_prgrmgr->GetPage("Floor Texture")->RefreshProperty(path_floor);
-				}
+				refresh_pgproperty(m_data.get_texture_floor(m_current_cell_position));
 			}
 		}
 
@@ -261,9 +283,10 @@ public:
 						return;
 					}
 				}
-				m_current_texture = m_data.add_texture_floor(current_cell_position, wxFileName(path_result));
+				m_current_texture = m_data.add_texture_floor(m_current_cell_position, wxFileName(path_result));
 				if(m_current_texture.IsOk())
 					SetCursor(wxCursor(m_current_texture.thumbnail));
+				refresh_pgproperty(m_current_texture);
 				wxLogMessage(path_result);
 			}
 		}
