@@ -56,7 +56,7 @@ public:
 
 	int id = -1;
 	wxFileName path;
-	wxImage thumbnail;// = wxNullImage;
+	wxImage thumbnail = wxNullImage;
 	wxBitmap bitmap;
 };
 
@@ -232,7 +232,12 @@ public:
 			return m_empty_texture;
 		return textures[texid];
 	}
-
+	
+	void set_texture_floor(wxPoint p)//clear texture
+	{
+		cells[p].texture_floor = -1;
+	}
+	
 	void set_texture_floor(wxPoint p, const Texture& tex)
 	{
 		cells[p].texture_floor = tex.id;

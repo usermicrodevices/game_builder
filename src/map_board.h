@@ -8,6 +8,14 @@
 
 #include "data.h"
 
+enum EraserType
+{
+	NONE = 0,
+	FLOOR,
+	WALL,
+	CEILING
+};
+
 enum
 {
 	Menu_Popup_ToBeDeleted = 2000,
@@ -16,6 +24,7 @@ enum
 	Menu_Popup_Submenu,
 	Menu_Popup_Set_Default_Cursor,
 	Menu_Popup_Open_Floor,
+	Menu_Popup_Set_Floor_Eraser,
 
 	Menu_PopupChoice
 };
@@ -73,6 +82,7 @@ public:
 		}
 		
 	private:
+		EraserType m_eraser = EraserType::NONE;
 		bool m_togle_mouse = false;
 		Texture m_current_texture = Texture();
 		Data m_data;
@@ -138,7 +148,7 @@ public:
 					dc.DrawText(s, point.x+w/2, point.y+h/4);
 				}
 			}
-			
+
 			if(m_current_click_position.x > -1)
 			{
 				dc.SetBrush(wxBrush(wxColour(0, 0, 0, 0)));
@@ -162,17 +172,6 @@ public:
 		{
 			Refresh();
 		}	
-
-		void OnMotion(wxMouseEvent& event)
-		{
-			m_current_mouse_position = event.GetPosition();
-			wxString s;
-			s.Printf("Position: (%d,%d)", m_current_mouse_position.x, m_current_mouse_position.y);
-			((wxFrame*)m_mgr->GetManagedWindow())->SetStatusText(s);
-			if(m_togle_mouse && m_current_texture.IsOk())
-				m_data.set_texture_floor(m_current_cell_position, m_current_texture);
-			Refresh();
-		}
 
 		void ShowContextMenu(const wxPoint& pos)
 		{
@@ -201,8 +200,9 @@ public:
 			}
 			else
 			{
-				menu.Append(Menu_Popup_Open_Floor, _("Open floor image"));
-				menu.Append(Menu_Popup_Set_Default_Cursor, _("Empty cursor"));
+				menu.Append(Menu_Popup_Open_Floor, "📂"+_("Open floor image"));
+				menu.Append(Menu_Popup_Set_Floor_Eraser, "🧹"+_("Eraser"));
+				menu.Append(Menu_Popup_Set_Default_Cursor, "↖"+_("Empty cursor"));
 				PopupMenu(&menu, pos);
 			}
 		}
@@ -253,16 +253,39 @@ public:
 				coords->SetValueFromString(wxString::Format("%d x %d", m_current_cell_position.x, m_current_cell_position.y));
 			}
 		}
-		
+
+		void store_currents()
+		{
+			if(m_current_texture.IsOk())
+				m_data.set_texture_floor(m_current_cell_position, m_current_texture);
+			else
+			{
+				switch (m_eraser)
+				{
+					case EraserType::FLOOR:
+						m_data.set_texture_floor(m_current_cell_position);
+				}
+			}
+		}
+
+		void OnMotion(wxMouseEvent& event)
+		{
+			m_current_mouse_position = event.GetPosition();
+			wxString s;
+			s.Printf("Position: (%d,%d)", m_current_mouse_position.x, m_current_mouse_position.y);
+			((wxFrame*)m_mgr->GetManagedWindow())->SetStatusText(s);
+			if(m_togle_mouse)
+				store_currents();
+			Refresh();
+		}
+
 		void OnLeftDown(wxMouseEvent& WXUNUSED(event))
 		{
 			m_current_click_position = m_current_cell_position;
 			m_togle_mouse = true;
-
-			if(m_current_texture.IsOk())
-				m_data.set_texture_floor(m_current_cell_position, m_current_texture);
+			store_currents();
 		}
-		
+
 		void OnLeftUp(wxMouseEvent& WXUNUSED(event))
 		{
 			m_current_click_position = m_current_cell_position;
@@ -304,6 +327,7 @@ public:
 				if(m_current_texture.IsOk())
 					SetCursor(wxCursor(m_current_texture.thumbnail));
 				refresh_pgproperty(m_current_texture);
+				m_eraser = EraserType::NONE;
 				wxLogMessage(path_result);
 			}
 		}
@@ -313,6 +337,15 @@ public:
 			if(m_current_texture.id > -1)
 				m_current_texture = Texture();
 			SetCursor(*wxSTANDARD_CURSOR);
+			m_eraser = EraserType::NONE;
+		}
+
+		void OnSetFloorEraser(wxCommandEvent& WXUNUSED(event))
+		{
+			if(m_current_texture.id > -1)
+				m_current_texture = Texture();
+			SetCursor(wxCURSOR_NO_ENTRY);
+			m_eraser = EraserType::FLOOR;
 		}
 
 		wxDECLARE_EVENT_TABLE();
@@ -332,6 +365,7 @@ wxBEGIN_EVENT_TABLE(MapBoardCtrl, wxScrolledWindow)
 #endif
 	EVT_LEFT_DOWN(MapBoardCtrl::OnLeftDown)
 	EVT_LEFT_UP(MapBoardCtrl::OnLeftUp)
-	EVT_MENU(Menu_Popup_Open_Floor, MapBoardCtrl::OnOpenFloorFile)
 	EVT_MENU(Menu_Popup_Set_Default_Cursor, MapBoardCtrl::OnSetDefaultCursor)
+	EVT_MENU(Menu_Popup_Open_Floor, MapBoardCtrl::OnOpenFloorFile)
+	EVT_MENU(Menu_Popup_Set_Floor_Eraser, MapBoardCtrl::OnSetFloorEraser)
 wxEND_EVENT_TABLE()
