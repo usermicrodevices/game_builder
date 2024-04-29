@@ -232,12 +232,12 @@ public:
 			return m_empty_texture;
 		return textures[texid];
 	}
-	
+
 	void set_texture_floor(wxPoint p)//clear texture
 	{
 		cells[p].texture_floor = -1;
 	}
-	
+
 	void set_texture_floor(wxPoint p, const Texture& tex)
 	{
 		cells[p].texture_floor = tex.id;
@@ -253,51 +253,54 @@ public:
 		return textures[id].bitmap;
 	}
 
+	wxString ToString()
+	{
+		wxString content("{\n\t\"textures\":\n\t{\n");
+		if(!textures.empty())
+		{
+			for(const auto& [k, v] : textures)
+			{
+				if(!v.path.GetFullPath().IsEmpty())
+					content.Append(wxString::Format("\t\t%d:\n\t\t{\n\t\t\t\"path\":\"%s\"\n\t\t},\n", k, v.path.GetFullPath()));
+			}
+		}
+		content.Append(wxString("\t},\n"));
+		if(cells.size())
+		{
+			content.Append("\t\"cells\":\n\t{\n");
+			bool first_line = true;
+			for(const auto& [k, v] : cells)
+			{
+				if(first_line)
+					first_line = false;
+				else
+					content.Append(",\n");
+				content.Append(wxString::Format("\t\t\"%d-%d\":\n\t\t{\n", k.x, k.y));
+				content.Append(wxString::Format("\t\t\t\"side\":%d,\n", v.side));
+				if(v.texture_floor)
+					content.Append(wxString::Format("\t\t\t\"floor\":%d,\n", v.texture_floor));
+				if(v.texture_ceiling)
+					content.Append(wxString::Format("\t\t\t\"ceiling\":%d,\n", v.texture_ceiling));
+				if(v.texture_wall)
+					content.Append(wxString::Format("\t\t\t\"wall\":%d,\n", v.texture_wall));
+				if(v.texture_wall)
+					content.Append(wxString::Format("\t\t\t\"wall\":%d,\n", v.texture_wall));
+				if(v.ctp != CT_WALL)
+					content.Append(wxString::Format("\t\t\t\"type\":%d,\n", (int)v.ctp));
+				content.Append("\t\t}");
+			}
+			content.Append(wxString("\n\t}"));
+		}
+		content.Append("\n}");
+		return content;
+	}
+
 	wxString ToFile(const wxString &filename)
 	{
 		wxFile f(filename, wxFile::write);
 		if(f.IsOpened())
 		{
-			f.Write("{\n");
-			f.Write("\t\"textures\":\n\t{\n");
-			if(!textures.empty())
-			{
-				for(const auto& [k, v] : textures)
-				{
-					if(!v.path.GetFullPath().IsEmpty())
-						f.Write(wxString::Format("\t\t%d:\n\t\t{\n\t\t\t\"path\":\"%s\"\n\t\t},\n", k, v.path.GetFullPath()));
-				}
-			}
-			f.Write(wxString("\t},\n"));
-			//f.Flush();
-			if(cells.size())
-			{
-				f.Write("\t\"cells\":\n");
-				f.Write(wxString("\t{\n"));
-				bool first_line = true;
-				for(const auto& [k, v] : cells)
-				{
-					if(first_line)
-						first_line = false;
-					else
-						f.Write(",\n");
-					f.Write(wxString::Format("\t\t\"%d-%d\":\n\t\t{\n", k.x, k.y));
-					f.Write(wxString::Format("\t\t\t\"side\":%d,\n", v.side));
-					if(v.texture_floor)
-						f.Write(wxString::Format("\t\t\t\"floor\":%d,\n", v.texture_floor));
-					if(v.texture_ceiling)
-						f.Write(wxString::Format("\t\t\t\"ceiling\":%d,\n", v.texture_ceiling));
-					if(v.texture_wall)
-						f.Write(wxString::Format("\t\t\t\"wall\":%d,\n", v.texture_wall));
-					if(v.texture_wall)
-						f.Write(wxString::Format("\t\t\t\"wall\":%d,\n", v.texture_wall));
-					if(v.ctp != CT_WALL)
-						f.Write(wxString::Format("\t\t\t\"type\":%d,\n", (int)v.ctp));
-					f.Write("\t\t}");
-				}
-				f.Write(wxString("\n\t}"));
-			}
-			f.Write("\n}");
+			f.Write(ToString());
 			f.Close();
 		}
 		return filename;
