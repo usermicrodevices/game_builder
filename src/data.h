@@ -253,45 +253,47 @@ public:
 		return textures[id].bitmap;
 	}
 
-	wxString ToString()
+	wxString ToString(const wxString& indentation = "")
 	{
-		wxString content("{\n\t\"textures\":\n\t{\n");
+		wxString content(indentation+"{\n"+indentation+"\t\"default_side_size\":"<<m_cell_side<<",\n"+indentation+"\t\"textures\":\n"+indentation+"\t{\n");
 		if(!textures.empty())
 		{
 			for(const auto& [k, v] : textures)
 			{
 				if(!v.path.GetFullPath().IsEmpty())
-					content.Append(wxString::Format("\t\t%d:\n\t\t{\n\t\t\t\"path\":\"%s\"\n\t\t},\n", k, v.path.GetFullPath()));
+					content.Append(indentation+"\t\t"<<k<<":\n"+indentation+"\t\t{\n"+indentation+"\t\t\t\"path\":\""<<v.path.GetFullPath()<<"\"\n"+indentation+"\t\t},\n");
 			}
 		}
-		content.Append(wxString("\t},\n"));
+		content.Append(indentation+"\t},\n");
 		if(cells.size())
 		{
-			content.Append("\t\"cells\":\n\t{\n");
+			content.Append(indentation+"\t\"cells\":\n"+indentation+"\t{\n");
 			bool first_line = true;
 			for(const auto& [k, v] : cells)
 			{
-				if(first_line)
-					first_line = false;
-				else
-					content.Append(",\n");
-				content.Append(wxString::Format("\t\t\"%d-%d\":\n\t\t{\n", k.x, k.y));
-				content.Append(wxString::Format("\t\t\t\"side\":%d,\n", v.side));
-				if(v.texture_floor)
-					content.Append(wxString::Format("\t\t\t\"floor\":%d,\n", v.texture_floor));
-				if(v.texture_ceiling)
-					content.Append(wxString::Format("\t\t\t\"ceiling\":%d,\n", v.texture_ceiling));
-				if(v.texture_wall)
-					content.Append(wxString::Format("\t\t\t\"wall\":%d,\n", v.texture_wall));
-				if(v.texture_wall)
-					content.Append(wxString::Format("\t\t\t\"wall\":%d,\n", v.texture_wall));
-				if(v.ctp != CT_WALL)
-					content.Append(wxString::Format("\t\t\t\"type\":%d,\n", (int)v.ctp));
-				content.Append("\t\t}");
+				if(v.side != m_cell_side || v.texture_floor > -1 || v.texture_ceiling > -1 || v.texture_wall > -1)
+				{
+					if(first_line)
+						first_line = false;
+					else
+						content.Append(indentation+",\n");
+					content.Append(indentation+"\t\t\""<<k.x<<"-"<<k.y<<"\":\n"+indentation+"\t\t{\n");
+					if(v.side != m_cell_side)
+						content.Append(indentation+"\t\t\t\"side\":"<<v.side<<",\n");
+					if(v.texture_floor > -1)
+						content.Append(indentation+"\t\t\t\"floor\":"<<v.texture_floor<<",\n");
+					if(v.texture_ceiling > -1)
+						content.Append(indentation+"\t\t\t\"ceiling\":"<<v.texture_ceiling<<",\n");
+					if(v.texture_wall > -1)
+						content.Append(indentation+"\t\t\t\"wall\":"<<v.texture_wall<<",\n");
+					if(v.ctp != CT_WALL)
+						content.Append(indentation+"\t\t\t\"type\":"<<v.ctp<<",\n");
+					content.Append(indentation+"\t\t}");
+				}
 			}
-			content.Append(wxString("\n\t}"));
+			content.Append("\n"+indentation+"\t}");
 		}
-		content.Append("\n}");
+		content.Append("\n"+indentation+"}");
 		return content;
 	}
 

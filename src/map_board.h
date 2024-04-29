@@ -69,6 +69,19 @@ public:
 			}
 		}
 
+		wxString LevelToString(const wxString& indentation = "")
+		{
+			try
+			{
+				return m_data.ToString(indentation);
+			}
+			catch(std::exception& e)
+			{
+				wxLogMessage(e.what());
+			}
+			return wxT("");
+		}
+
 		void LevelToFile(const wxString &filename)
 		{
 			try

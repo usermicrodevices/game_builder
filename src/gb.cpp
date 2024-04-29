@@ -126,82 +126,6 @@ bool GBApp::OnInit()
     return true;
 }
 
-wxBEGIN_EVENT_TABLE(GBFrame, wxFrame)
-    EVT_ERASE_BACKGROUND(GBFrame::OnEraseBackground)
-    EVT_SIZE(GBFrame::OnSize)
-    EVT_MENU(GBFrame::ID_AddLevel, GBFrame::OnAddLevel)
-    EVT_MENU(GBFrame::ID_ShowLog, GBFrame::OnShowLog)
-    EVT_MENU(GBFrame::ID_ShowTree, GBFrame::OnShowTree)
-    EVT_MENU(GBFrame::ID_ShowNotebook, GBFrame::OnShowNotebook)
-    EVT_MENU(GBFrame::ID_CreatePerspective, GBFrame::OnCreatePerspective)
-    EVT_MENU(GBFrame::ID_CopyPerspectiveCode, GBFrame::OnCopyPerspectiveCode)
-    EVT_MENU(ID_AllowFloating, GBFrame::OnManagerFlag)
-    EVT_MENU(ID_TransparentHint, GBFrame::OnManagerFlag)
-    EVT_MENU(ID_VenetianBlindsHint, GBFrame::OnManagerFlag)
-    EVT_MENU(ID_RectangleHint, GBFrame::OnManagerFlag)
-    EVT_MENU(ID_NoHint, GBFrame::OnManagerFlag)
-    EVT_MENU(ID_HintFade, GBFrame::OnManagerFlag)
-    EVT_MENU(ID_NoVenetianFade, GBFrame::OnManagerFlag)
-    EVT_MENU(ID_TransparentDrag, GBFrame::OnManagerFlag)
-    EVT_MENU(ID_LiveUpdate, GBFrame::OnManagerFlag)
-    EVT_MENU(ID_AllowActivePane, GBFrame::OnManagerFlag)
-    EVT_MENU(ID_NotebookTabFixedWidth, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookNoCloseButton, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookCloseButton, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookCloseButtonAll, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookCloseButtonActive, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookAllowTabMove, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookAllowTabExternalMove, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookAllowTabSplit, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookScrollButtons, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookWindowList, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookArtGloss, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookArtSimple, GBFrame::OnNotebookFlag)
-    EVT_MENU(ID_NotebookAlignTop,     GBFrame::OnTabAlignment)
-    EVT_MENU(ID_NotebookAlignBottom,  GBFrame::OnTabAlignment)
-    //EVT_MENU(ID_NotebookNewTab, GBFrame::OnNotebookNewTab)
-    //EVT_MENU(ID_NotebookDeleteTab, GBFrame::OnNotebookDeleteTab)
-    EVT_MENU(ID_NoGradient, GBFrame::OnGradient)
-    EVT_MENU(ID_VerticalGradient, GBFrame::OnGradient)
-    EVT_MENU(ID_HorizontalGradient, GBFrame::OnGradient)
-    EVT_MENU(ID_AllowToolbarResizing, GBFrame::OnToolbarResizing)
-    EVT_MENU(ID_Settings, GBFrame::OnSettings)
-    EVT_MENU(wxID_SAVE, GBFrame::OnSave)
-    EVT_MENU(wxID_EXIT, GBFrame::OnExit)
-    EVT_MENU(wxID_ABOUT, GBFrame::OnAbout)
-    EVT_UPDATE_UI(ID_NotebookTabFixedWidth, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NotebookNoCloseButton, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NotebookCloseButton, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NotebookCloseButtonAll, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NotebookCloseButtonActive, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NotebookAllowTabMove, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NotebookAllowTabExternalMove, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NotebookAllowTabSplit, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NotebookScrollButtons, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NotebookWindowList, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_AllowFloating, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_TransparentHint, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_VenetianBlindsHint, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_RectangleHint, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NoHint, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_HintFade, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NoVenetianFade, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_TransparentDrag, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_LiveUpdate, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_NoGradient, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_VerticalGradient, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_HorizontalGradient, GBFrame::OnUpdateUI)
-    EVT_UPDATE_UI(ID_AllowToolbarResizing, GBFrame::OnUpdateUI)
-    EVT_MENU_RANGE(GBFrame::ID_FirstPerspective, GBFrame::ID_FirstPerspective+1000,
-                   GBFrame::OnRestorePerspective)
-    EVT_AUITOOLBAR_TOOL_DROPDOWN(ID_DropDownToolbarItem, GBFrame::OnDropDownToolbarItem)
-    //EVT_AUI_PANE_CLOSE(GBFrame::OnPaneClose)
-    EVT_AUINOTEBOOK_ALLOW_DND(wxID_ANY, GBFrame::OnAllowNotebookDnD)
-    EVT_AUINOTEBOOK_PAGE_CLOSE(wxID_ANY, GBFrame::OnNotebookPageClose)
-    EVT_AUINOTEBOOK_PAGE_CLOSED(wxID_ANY, GBFrame::OnNotebookPageClosed)
-    //EVT_AUINOTEBOOK_PAGE_CHANGING(wxID_ANY, GBFrame::OnNotebookPageChanging)
-wxEND_EVENT_TABLE()
-
 
 GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
 : wxFrame(parent, id, title, pos, size, style)
@@ -216,9 +140,10 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     wxMenuBar* mb = new wxMenuBar;
 
     wxMenu* file_menu = new wxMenu;
-    file_menu->Append(ID_AddLevel, wxT("➕New Level\tCtrl-A"));
+    file_menu->Append(ID_AddLevel, wxT("➕New Level\tCtrl-N"));
     file_menu->Append(wxID_OPEN, wxT("📂Open\tCtrl-O"));
     file_menu->Append(wxID_SAVE, wxT("💾Save\tCtrl-S"));
+    file_menu->Append(wxID_FILE, wxT("📥Save level\tCtrl-L"));
     file_menu->Append(wxID_EXIT, wxT("🚫Quit\tCtrl-Q"));
 
     wxMenu* view_menu = new wxMenu;
@@ -292,13 +217,15 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     SetMinSize(FromDIP(wxSize(400,300)));
 
     wxAuiToolBar* tb1 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW);
-    tb1->AddTool(wxID_OPEN, "&Open", wxArtProvider::GetBitmapBundle(wxART_FILE_OPEN), "Open another project from file");
-    tb1->AddTool(wxID_SAVE, "&Save", wxArtProvider::GetBitmapBundle(wxART_FILE_SAVE), "Save current project to file");
+    tb1->AddTool(ID_AddLevel, "&New Level", wxArtProvider::GetBitmapBundle(wxART_NEW), _("New Level"));
+    tb1->AddTool(wxID_OPEN, "&Open", wxArtProvider::GetBitmapBundle(wxART_FILE_OPEN), _("Open another project from file"));
+    tb1->AddTool(wxID_SAVE, "&Save", wxArtProvider::GetBitmapBundle(wxART_FLOPPY), _("Save current project to file"));
+    tb1->AddTool(wxID_FILE, "Save &Level", wxArtProvider::GetBitmapBundle(wxART_CDROM), _("Save current level to file"));
     tb1->AddSeparator();
-    tb1->AddTool(wxID_COPY, "&Copy", wxArtProvider::GetBitmapBundle(wxART_COPY), "Copy selected");
-    tb1->AddTool(wxID_PASTE, "&Paste", wxArtProvider::GetBitmapBundle(wxART_PASTE), "Paste from buffer");
+    tb1->AddTool(wxID_COPY, "&Copy", wxArtProvider::GetBitmapBundle(wxART_COPY), _("Copy selected"));
+    tb1->AddTool(wxID_PASTE, "&Paste", wxArtProvider::GetBitmapBundle(wxART_PASTE), _("Paste from buffer"));
     tb1->AddSeparator();
-    tb1->AddTool(wxID_EXIT, "&Quit", wxArtProvider::GetBitmapBundle(wxART_QUIT), "Quit from app");
+    tb1->AddTool(wxID_EXIT, "&Quit", wxArtProvider::GetBitmapBundle(wxART_QUIT), _("Quit from app"));
     tb1->Realize();
 
     m_tree_ctrl = CreateTreeCtrl();
@@ -817,8 +744,25 @@ void GBFrame::OnSave(wxCommandEvent& WXUNUSED(event))
     wxFileDialog dlg(this, "Save as JSON", wxEmptyString, wxEmptyString, wildCard, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
     if(dlg.ShowModal() == wxID_OK)
     {
+        wxFile f(dlg.GetPath(), wxFile::write);
+        if(f.IsOpened())
+        {
+            MapBoardCtrl* map_board = levels[wxT("level-0")];
+            f.Write("{\n\t\"levels\":\n\t{\n\t\t0:\n");
+            f.Write(map_board->LevelToString("\t\t"));
+            f.Write("\n\t}\n}");
+            f.Close();
+        }
+    }
+}
+
+void GBFrame::OnSaveLevel(wxCommandEvent& WXUNUSED(event))
+{
+    wxString wildCard = "JSON data (*.json)|*.json;*.JSON";
+    wxFileDialog dlg(this, "Save as JSON", wxEmptyString, wxEmptyString, wildCard, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+    if(dlg.ShowModal() == wxID_OK)
+    {
         MapBoardCtrl* map_board = levels[wxT("level-0")];
-        //map_board->LogMessage(dlg.GetPath());
         map_board->LevelToFile(dlg.GetPath());
     }
 }
