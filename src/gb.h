@@ -50,6 +50,8 @@
 
 #include "map_board.h"
 
+#include <map>
+
 // Under Linux we demonstrate loading an existing message catalog using
 // coreutils package (which is always installed) as an example.
 #ifdef __LINUX__
@@ -57,15 +59,13 @@
 static bool g_loadedCoreutilsMO = false;
 #endif // __LINUX__
 
-typedef std::unordered_map<wxString, MapBoardCtrl*> LevelContainer;
-//typedef std::map<wxString, MapBoardCtrl*> LevelContainer;
-
 #if defined(__WXOSX__) || defined(__WXGTK3__)
 #define wxDRAWING_DC_SUPPORTS_ALPHA 1
 #else
 #define wxDRAWING_DC_SUPPORTS_ALPHA 0
 #endif // __WXOSX__ || __WXGTK3__
 
+typedef std::map<wxString, MapBoardCtrl*> LevelContainer;
 
 class GBApp : public wxApp
 {

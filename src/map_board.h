@@ -93,7 +93,7 @@ public:
 				wxLogMessage(e.what());
 			}
 		}
-		
+
 	private:
 		EraserType m_eraser = EraserType::NONE;
 		bool m_togle_mouse = false;

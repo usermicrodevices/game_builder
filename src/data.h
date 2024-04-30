@@ -267,16 +267,19 @@ public:
 		content.Append(indentation+"\t},\n");
 		if(cells.size())
 		{
-			content.Append(indentation+"\t\"cells\":\n"+indentation+"\t{\n");
+			content.Append(indentation+"\t\"cells\":\n"+indentation+"\t{");
 			bool first_line = true;
 			for(const auto& [k, v] : cells)
 			{
 				if(v.side != m_cell_side || v.texture_floor > -1 || v.texture_ceiling > -1 || v.texture_wall > -1)
 				{
 					if(first_line)
+					{
 						first_line = false;
+						content.Append("\n");
+					}
 					else
-						content.Append(indentation+",\n");
+						content.Append(",\n");
 					content.Append(indentation+"\t\t\""<<k.x<<"-"<<k.y<<"\":\n"+indentation+"\t\t{\n");
 					if(v.side != m_cell_side)
 						content.Append(indentation+"\t\t\t\"side\":"<<v.side<<",\n");

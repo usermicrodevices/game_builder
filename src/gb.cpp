@@ -597,26 +597,18 @@ void GBFrame::OnRestorePerspective(wxCommandEvent& evt)
 
 void GBFrame::OnNotebookPageClose(wxAuiNotebookEvent& evt)
 {
-    wxAuiNotebook* ctrl = (wxAuiNotebook*)evt.GetEventObject();
-    if (ctrl->GetPage(evt.GetSelection())->IsKindOf(CLASSINFO(wxHtmlWindow)))
-    {
-        int res = wxMessageBox("Are you sure you want to close/hide this notebook page?",
-            "wxAUI", wxYES_NO, this);
-        if (res != wxYES)
-            evt.Veto();
-    }
+    //wxAuiNotebook* m_notebook_ctrl = (wxAuiNotebook*)evt.GetEventObject();
+    //if(m_notebook_ctrl->GetPage(evt.GetSelection())->IsKindOf(CLASSINFO(MapBoardCtrl)))
+    levels.erase(m_notebook_ctrl->GetPageText(evt.GetSelection()));
+    //evt.Veto();
 }
 
 void GBFrame::OnNotebookPageClosed(wxAuiNotebookEvent& evt)
 {
     wxAuiNotebook* ctrl = (wxAuiNotebook*)evt.GetEventObject();
     wxUnusedVar(ctrl);
-
     // selection should always be a valid index
-    wxASSERT_MSG( ctrl->GetSelection() < (int)ctrl->GetPageCount(),
-        wxString::Format("Invalid selection %d, only %d pages left",
-        ctrl->GetSelection(), (int)ctrl->GetPageCount()) );
-
+    wxASSERT_MSG(ctrl->GetSelection() < (int)ctrl->GetPageCount(), wxString::Format("Invalid selection %d, only %d pages left", ctrl->GetSelection(), (int)ctrl->GetPageCount()));
     evt.Skip();
 }
 
@@ -665,10 +657,10 @@ void GBFrame::OnShowNotebook(wxCommandEvent& event)
 
 void GBFrame::OnAddLevel(wxCommandEvent& WXUNUSED(event))
 {
-    auto* const book = wxCheckCast<wxAuiNotebook>(m_mgr.GetPane("notebook").window);
-    wxString level_name = wxString::Format("level-%zu", book->GetPageCount() + 1);
-    MapBoardCtrl* map_ctrl = new MapBoardCtrl(book, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL, level_name, &m_mgr, m_tree_ctrl, m_propGridManager);
-    book->AddPage(map_ctrl, level_name, true);
+    //auto* const m_notebook_ctrl = wxCheckCast<wxAuiNotebook>(m_mgr.GetPane("notebook").window);
+    wxString level_name = wxString::Format("level-%zu", m_notebook_ctrl->GetPageCount());
+    MapBoardCtrl* map_ctrl = new MapBoardCtrl(m_notebook_ctrl, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL, level_name, &m_mgr, m_tree_ctrl, m_propGridManager);
+    m_notebook_ctrl->AddPage(map_ctrl, level_name, true);
     levels[level_name] = map_ctrl;
 }
 
@@ -747,9 +739,17 @@ void GBFrame::OnSave(wxCommandEvent& WXUNUSED(event))
         wxFile f(dlg.GetPath(), wxFile::write);
         if(f.IsOpened())
         {
-            MapBoardCtrl* map_board = levels[wxT("level-0")];
-            f.Write("{\n\t\"levels\":\n\t{\n\t\t0:\n");
-            f.Write(map_board->LevelToString("\t\t"));
+            f.Write("{\n\t\"levels\":\n\t{\n");
+            bool first_line = true;
+			for(const auto& [k, map_board] : levels)
+            {
+                if(first_line)
+                    first_line = false;
+                else
+                    f.Write(",\n");
+                f.Write(wxString("\t\t")<<k.Mid(6)<<":\n");
+                f.Write(map_board->LevelToString("\t\t"));
+            }
             f.Write("\n\t}\n}");
             f.Close();
         }
@@ -762,7 +762,8 @@ void GBFrame::OnSaveLevel(wxCommandEvent& WXUNUSED(event))
     wxFileDialog dlg(this, "Save as JSON", wxEmptyString, wxEmptyString, wildCard, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
     if(dlg.ShowModal() == wxID_OK)
     {
-        MapBoardCtrl* map_board = levels[wxT("level-0")];
+        //wxWindow* current_page = m_notebook_ctrl->GetCurrentPage();
+        MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
         map_board->LevelToFile(dlg.GetPath());
     }
 }
