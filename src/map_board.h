@@ -69,6 +69,17 @@ public:
 			}
 		}
 
+		void ToggleDrawCoords()
+		{
+			if(m_draw_coords)
+			{
+				wxClientDC dc(this);
+				dc.Clear();
+			}
+			m_draw_coords = !m_draw_coords;
+			Refresh();
+		}
+
 		wxString LevelToString(const wxString& indentation = "")
 		{
 			try
@@ -95,6 +106,7 @@ public:
 		}
 
 	private:
+		bool m_draw_coords = false;
 		EraserType m_eraser = EraserType::NONE;
 		bool m_togle_mouse = false;
 		Texture m_current_texture = Texture();
@@ -140,25 +152,28 @@ public:
 			for(size_t ypos = cellSideInPx; ypos < mapyInPx; ypos+=cell_side)
 				dc.DrawLine(0, ypos, mapyInPx, ypos);
 
-			wxString s;
-			int h, w;
-			dc.SetFont(*wxNORMAL_FONT);
-			wxRect rect(view_x, view_y, size.x, size.y);
-			for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
+			if(m_draw_coords)
 			{
-				auto point = iter->first;
-				auto cell = iter->second;
-				if(cell.texture_floor > -1)
+				wxString s;
+				int h, w;
+				dc.SetFont(*wxNORMAL_FONT);
+				wxRect rect(view_x, view_y, size.x, size.y);
+				for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
 				{
-					wxBitmap bitmap = m_data.get_texture_bitmap(cell.texture_floor);
-					if(bitmap.IsOk())
-						dc.DrawBitmap(bitmap, point);
-				}
-				else if(rect.Contains(point))
-				{
-					s.Printf("%d\n%d", point.x, point.y);
-					dc.GetTextExtent(s, &w, &h);
-					dc.DrawText(s, point.x+w/2, point.y+h/4);
+					auto point = iter->first;
+					auto cell = iter->second;
+					if(cell.texture_floor > -1)
+					{
+						wxBitmap bitmap = m_data.get_texture_bitmap(cell.texture_floor);
+						if(bitmap.IsOk())
+							dc.DrawBitmap(bitmap, point);
+					}
+					else if(rect.Contains(point))
+					{
+						s.Printf("%d\n%d", point.x, point.y);
+						dc.GetTextExtent(s, &w, &h);
+						dc.DrawText(s, point.x+w/2, point.y+h/4);
+					}
 				}
 			}
 

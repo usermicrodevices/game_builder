@@ -85,6 +85,8 @@ class GBFrame : public wxFrame
 		ID_ShowLog,
 		ID_ShowTree,
 		ID_ShowNotebook,
+		ID_ShowProperties,
+		ID_DrawCellCoords,
 		ID_CreatePerspective,
 		ID_CopyPerspectiveCode,
 		ID_AllowFloating,
@@ -166,6 +168,8 @@ private:
 	void OnShowLog(wxCommandEvent& event);
 	void OnShowTree(wxCommandEvent& event);
 	void OnShowNotebook(wxCommandEvent& event);
+	void OnShowProperties(wxCommandEvent& event);
+	void OnDrawCellCoords(wxCommandEvent& event);
 	void OnAddLevel(wxCommandEvent& event);
 	void OnDropDownToolbarItem(wxAuiToolBarEvent& evt);
 	void OnCreatePerspective(wxCommandEvent& evt);
@@ -201,6 +205,8 @@ EVT_MENU(GBFrame::ID_AddLevel, GBFrame::OnAddLevel)
 EVT_MENU(GBFrame::ID_ShowLog, GBFrame::OnShowLog)
 EVT_MENU(GBFrame::ID_ShowTree, GBFrame::OnShowTree)
 EVT_MENU(GBFrame::ID_ShowNotebook, GBFrame::OnShowNotebook)
+EVT_MENU(GBFrame::ID_ShowProperties, GBFrame::OnShowProperties)
+EVT_MENU(GBFrame::ID_DrawCellCoords, GBFrame::OnDrawCellCoords)
 EVT_MENU(GBFrame::ID_CreatePerspective, GBFrame::OnCreatePerspective)
 EVT_MENU(GBFrame::ID_CopyPerspectiveCode, GBFrame::OnCopyPerspectiveCode)
 EVT_MENU(ID_AllowFloating, GBFrame::OnManagerFlag)

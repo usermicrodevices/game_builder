@@ -150,7 +150,9 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     view_menu->Append(ID_ShowLog, _("Show Log"));
     view_menu->Append(ID_ShowTree, _("Show Tree"));
     view_menu->Append(ID_ShowNotebook, _("Show Notebook"));
-
+    view_menu->Append(ID_ShowNotebook, _("Show Cell Properties"));
+    view_menu->Append(ID_DrawCellCoords, _("Draw Cell Coords on/off"));
+    
     wxMenu* options_menu = new wxMenu;
     options_menu->AppendRadioItem(ID_TransparentHint, _("Transparent Hint"));
     options_menu->AppendRadioItem(ID_VenetianBlindsHint, _("Venetian Blinds Hint"));
@@ -248,7 +250,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     wxPGProperty* prop = page->Append(new wxPropertyCategory("Floor"));
     page->SetPropertyCell(prop, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
     page->Append(new wxImageFileProperty("path", wxPG_LABEL, ""));
-    m_mgr.AddPane(m_propGridManager, wxAuiPaneInfo().Name("property-grid").Right().PaneBorder(false).Caption("properties").Dock().CloseButton(true));
+    m_mgr.AddPane(m_propGridManager, wxAuiPaneInfo().Name("property-cell").BestSize(200,200).Right().PaneBorder(false).Caption("properties").Dock().CloseButton(true));
 
     m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().Name("notebook").CenterPane().PaneBorder(false).Caption("notebook").Dock().CloseButton(true).MaximizeButton(true));
 
@@ -653,6 +655,18 @@ void GBFrame::OnShowNotebook(wxCommandEvent& event)
 {
     m_mgr.GetPane("notebook").Show(event.GetId() == ID_ShowNotebook);
     m_mgr.Update();
+}
+
+void GBFrame::OnShowProperties(wxCommandEvent& event)
+{
+    m_mgr.GetPane("property-cell").Show(event.GetId() == ID_ShowProperties);
+    m_mgr.Update();
+}
+
+void GBFrame::OnDrawCellCoords(wxCommandEvent& event)
+{
+    MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
+    map_board->ToggleDrawCoords();
 }
 
 void GBFrame::OnAddLevel(wxCommandEvent& WXUNUSED(event))
