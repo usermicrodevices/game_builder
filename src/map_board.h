@@ -71,13 +71,10 @@ public:
 
 		void ToggleDrawCoords()
 		{
-			if(m_draw_coords)
-			{
-				wxClientDC dc(this);
-				dc.Clear();
-			}
 			m_draw_coords = !m_draw_coords;
+			wxClientDC(this).Clear();
 			Refresh();
+			Update();
 		}
 
 		wxString LevelToString(const wxString& indentation = "")
@@ -152,23 +149,23 @@ public:
 			for(size_t ypos = cellSideInPx; ypos < mapyInPx; ypos+=cell_side)
 				dc.DrawLine(0, ypos, mapyInPx, ypos);
 
-			if(m_draw_coords)
+			wxString s;
+			int h, w;
+			dc.SetFont(*wxNORMAL_FONT);
+			wxRect rect(view_x, view_y, size.x, size.y);
+			for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
 			{
-				wxString s;
-				int h, w;
-				dc.SetFont(*wxNORMAL_FONT);
-				wxRect rect(view_x, view_y, size.x, size.y);
-				for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
+				auto point = iter->first;
+				auto cell = iter->second;
+				if(cell.texture_floor > -1)
 				{
-					auto point = iter->first;
-					auto cell = iter->second;
-					if(cell.texture_floor > -1)
-					{
-						wxBitmap bitmap = m_data.get_texture_bitmap(cell.texture_floor);
-						if(bitmap.IsOk())
-							dc.DrawBitmap(bitmap, point);
-					}
-					else if(rect.Contains(point))
+					wxBitmap bitmap = m_data.get_texture_bitmap(cell.texture_floor);
+					if(bitmap.IsOk())
+						dc.DrawBitmap(bitmap, point);
+				}
+				else if(m_draw_coords)
+				{
+					if(rect.Contains(point))
 					{
 						s.Printf("%d\n%d", point.x, point.y);
 						dc.GetTextExtent(s, &w, &h);

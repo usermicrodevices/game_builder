@@ -152,7 +152,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     view_menu->Append(ID_ShowNotebook, _("Show Notebook"));
     view_menu->Append(ID_ShowNotebook, _("Show Cell Properties"));
     view_menu->Append(ID_DrawCellCoords, _("Draw Cell Coords on/off"));
-    
+
     wxMenu* options_menu = new wxMenu;
     options_menu->AppendRadioItem(ID_TransparentHint, _("Transparent Hint"));
     options_menu->AppendRadioItem(ID_VenetianBlindsHint, _("Venetian Blinds Hint"));
@@ -663,7 +663,7 @@ void GBFrame::OnShowProperties(wxCommandEvent& event)
     m_mgr.Update();
 }
 
-void GBFrame::OnDrawCellCoords(wxCommandEvent& event)
+void GBFrame::OnDrawCellCoords(wxCommandEvent& WXUNUSED(event))
 {
     MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
     map_board->ToggleDrawCoords();
