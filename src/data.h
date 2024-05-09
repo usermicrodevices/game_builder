@@ -122,6 +122,7 @@ class Data
 private:
 	Texture m_empty_texture;
 	int m_cell_side;//cell side size in DIPs
+	int m_count_cell_x, m_count_cell_y;
 	wxSize m_cell_size;
 	wxSize m_virtual_size;
 	wxArrayTreeItemIds tree_items;
@@ -132,14 +133,16 @@ public:
 	Data(){m_empty_texture = Texture();};//wxDECLARE_DYNAMIC_CLASS
 	Data(wxTreeCtrl* tree, wxTreeItemId level_tree_item, int cell_side_size=50, int count_x=100, int count_y=100)
 	{
+		m_count_cell_x = count_x;
+		m_count_cell_y = count_y;
 		m_empty_texture = Texture();
 		m_cell_side = cell_side_size;
 		m_cell_size = wxSize(m_cell_side, m_cell_side);
 		size_t idx = 0;
 		int x = 0, y = 0;
-		for(int i=0; i<count_x; ++i)
+		for(int i=0; i<m_count_cell_x; ++i)
 		{
-			for(int j=0; j<count_y; ++j)
+			for(int j=0; j<m_count_cell_y; ++j)
 			{
 				x = i * cell_side_size;
 				y = j * cell_side_size;
@@ -148,7 +151,7 @@ public:
 				++idx;
 			}
 		}
-		m_virtual_size = wxSize(count_x*cell_side_size, count_y*cell_side_size);
+		m_virtual_size = wxSize(cell_side_size*m_count_cell_x, cell_side_size*m_count_cell_y);
 	};
 
 	~Data()
@@ -255,7 +258,11 @@ public:
 
 	wxString ToString(const wxString& indentation = "")
 	{
-		wxString content(indentation+"{\n"+indentation+"\t\"default_side_size\":"<<m_cell_side<<",\n"+indentation+"\t\"textures\":\n"+indentation+"\t{\n");
+		wxString content(indentation+
+		"{\n"+indentation+"\t\"count_x\":"<<m_count_cell_x<<",\n"+
+		indentation+"\t\"count_y\":"<<m_count_cell_y<<",\n"+
+		indentation+"\t\"default_side_size\":"<<m_cell_side<<",\n"+
+		indentation+"\t\"textures\":\n"+indentation+"\t{\n");
 		if(!textures.empty())
 		{
 			for(const auto& [k, v] : textures)
