@@ -10,7 +10,15 @@
 #pragma once
 
 // For compilers that support precompilation, includes "wx/wx.h".
+#ifndef WX_PRECOMP
+#include "wx/wx.h"
+#else
 #include "wx/wxprec.h"
+#endif
+
+#ifndef WXWIN_COMPATIBILITY_3_2
+#define WXWIN_COMPATIBILITY_3_2 1
+#endif
 
 #include <wx/debug.h>
 
@@ -42,6 +50,7 @@
 #include "wx/translation.h"
 #include "wx/uilocale.h"
 
+#include <wx/propgrid/props.h>
 #include "wx/propgrid/propgrid.h"
 #include "wx/propgrid/advprops.h"
 #include "wx/propgrid/manager.h"
