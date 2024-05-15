@@ -365,6 +365,7 @@ public:
 						return;
 					}
 				}
+				m_current_texture_type = tt;
 				m_current_texture = m_data.add_texture(m_current_cell_position, wxFileName(path_result), m_current_texture_type);
 				if(m_current_texture.IsOk())
 					SetCursor(wxCursor(m_current_texture.thumbnail));
