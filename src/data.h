@@ -15,14 +15,20 @@
 #include <wx/file.h>
 
 #include <unordered_map>
-//#include <map>
 
-enum CellType
+enum TextureType
 {
-	CT_WALL = 0,
-	CT_DOOR,
-	CT_WINDOW,
-	CT_NPS
+	TT_FLOOR = 0,
+	TT_WALL,
+	TT_ROOF
+};
+
+enum WallType
+{
+	WT_DEFAULT = 0,
+	WT_DOOR,
+	WT_WINDOW,
+	WT_NPS
 };
 
 class Texture
@@ -61,7 +67,6 @@ public:
 };
 
 typedef std::unordered_map<int, Texture> TextureContainer;
-//typedef std::map<int, Texture> TextureContainer;
 
 class Cell
 {
@@ -69,22 +74,31 @@ public:
 	size_t id = -1;
 	int side = 50;
 	int texture_floor = -1;
-	int texture_ceiling = -1;
 	int texture_wall = -1;
-	CellType ctp = CT_WALL;
+	int texture_roof = -1;
+	WallType wtp = WT_DEFAULT;
 
-	Cell(size_t idx=0, int side_size=50, int tex_floor=-1, int tex_ceiling=-1, int tex_wall=-1, CellType ct=CT_WALL)
+	Cell(size_t idx=0, int side_size=50, int tex_floor=-1, int tex_roof=-1, int tex_wall=-1, WallType wt=WT_DEFAULT)
 	{
 		id = idx;
 		side = side_size;
 		if(tex_floor > -1)
 			texture_floor = tex_floor;
-		if(tex_ceiling > -1)
-			texture_ceiling = tex_ceiling;
+		if(tex_roof > -1)
+			texture_roof = tex_roof;
 		if(tex_wall > -1)
 			texture_wall = tex_wall;
-		if(ct != CT_WALL)
-			ctp = ct;
+		if(wt != WT_DEFAULT)
+			wtp = wt;
+	}
+
+	int get_visible_texture()
+	{
+		if(texture_roof > -1)
+			return texture_roof;
+		if(texture_wall > -1)
+			return texture_wall;
+		return texture_floor;
 	}
 };
 
@@ -95,27 +109,8 @@ struct wxPointHash
 		return std::hash<int>()(p.x) ^ (std::hash<int>()(p.y) << 1);
 	}
 };
-//class wxPointKey : public wxPoint
-//{
-//private:
-	//int id;
-
-//public:
-	//wxPointKey(int vid=0, int vx=0, int vy=0)
-	//{
-		//id = vid;
-		//x = vx;
-		//y = vy;
-	//}
-
-	//bool operator <(const wxPointKey& p) const
-	//{
-		//return id < p.id;
-	//}
-//};
 
 typedef std::unordered_map<wxPoint, Cell, wxPointHash> CellContainer;
-//typedef std::map<wxPointKey, Cell> CellContainer;
 
 class Data
 {
@@ -207,7 +202,7 @@ public:
 		return nullptr;
 	}
 
-	const Texture& add_texture_floor(wxPoint p, const wxFileName& path)
+	const Texture& add_texture(wxPoint p, const wxFileName& path, TextureType tt=TT_FLOOR)
 	{
 		bool texture_exists = false;
 		int texid = textures.size();
@@ -224,26 +219,26 @@ public:
 		}
 		if(!texture_exists)
 			textures[texid] = Texture(texid, path, m_cell_size);
-		cells[p].texture_floor = texid;
+		switch(tt)
+		{
+			case TT_WALL:
+				cells[p].texture_wall = texid;
+			case TT_ROOF:
+				cells[p].texture_roof = texid;
+			default:
+				cells[p].texture_floor = texid;
+		}
 		return textures[texid];
 	}
 
-	const Texture& get_texture_floor(wxPoint p)
+	const wxBitmap& get_texture_bitmap(int id)
 	{
-		int texid = cells[p].texture_floor;
-		if(texid < 0)
-			return m_empty_texture;
-		return textures[texid];
+		return textures[id].bitmap;
 	}
 
-	void set_texture_floor(wxPoint p)//clear texture
+	const wxBitmap& get_visible_texture_bitmap(Cell& cell)
 	{
-		cells[p].texture_floor = -1;
-	}
-
-	void set_texture_floor(wxPoint p, const Texture& tex)
-	{
-		cells[p].texture_floor = tex.id;
+		return textures[cell.get_visible_texture()].bitmap;
 	}
 
 	const Texture& get_texture(int id)
@@ -251,9 +246,47 @@ public:
 		return textures[id];
 	}
 
-	const wxBitmap& get_texture_bitmap(int id)
+	const Texture& get_texture(wxPoint p, TextureType tt=TT_FLOOR)
 	{
-		return textures[id].bitmap;
+		int texid = -1;
+		switch(tt)
+		{
+			case TT_WALL:
+				texid = cells[p].texture_wall;
+			case TT_ROOF:
+				texid = cells[p].texture_roof;
+			default:
+				texid = cells[p].texture_floor;
+		}
+		if(texid < 0)
+			return m_empty_texture;
+		return textures[texid];
+	}
+
+	void set_texture(wxPoint p, TextureType tt=TT_FLOOR)//clear texture
+	{
+		switch(tt)
+		{
+			case TT_WALL:
+				cells[p].texture_wall = -1;
+			case TT_ROOF:
+				cells[p].texture_roof = -1;
+			default:
+				cells[p].texture_floor = -1;
+		}
+	}
+
+	void set_texture(wxPoint p, const Texture& tex, TextureType tt=TT_FLOOR)
+	{
+		switch(tt)
+		{
+			case TT_WALL:
+				cells[p].texture_wall = tex.id;
+			case TT_ROOF:
+				cells[p].texture_roof = tex.id;
+			default:
+				cells[p].texture_floor = tex.id;
+		}
 	}
 
 	wxString ToString(const wxString& indentation = "")
@@ -278,7 +311,7 @@ public:
 			bool first_line = true;
 			for(const auto& [k, v] : cells)
 			{
-				if(v.side != m_cell_side || v.texture_floor > -1 || v.texture_ceiling > -1 || v.texture_wall > -1)
+				if(v.side != m_cell_side || v.texture_floor > -1 || v.texture_roof > -1 || v.texture_wall > -1)
 				{
 					if(first_line)
 					{
@@ -292,12 +325,12 @@ public:
 						content.Append(indentation+"\t\t\t\"side\":"<<v.side<<",\n");
 					if(v.texture_floor > -1)
 						content.Append(indentation+"\t\t\t\"floor\":"<<v.texture_floor<<",\n");
-					if(v.texture_ceiling > -1)
-						content.Append(indentation+"\t\t\t\"ceiling\":"<<v.texture_ceiling<<",\n");
+					if(v.texture_roof > -1)
+						content.Append(indentation+"\t\t\t\"roof\":"<<v.texture_roof<<",\n");
 					if(v.texture_wall > -1)
 						content.Append(indentation+"\t\t\t\"wall\":"<<v.texture_wall<<",\n");
-					if(v.ctp != CT_WALL)
-						content.Append(indentation+"\t\t\t\"type\":"<<v.ctp<<",\n");
+					if(v.wtp != WT_DEFAULT)
+						content.Append(indentation+"\t\t\t\"type\":"<<v.wtp<<",\n");
 					content.Append(indentation+"\t\t}");
 				}
 			}
@@ -318,5 +351,3 @@ public:
 		return filename;
 	}
 };
-
-//wxIMPLEMENT_DYNAMIC_CLASS(Data, wxObject);

@@ -10,10 +10,10 @@
 
 enum EraserType
 {
-	NONE = 0,
-	FLOOR,
-	WALL,
-	CEILING
+	ET_NONE = 0,
+	ET_FLOOR,
+	ET_WALL,
+	ET_ROOF
 };
 
 enum
@@ -25,6 +25,10 @@ enum
 	Menu_Popup_Set_Default_Cursor,
 	Menu_Popup_Open_Floor,
 	Menu_Popup_Set_Floor_Eraser,
+	Menu_Popup_Open_Wall,
+	Menu_Popup_Set_Wall_Eraser,
+	Menu_Popup_Open_Roof,
+	Menu_Popup_Set_Roof_Eraser,
 
 	Menu_PopupChoice
 };
@@ -104,8 +108,9 @@ public:
 
 	private:
 		bool m_draw_coords = false;
-		EraserType m_eraser = EraserType::NONE;
+		EraserType m_eraser = ET_NONE;
 		bool m_togle_mouse = false;
+		TextureType m_current_texture_type = TT_FLOOR;
 		Texture m_current_texture = Texture();
 		Data m_data;
 		wxTreeItemId m_level_tree_item;
@@ -157,9 +162,10 @@ public:
 			{
 				auto point = iter->first;
 				auto cell = iter->second;
-				if(cell.texture_floor > -1)
+				int tex_id = cell.get_visible_texture();
+				if(tex_id > -1)
 				{
-					wxBitmap bitmap = m_data.get_texture_bitmap(cell.texture_floor);
+					wxBitmap bitmap = m_data.get_texture_bitmap(tex_id);
 					if(bitmap.IsOk())
 						dc.DrawBitmap(bitmap, point);
 				}
@@ -226,7 +232,14 @@ public:
 			else
 			{
 				menu.Append(Menu_Popup_Open_Floor, "📂"+_("Open floor image"));
-				menu.Append(Menu_Popup_Set_Floor_Eraser, "🧹"+_("Eraser"));
+				menu.Append(Menu_Popup_Set_Floor_Eraser, "🧹"+_("Floor eraser"));
+				menu.AppendSeparator();
+				menu.Append(Menu_Popup_Open_Wall, "📂"+_("Open wall image"));
+				menu.Append(Menu_Popup_Set_Wall_Eraser, "🧹"+_("Wall eraser"));
+				menu.AppendSeparator();
+				menu.Append(Menu_Popup_Open_Roof, "📂"+_("Open roof image"));
+				menu.Append(Menu_Popup_Set_Roof_Eraser, "🧹"+_("Roof eraser"));
+				menu.AppendSeparator();
 				menu.Append(Menu_Popup_Set_Default_Cursor, "↖"+_("Empty cursor"));
 				PopupMenu(&menu, pos);
 			}
@@ -282,13 +295,17 @@ public:
 		void store_currents()
 		{
 			if(m_current_texture.IsOk())
-				m_data.set_texture_floor(m_current_cell_position, m_current_texture);
+				m_data.set_texture(m_current_cell_position, m_current_texture, m_current_texture_type);
 			else
 			{
-				switch (m_eraser)
+				switch(m_eraser)
 				{
-					case EraserType::FLOOR:
-						m_data.set_texture_floor(m_current_cell_position);
+					case ET_FLOOR:
+						m_data.set_texture(m_current_cell_position, TT_FLOOR);
+					case ET_WALL:
+						m_data.set_texture(m_current_cell_position, TT_WALL);
+					case ET_ROOF:
+						m_data.set_texture(m_current_cell_position, TT_ROOF);
 				}
 			}
 		}
@@ -318,7 +335,7 @@ public:
 			if(!m_prgrmgr)
 				wxLogError(wxT("wxPropertyGridManager error"));
 			else
-				refresh_pgproperty(m_data.get_texture_floor(m_current_cell_position));
+				refresh_pgproperty(m_data.get_texture(m_current_cell_position));
 
 			wxTreeItemId id = m_data.cell_tree_item(m_current_cell_position);
 			if(id)
@@ -331,7 +348,7 @@ public:
 			m_togle_mouse = false;
 		}
 
-		void OnOpenFloorFile(wxCommandEvent& WXUNUSED(event))
+		void OpenTexureFile(TextureType tt=TT_FLOOR)
 		{
 			wxString dir_imgs("assets/images");
 			wxFileDialog dialog(this, _("Please choose floor image"), dir_imgs, wxEmptyString, "*.jpg;*.png;*.*", wxFD_OPEN|wxFD_FILE_MUST_EXIST|wxFD_PREVIEW);
@@ -348,13 +365,51 @@ public:
 						return;
 					}
 				}
-				m_current_texture = m_data.add_texture_floor(m_current_cell_position, wxFileName(path_result));
+				m_current_texture = m_data.add_texture(m_current_cell_position, wxFileName(path_result), m_current_texture_type);
 				if(m_current_texture.IsOk())
 					SetCursor(wxCursor(m_current_texture.thumbnail));
 				refresh_pgproperty(m_current_texture);
-				m_eraser = EraserType::NONE;
+				m_eraser = ET_NONE;
 				wxLogMessage(path_result);
 			}
+		}
+
+		void SetEraser(EraserType et=ET_FLOOR)
+		{
+			if(m_current_texture.id > -1)
+				m_current_texture = Texture();
+			SetCursor(wxCURSOR_NO_ENTRY);
+			m_eraser = et;
+		}
+
+		void OnOpenFloorFile(wxCommandEvent& WXUNUSED(event))
+		{
+			OpenTexureFile();
+		}
+
+		void OnOpenWallFile(wxCommandEvent& WXUNUSED(event))
+		{
+			OpenTexureFile(TT_WALL);
+		}
+
+		void OnOpenRoofFile(wxCommandEvent& WXUNUSED(event))
+		{
+			OpenTexureFile(TT_ROOF);
+		}
+
+		void OnSetFloorEraser(wxCommandEvent& WXUNUSED(event))
+		{
+			SetEraser();
+		}
+
+		void OnSetWallEraser(wxCommandEvent& WXUNUSED(event))
+		{
+			SetEraser(ET_WALL);
+		}
+
+		void OnSetRoofEraser(wxCommandEvent& WXUNUSED(event))
+		{
+			SetEraser(ET_ROOF);
 		}
 
 		void OnSetDefaultCursor(wxCommandEvent& WXUNUSED(event))
@@ -362,15 +417,7 @@ public:
 			if(m_current_texture.id > -1)
 				m_current_texture = Texture();
 			SetCursor(*wxSTANDARD_CURSOR);
-			m_eraser = EraserType::NONE;
-		}
-
-		void OnSetFloorEraser(wxCommandEvent& WXUNUSED(event))
-		{
-			if(m_current_texture.id > -1)
-				m_current_texture = Texture();
-			SetCursor(wxCURSOR_NO_ENTRY);
-			m_eraser = EraserType::FLOOR;
+			m_eraser = ET_NONE;
 		}
 
 		wxDECLARE_EVENT_TABLE();
@@ -393,4 +440,8 @@ wxBEGIN_EVENT_TABLE(MapBoardCtrl, wxScrolledWindow)
 	EVT_MENU(Menu_Popup_Set_Default_Cursor, MapBoardCtrl::OnSetDefaultCursor)
 	EVT_MENU(Menu_Popup_Open_Floor, MapBoardCtrl::OnOpenFloorFile)
 	EVT_MENU(Menu_Popup_Set_Floor_Eraser, MapBoardCtrl::OnSetFloorEraser)
+	EVT_MENU(Menu_Popup_Open_Wall, MapBoardCtrl::OnOpenWallFile)
+	EVT_MENU(Menu_Popup_Set_Wall_Eraser, MapBoardCtrl::OnSetWallEraser)
+	EVT_MENU(Menu_Popup_Open_Roof, MapBoardCtrl::OnOpenRoofFile)
+	EVT_MENU(Menu_Popup_Set_Roof_Eraser, MapBoardCtrl::OnSetRoofEraser)
 wxEND_EVENT_TABLE()
