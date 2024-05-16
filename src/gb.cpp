@@ -247,11 +247,21 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     m_propGridManager->SetExtraStyle(wxPG_EX_MODE_BUTTONS | wxPG_EX_NATIVE_DOUBLE_BUFFERING | wxPG_EX_MULTIPLE_SELECTION);
     wxPropertyGridPage* page = m_propGridManager->AddPage("Common");
     page->Append(new wxStringProperty("coords", wxPG_LABEL, ""));
-    wxPGProperty* prop = page->Append(new wxPropertyCategory("Floor"));
-    page->SetPropertyCell(prop, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
-    page->Append(new wxImageFileProperty("path", wxPG_LABEL, ""));
+    /////////////////////////////////
+    wxPGProperty* prop0 = page->Append(new wxPropertyCategory("Floor"));
+    page->SetPropertyCell(prop0, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
+    page->Append(new wxImageFileProperty("path_floor", wxPG_LABEL, ""));
+    /////////////////////////////////
+    wxPGProperty* prop1 = page->Append(new wxPropertyCategory("Wall"));
+    page->SetPropertyCell(prop1, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
+    page->Append(new wxImageFileProperty("path_wall", wxPG_LABEL, ""));
+    /////////////////////////////////
+    wxPGProperty* prop2 = page->Append(new wxPropertyCategory("Roof"));
+    page->SetPropertyCell(prop2, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
+    page->Append(new wxImageFileProperty("path_roof", wxPG_LABEL, ""));
+    /////////////////////////////////
     m_mgr.AddPane(m_propGridManager, wxAuiPaneInfo().Name("property-cell").BestSize(200,200).Right().PaneBorder(false).Caption("properties").Dock().CloseButton(true));
-
+    
     m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().Name("notebook").CenterPane().PaneBorder(false).Caption("notebook").Dock().CloseButton(true).MaximizeButton(true));
 
     // add the toolbars to the manager

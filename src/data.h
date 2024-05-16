@@ -223,10 +223,15 @@ public:
 		{
 			case TT_WALL:
 				cells[p].texture_wall = texid;
+				break;
 			case TT_ROOF:
 				cells[p].texture_roof = texid;
-			default:
+				break;
+			case TT_FLOOR:
 				cells[p].texture_floor = texid;
+				break;
+			default:
+				break;
 		}
 		return textures[texid];
 	}
@@ -253,26 +258,36 @@ public:
 		{
 			case TT_WALL:
 				texid = cells[p].texture_wall;
+				break;
 			case TT_ROOF:
 				texid = cells[p].texture_roof;
-			default:
+				break;
+			case TT_FLOOR:
 				texid = cells[p].texture_floor;
+				break;
+			default:
+				break;
 		}
 		if(texid < 0)
 			return m_empty_texture;
 		return textures[texid];
 	}
 
-	void set_texture(wxPoint p, TextureType tt=TT_FLOOR)//clear texture
+	void clear_texture(wxPoint p, TextureType tt=TT_FLOOR)
 	{
 		switch(tt)
 		{
 			case TT_WALL:
 				cells[p].texture_wall = -1;
+				break;
 			case TT_ROOF:
 				cells[p].texture_roof = -1;
-			default:
+				break;
+			case TT_FLOOR:
 				cells[p].texture_floor = -1;
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -282,10 +297,15 @@ public:
 		{
 			case TT_WALL:
 				cells[p].texture_wall = tex.id;
+				break;
 			case TT_ROOF:
 				cells[p].texture_roof = tex.id;
-			default:
+				break;
+			case TT_FLOOR:
 				cells[p].texture_floor = tex.id;
+				break;
+			default:
+				break;
 		}
 	}
 

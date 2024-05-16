@@ -264,25 +264,30 @@ public:
 		{ ShowContextMenu(event.GetPosition()); }
 #endif
 
-		void refresh_pgproperty(const Texture& texture)
+		void set_pgprop_tex(wxPGProperty* pgprop, const Texture& texture)
 		{
 			//std::cout << "texture " << texture.id << std::endl;
-			wxPGProperty* path_floor = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path");
-			if(!path_floor)
+			if(!pgprop)
 				wxLogError("wxPGProperty path");
 			else
 			{
 				if(texture.id > -1)
 				{
 					//wxLogMessage("🩸"+texture.path.GetFullPath()+"🩸");
-					//if(!path_floor->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue|wxPGPropValFormatFlags::ReportError))
+					//if(!pgprop->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue|wxPGPropValFormatFlags::ReportError))
 						//wxLogError("🩸wxPGProperty.SetValueFromString 🧵" + texture.path.GetFullPath()+"🧵");
-					path_floor->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue);
+					pgprop->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue);
 				}
 				else
-					path_floor->SetValueFromString("", wxPGPropValFormatFlags::FullValue);
+					pgprop->SetValueFromString("", wxPGPropValFormatFlags::FullValue);
 			}
+		}
 
+		void refresh_pgproperty(const Cell& cell)
+		{
+			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_floor"), m_data.get_texture(cell.texture_floor));
+			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_wall"), m_data.get_texture(cell.texture_wall));
+			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_roof"), m_data.get_texture(cell.texture_roof));
 			if(m_current_cell_position.x > -1 && m_current_cell_position.y > -1)
 			{
 				wxPGProperty* coords = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("coords");
@@ -301,11 +306,16 @@ public:
 				switch(m_eraser)
 				{
 					case ET_FLOOR:
-						m_data.set_texture(m_current_cell_position, TT_FLOOR);
+						m_data.clear_texture(m_current_cell_position, TT_FLOOR);
+						break;
 					case ET_WALL:
-						m_data.set_texture(m_current_cell_position, TT_WALL);
+						m_data.clear_texture(m_current_cell_position, TT_WALL);
+						break;
 					case ET_ROOF:
-						m_data.set_texture(m_current_cell_position, TT_ROOF);
+						m_data.clear_texture(m_current_cell_position, TT_ROOF);
+						break;
+					default:
+						break;
 				}
 			}
 		}
@@ -335,7 +345,8 @@ public:
 			if(!m_prgrmgr)
 				wxLogError(wxT("wxPropertyGridManager error"));
 			else
-				refresh_pgproperty(m_data.get_texture(m_current_cell_position));
+				refresh_pgproperty(m_data.cell(m_current_cell_position));
+				//refresh_pgproperty(m_data.get_texture(m_current_cell_position));
 
 			wxTreeItemId id = m_data.cell_tree_item(m_current_cell_position);
 			if(id)
@@ -369,7 +380,8 @@ public:
 				m_current_texture = m_data.add_texture(m_current_cell_position, wxFileName(path_result), m_current_texture_type);
 				if(m_current_texture.IsOk())
 					SetCursor(wxCursor(m_current_texture.thumbnail));
-				refresh_pgproperty(m_current_texture);
+				//refresh_pgproperty(m_current_texture);
+				refresh_pgproperty(m_data.cell(m_current_cell_position));
 				m_eraser = ET_NONE;
 				wxLogMessage(path_result);
 			}
