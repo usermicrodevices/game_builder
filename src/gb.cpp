@@ -740,7 +740,6 @@ void GBFrame::OnTabAlignment(wxCommandEvent &evt)
         if (pane.window->IsKindOf(CLASSINFO(wxAuiNotebook)))
         {
             wxAuiNotebook* nb = (wxAuiNotebook*)pane.window;
-
             long style = nb->GetWindowStyleFlag();
             style &= ~(wxAUI_NB_TOP | wxAUI_NB_BOTTOM);
             if (evt.GetId() == ID_NotebookAlignTop)
@@ -748,9 +747,103 @@ void GBFrame::OnTabAlignment(wxCommandEvent &evt)
             else if (evt.GetId() == ID_NotebookAlignBottom)
                 style |= wxAUI_NB_BOTTOM;
             nb->SetWindowStyleFlag(style);
-
             nb->Refresh();
         }
+    }
+}
+
+void GBFrame::ParseJsonLevels(wxTextFile& f)
+{
+    int id_level = -1;
+    int id_texture = -1;
+    wxString idcell("");
+    wxString tag("levels");
+    wxRegEx r_id_int("([[:digit:]])(:)");
+    wxString str = f.GetNextLine();
+    while(!tag.empty())
+    {
+        str.Replace("\t", "");
+        str.Replace("\n", "");
+        if(str != "{" && str != "}" && str != "},")
+        {
+            if(r_id_int.Matches(str))
+            {
+                if(tag == "levels")
+                {
+                    id_level = wxAtoi(r_id_int.GetMatch(str, 1));
+                    wxLogMessage(wxString("🔝🆔 ") << id_level);
+                }
+                else
+                {
+                    id_texture = wxAtoi(r_id_int.GetMatch(str, 1));
+                    wxLogMessage(wxString("🎨🆔 ") << id_texture);
+                }
+            }
+            else if(str.Find("textures") != wxNOT_FOUND)
+            {
+                tag = "textures";
+                wxLogMessage("🎨TEXTURES🎨");
+            }
+            else if(str.Find("cells") != wxNOT_FOUND)
+            {
+                tag = "cells";
+                wxLogMessage("🛟CELLS🛟");
+            }
+            else
+                wxLogMessage(str);
+        }
+        else if(str == "}")
+        {
+            if(tag != "levels")
+                tag = "levels";
+            if(id_texture > -1)
+                id_texture = -1;
+            else if(id_level > -1)
+                id_level = -1;
+            else
+            {
+                //wxLogMessage(str << " TAG EMPTY");
+                tag = "";
+            }
+        }
+        str = f.GetNextLine();
+    }
+}
+
+void GBFrame::ParseJsonFile(wxTextFile& f)
+{
+    wxString str = f.GetFirstLine();
+    while(!f.Eof())
+    {
+        str.Replace("\t", "");
+        str.Replace("\n", "");
+        if(str == "{")
+            wxLogMessage("🎬");
+        else if(str == "}" || str == "},")
+            wxLogMessage("🛑");
+        else if(str.Find("levels") != wxNOT_FOUND)
+        {
+            wxLogMessage("🎒LEVELS🎒");
+            ParseJsonLevels(f);
+        }
+        else
+            wxLogMessage(str);
+        str = f.GetNextLine();
+    }
+}
+
+void GBFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
+{
+    wxString wildCard = "JSON file (*.json)|*.json;*.JSON";
+    wxFileDialog dlg(this, "Open JSON project", wxEmptyString, wxEmptyString, wildCard, wxFD_OPEN);
+    if(dlg.ShowModal() == wxID_OK)
+    {
+        wxLogMessage(dlg.GetPath());
+        wxTextFile f(dlg.GetPath());
+        if(f.Open())
+            ParseJsonFile(f);
+        else
+            wxLogWarning("JSON file not opened");
     }
 }
 
@@ -767,12 +860,15 @@ void GBFrame::OnSave(wxCommandEvent& WXUNUSED(event))
             bool first_line = true;
 			for(const auto& [k, map_board] : levels)
             {
-                if(first_line)
-                    first_line = false;
-                else
-                    f.Write(",\n");
-                f.Write(wxString("\t\t")<<k.Mid(6)<<":\n");
-                f.Write(map_board->LevelToString("\t\t"));
+                if(map_board->HasData())
+                {
+                    if(first_line)
+                        first_line = false;
+                    else
+                        f.Write(",\n");
+                    f.Write(wxString("\t\t")<<k.Mid(6)<<":\n");
+                    f.Write(map_board->LevelToString("\t\t"));
+                }
             }
             f.Write("\n\t}\n}");
             f.Close();
@@ -788,7 +884,10 @@ void GBFrame::OnSaveLevel(wxCommandEvent& WXUNUSED(event))
     {
         //wxWindow* current_page = m_notebook_ctrl->GetCurrentPage();
         MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
-        map_board->LevelToFile(dlg.GetPath());
+        if(map_board->HasData())
+            map_board->LevelToFile(dlg.GetPath());
+        else
+            wxLogWarning("CURRENT MAP EMPTY");
     }
 }
 

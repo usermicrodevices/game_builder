@@ -31,7 +31,6 @@ RPATH_FLAG = -Wl,-rpath,$(wx_top_builddir)/lib
 
 ### Variables: ###
 
-DESTDIR = 
 WX_RELEASE = 3.3
 WX_VERSION = $(WX_RELEASE).0
 LIBDIRNAME = $(wx_top_builddir)/lib

@@ -155,6 +155,11 @@ public:
 		cells.clear();
 	}
 
+	bool has_data()
+	{
+		return count_textures() && count_cells();
+	}
+
 	int cell_side_size()
 	{
 		return m_cell_side;

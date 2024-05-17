@@ -73,6 +73,11 @@ public:
 			}
 		}
 
+		bool HasData()
+		{
+			return m_data.has_data();
+		}
+
 		void ToggleDrawCoords()
 		{
 			m_draw_coords = !m_draw_coords;
@@ -234,11 +239,11 @@ public:
 				menu.Append(Menu_Popup_Open_Floor, "📂"+_("Open floor image"));
 				menu.Append(Menu_Popup_Set_Floor_Eraser, "🧹"+_("Floor eraser"));
 				menu.AppendSeparator();
-				menu.Append(Menu_Popup_Open_Wall, "📂"+_("Open wall image"));
-				menu.Append(Menu_Popup_Set_Wall_Eraser, "🧹"+_("Wall eraser"));
+				menu.Append(Menu_Popup_Open_Wall, "📂🧱"+_("Open wall image"));
+				menu.Append(Menu_Popup_Set_Wall_Eraser, "🪚"+_("Wall eraser"));
 				menu.AppendSeparator();
-				menu.Append(Menu_Popup_Open_Roof, "📂"+_("Open roof image"));
-				menu.Append(Menu_Popup_Set_Roof_Eraser, "🧹"+_("Roof eraser"));
+				menu.Append(Menu_Popup_Open_Roof, "📂⛺️"+_("Open roof image"));
+				menu.Append(Menu_Popup_Set_Roof_Eraser, "🪓"+_("Roof eraser"));
 				menu.AppendSeparator();
 				menu.Append(Menu_Popup_Set_Default_Cursor, "↖"+_("Empty cursor"));
 				PopupMenu(&menu, pos);

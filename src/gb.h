@@ -21,7 +21,7 @@
 #endif
 
 #include <wx/debug.h>
-
+#include <wx/regex.h>
 #include "wx/app.h"
 #include "wx/grid.h"
 #include "wx/treectrl.h"
@@ -60,6 +60,8 @@
 #include "map_board.h"
 
 #include <map>
+#include <string>
+#include <regex>
 
 // Under Linux we demonstrate loading an existing message catalog using
 // coreutils package (which is always installed) as an example.
@@ -88,6 +90,7 @@ wxIMPLEMENT_APP(GBApp);
 
 class GBFrame : public wxFrame
 {
+
 	enum
 	{
 		ID_AddLevel = wxID_HIGHEST,
@@ -202,10 +205,15 @@ private:
 	//void OnNotebookDeleteTab(wxCommandEvent& evt);
 	//void OnPaneClose(wxAuiManagerEvent& evt);
 
+	void ParseJsonLevels(wxTextFile& f);
+	void ParseJsonFile(wxTextFile& f);
+	void OnOpen(wxCommandEvent& evt);
+
 	wxDECLARE_EVENT_TABLE();
 };
 
 wxBEGIN_EVENT_TABLE(GBFrame, wxFrame)
+EVT_MENU(wxID_OPEN, GBFrame::OnOpen)
 EVT_MENU(wxID_SAVE, GBFrame::OnSave)
 EVT_MENU(wxID_FILE, GBFrame::OnSaveLevel)
 EVT_MENU(wxID_EXIT, GBFrame::OnExit)
