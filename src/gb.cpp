@@ -756,9 +756,15 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
 {
     int id_level = -1;
     int id_texture = -1;
+    int count_x = 0;
+    int count_y = 0;
+    int default_side_size = 0;
     wxString idcell("");
     wxString tag("levels");
-    wxRegEx r_id_int("([[:digit:]])(:)");
+    wxRegEx r_id_int("(?<digit>\\d+)(:)");
+    wxRegEx r_count_x("\"count_x\":(?<digit>\\d+)(,)");
+    wxRegEx r_count_y("\"count_y\":(?<digit>\\d+)(,)");
+    wxRegEx r_default_side_size("\"default_side_size\":(?<digit>\\d+)(,)");
     wxString str = f.GetNextLine();
     while(!tag.empty())
     {
@@ -770,6 +776,9 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
             {
                 if(tag == "levels")
                 {
+                    count_x = 0;
+                    count_y = 0;
+                    default_side_size = 0;
                     id_level = wxAtoi(r_id_int.GetMatch(str, 1));
                     wxLogMessage(wxString("🔝🆔 ") << id_level);
                 }
@@ -778,6 +787,24 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                     id_texture = wxAtoi(r_id_int.GetMatch(str, 1));
                     wxLogMessage(wxString("🎨🆔 ") << id_texture);
                 }
+            }
+            else if(r_count_x.Matches(str))
+            {
+                tag = "count_x";
+                count_x = wxAtoi(r_count_x.GetMatch(str, 1));
+                wxLogMessage(wxString("🔝🅧") << count_x);
+            }
+            else if(r_count_y.Matches(str))
+            {
+                tag = "count_y";
+                count_y = wxAtoi(r_count_y.GetMatch(str, 1));
+                wxLogMessage(wxString("🔝🅨") << count_y);
+            }
+            else if(r_default_side_size.Matches(str))
+            {
+                tag = "default_side_size";
+                default_side_size = wxAtoi(r_default_side_size.GetMatch(str, 1));
+                wxLogMessage(wxString("🔝🅩") << default_side_size);
             }
             else if(str.Find("textures") != wxNOT_FOUND)
             {
