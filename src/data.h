@@ -346,6 +346,7 @@ public:
 					else
 						content.Append(",\n");
 					content.Append(indentation+"\t\t\""<<k.x<<"-"<<k.y<<"\":\n"+indentation+"\t\t{\n");
+					content.Append(indentation+"\t\t\t\"id\":"<<v.id<<",\n");
 					if(v.side != m_cell_side)
 						content.Append(indentation+"\t\t\t\"side\":"<<v.side<<",\n");
 					if(v.texture_floor > -1)

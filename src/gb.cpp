@@ -759,12 +759,23 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     int count_x = 0;
     int count_y = 0;
     int default_side_size = 0;
-    wxString idcell("");
+    size_t id_cell = -1;
+    int id_floor = -1;
+    int id_wall = -1;
+    int id_roof = -1;
+    wxString tex_path("");
     wxString tag("levels");
-    wxRegEx r_id_int("(?<digit>\\d+)(:)");
-    wxRegEx r_count_x("\"count_x\":(?<digit>\\d+)(,)");
-    wxRegEx r_count_y("\"count_y\":(?<digit>\\d+)(,)");
-    wxRegEx r_default_side_size("\"default_side_size\":(?<digit>\\d+)(,)");
+    wxPoint cell_point(0, 0);
+    wxRegEx r_id_int("(\\d+)(:)");
+    wxRegEx r_count_x("\"count_x\":(\\d+)(,)");
+    wxRegEx r_count_y("\"count_y\":(\\d+)(,)");
+    wxRegEx r_default_side_size("\"default_side_size\":(\\d+)(,)");
+    wxRegEx r_path("\"path\":\"(.*?)\"");
+    wxRegEx r_id_coords("\"(\\d+)-(\\d+)\"(:)");
+    wxRegEx r_id_cell("\"id\":(\\d+)(,)");
+    wxRegEx r_id_floor("\"floor\":(\\d+)(,)");
+    wxRegEx r_id_wall("\"wall\":(\\d+)(,)");
+    wxRegEx r_id_roof("\"roof\":(\\d+)(,)");
     wxString str = f.GetNextLine();
     while(!tag.empty())
     {
@@ -772,13 +783,47 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
         str.Replace("\n", "");
         if(str != "{" && str != "}" && str != "},")
         {
-            if(r_id_int.Matches(str))
+            if(tag == "cells")
+            {
+                if(r_id_coords.Matches(str))
+                {
+                    cell_point.x = wxAtoi(r_id_coords.GetMatch(str, 1));
+                    cell_point.y = wxAtoi(r_id_coords.GetMatch(str, 2));
+                    wxLogMessage(wxString("🅧") << cell_point.x << "; 🅨" << cell_point.y);
+                }
+                else if(r_id_cell.Matches(str))
+                {
+                    tag = "id";
+                    id_cell = wxAtoi(r_id_cell.GetMatch(str, 1));
+                    wxLogMessage(wxString("🆔") << id_cell);
+                }
+                else if(r_id_floor.Matches(str))
+                {
+                    tag = "floor";
+                    id_floor = wxAtoi(r_id_floor.GetMatch(str, 1));
+                    wxLogMessage(wxString("🆔🖼") << id_floor);
+                }
+                else if(r_id_wall.Matches(str))
+                {
+                    tag = "wall";
+                    id_wall = wxAtoi(r_id_wall.GetMatch(str, 1));
+                    wxLogMessage(wxString("🆔🧱") << id_wall);
+                }
+                else if(r_id_roof.Matches(str))
+                {
+                    tag = "roof";
+                    id_roof = wxAtoi(r_id_roof.GetMatch(str, 1));
+                    wxLogMessage(wxString("🆔🏗") << id_roof);
+                }
+            }
+            else if(r_id_int.Matches(str))
             {
                 if(tag == "levels")
                 {
                     count_x = 0;
                     count_y = 0;
                     default_side_size = 0;
+                    tex_path = "";
                     id_level = wxAtoi(r_id_int.GetMatch(str, 1));
                     wxLogMessage(wxString("🔝🆔 ") << id_level);
                 }
@@ -810,6 +855,12 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
             {
                 tag = "textures";
                 wxLogMessage("🎨TEXTURES🎨");
+            }
+            else if(r_path.Matches(str))
+            {
+                tag = "path";
+                tex_path = r_path.GetMatch(str, 1);
+                wxLogMessage(wxString("🎨🗂") << tex_path);
             }
             else if(str.Find("cells") != wxNOT_FOUND)
             {
