@@ -793,25 +793,25 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                 }
                 else if(r_id_cell.Matches(str))
                 {
-                    tag = "id";
+                    //tag = "id";
                     id_cell = wxAtoi(r_id_cell.GetMatch(str, 1));
                     wxLogMessage(wxString("🆔") << id_cell);
                 }
                 else if(r_id_floor.Matches(str))
                 {
-                    tag = "floor";
+                    //tag = "floor";
                     id_floor = wxAtoi(r_id_floor.GetMatch(str, 1));
                     wxLogMessage(wxString("🆔🖼") << id_floor);
                 }
                 else if(r_id_wall.Matches(str))
                 {
-                    tag = "wall";
+                    //tag = "wall";
                     id_wall = wxAtoi(r_id_wall.GetMatch(str, 1));
                     wxLogMessage(wxString("🆔🧱") << id_wall);
                 }
                 else if(r_id_roof.Matches(str))
                 {
-                    tag = "roof";
+                    //tag = "roof";
                     id_roof = wxAtoi(r_id_roof.GetMatch(str, 1));
                     wxLogMessage(wxString("🆔🏗") << id_roof);
                 }

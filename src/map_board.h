@@ -47,18 +47,42 @@ public:
 			m_mgr = mgr;
 			m_tree = tree;
 			m_prgrmgr = prop_grid_mgr;
-			m_level_tree_item = tree->AppendItem(m_tree->GetRootItem(), "Level 0", 0);
-			m_data = Data(m_tree, m_level_tree_item);
-			wxSize virtual_size = m_data.virtual_size();
-			int cell_side = m_data.cell_side_size();
-			SetVirtualSize(virtual_size);
-			SetScrollbars(cell_side, cell_side, virtual_size.x/cell_side, virtual_size.y/cell_side);
+			FillData();
 			//FitInside();
 			//SetTargetWindow(parent);
-			LogMessage(wxString::Format("cells count %d", m_data.count_cells()));
-			LogMessage(wxString::Format("virtual_size %dx%d", virtual_size.x, virtual_size.y));
-			//std::cout << "textures count " << m_data.count_textures() << std::endl;
-			//std::cout << "cells count " << m_data.count_cells() << std::endl;
+			//LogMessage(wxString::Format("cells count %d", m_data.count_cells()));
+			//LogMessage(wxString::Format("virtual_size %dx%d", m_virtual_size.x, m_virtual_size.y));
+		}
+
+		void FillData(Data* d=nullptr)
+		{
+			m_level_tree_item = m_tree->AppendItem(m_tree->GetRootItem(), "Level 0", 0);
+			if(d)
+				m_data = *d;
+			else
+			{
+				int cell_side_size=50;
+				int count_x=100;
+				int count_y=100;
+				m_data = Data(cell_side_size, count_x, count_y);
+				int idx = 0;
+				int x = 0, y = 0;
+				for(int i=0; i<count_x; ++i)
+				{
+					for(int j=0; j<count_y; ++j)
+					{
+						x = i * cell_side_size;
+						y = j * cell_side_size;
+						m_data.append_cell(x, y, idx, cell_side_size);
+						m_tree_items.Add(m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", x, y), 1));
+						++idx;
+					}
+				}
+			}
+			int cell_side = m_data.cell_side_size();
+			m_virtual_size = wxSize(cell_side*m_data.count_cell_x(), cell_side*m_data.count_cell_y());
+			SetVirtualSize(m_virtual_size);
+			SetScrollbars(cell_side, cell_side, m_virtual_size.x/cell_side, m_virtual_size.y/cell_side);
 		}
 
 		void LogMessage(const wxString &value)
@@ -118,6 +142,8 @@ public:
 		TextureType m_current_texture_type = TT_FLOOR;
 		Texture m_current_texture = Texture();
 		Data m_data;
+		wxSize m_virtual_size;
+		wxArrayTreeItemIds m_tree_items;
 		wxTreeItemId m_level_tree_item;
 		wxPoint m_current_mouse_position = wxDefaultPosition;
 		wxPoint m_current_cell_position = wxDefaultPosition;
@@ -130,9 +156,8 @@ public:
 		{
 			int cell_side = m_data.cell_side_size();
 			size_t cellSideInPx = FromDIP(cell_side);
-			wxSize virtual_size = m_data.virtual_size();
-			size_t mapxInPx = FromDIP(virtual_size.x);
-			size_t mapyInPx = FromDIP(virtual_size.y);
+			size_t mapxInPx = FromDIP(m_virtual_size.x);
+			size_t mapyInPx = FromDIP(m_virtual_size.y);
 
 			wxPaintDC dc(this);
 			DoPrepareDC(dc);
@@ -351,9 +376,8 @@ public:
 				wxLogError(wxT("wxPropertyGridManager error"));
 			else
 				refresh_pgproperty(m_data.cell(m_current_cell_position));
-				//refresh_pgproperty(m_data.get_texture(m_current_cell_position));
 
-			wxTreeItemId id = m_data.cell_tree_item(m_current_cell_position);
+			wxTreeItemId id = m_tree_items.IsEmpty() ? nullptr : m_tree_items.Item(m_data.cell(m_current_cell_position).id);
 			if(id)
 			{
 				m_tree->EnsureVisible(id);

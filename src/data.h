@@ -71,14 +71,14 @@ typedef std::unordered_map<int, Texture> TextureContainer;
 class Cell
 {
 public:
-	size_t id = -1;
+	int id = 0;
 	int side = 50;
 	int texture_floor = -1;
 	int texture_wall = -1;
 	int texture_roof = -1;
 	WallType wtp = WT_DEFAULT;
 
-	Cell(size_t idx=0, int side_size=50, int tex_floor=-1, int tex_roof=-1, int tex_wall=-1, WallType wt=WT_DEFAULT)
+	Cell(int idx=0, int side_size=50, int tex_floor=-1, int tex_roof=-1, int tex_wall=-1, WallType wt=WT_DEFAULT)
 	{
 		id = idx;
 		side = side_size;
@@ -119,40 +119,47 @@ private:
 	int m_cell_side;//cell side size in DIPs
 	int m_count_cell_x, m_count_cell_y;
 	wxSize m_cell_size;
-	wxSize m_virtual_size;
-	wxArrayTreeItemIds tree_items;
 	TextureContainer textures = {};
 	CellContainer cells = {};
 
 public:
-	Data(){m_empty_texture = Texture();};//wxDECLARE_DYNAMIC_CLASS
-	Data(wxTreeCtrl* tree, wxTreeItemId level_tree_item, int cell_side_size=50, int count_x=100, int count_y=100)
+	Data(int cell_side_size=50, int count_x=100, int count_y=100)
 	{
 		m_count_cell_x = count_x;
 		m_count_cell_y = count_y;
 		m_empty_texture = Texture();
 		m_cell_side = cell_side_size;
 		m_cell_size = wxSize(m_cell_side, m_cell_side);
-		size_t idx = 0;
-		int x = 0, y = 0;
-		for(int i=0; i<m_count_cell_x; ++i)
-		{
-			for(int j=0; j<m_count_cell_y; ++j)
-			{
-				x = i * cell_side_size;
-				y = j * cell_side_size;
-				cells[wxPoint(x, y)] = Cell(idx, cell_side_size);
-				tree_items.Add(tree->AppendItem(level_tree_item, wxString::Format("%d-%d", x, y), 1));
-				++idx;
-			}
-		}
-		m_virtual_size = wxSize(cell_side_size*m_count_cell_x, cell_side_size*m_count_cell_y);
-	};
+		//std::cout << "textures count " << count_textures() << std::endl;
+		//std::cout << "cells count " << count_cells() << std::endl;
+	}
 
 	~Data()
 	{
 		textures.clear();
 		cells.clear();
+	}
+
+	int count_cell_x()
+	{
+		return m_count_cell_x;
+	}
+
+	int count_cell_y()
+	{
+		return m_count_cell_y;
+	}
+
+	void append_cell(int x, int y, int idx, int cell_side_size=50)
+	{
+		cells[wxPoint(x, y)] = Cell(idx, cell_side_size);
+	}
+
+	int append_cell(int x, int y, int cell_side_size=50)
+	{
+		int idx = count_cells();
+		cells[wxPoint(x, y)] = Cell(idx, cell_side_size);
+		return idx;
 	}
 
 	bool has_data()
@@ -185,11 +192,6 @@ public:
 		return cells.end();
 	}
 
-	wxSize virtual_size()
-	{
-		return m_virtual_size;
-	}
-
 	size_t cell_index(wxPoint p)
 	{
 		return cells[p].id;
@@ -198,13 +200,6 @@ public:
 	Cell cell(wxPoint p)
 	{
 		return cells[p];
-	}
-
-	wxTreeItemId cell_tree_item(wxPoint p)
-	{
-		if(!tree_items.IsEmpty())
-			return tree_items.Item(cells[p].id);
-		return nullptr;
 	}
 
 	const Texture& add_texture(wxPoint p, const wxFileName& path, TextureType tt=TT_FLOOR)
