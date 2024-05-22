@@ -26,8 +26,9 @@ enum TextureType
 enum WallType
 {
 	WT_DEFAULT = 0,
+	WT_HERO,
 	WT_DOOR,
-	WT_WINDOW,
+	WT_KEY,
 	WT_NPS
 };
 
@@ -78,16 +79,16 @@ public:
 	int texture_roof = -1;
 	WallType wtp = WT_DEFAULT;
 
-	Cell(int idx=0, int side_size=50, int tex_floor=-1, int tex_roof=-1, int tex_wall=-1, WallType wt=WT_DEFAULT)
+	Cell(int idx=0, int side_size=50, int tex_floor=-1, int tex_wall=-1, int tex_roof=-1, WallType wt=WT_DEFAULT)
 	{
 		id = idx;
 		side = side_size;
 		if(tex_floor > -1)
 			texture_floor = tex_floor;
-		if(tex_roof > -1)
-			texture_roof = tex_roof;
 		if(tex_wall > -1)
 			texture_wall = tex_wall;
+		if(tex_roof > -1)
+			texture_roof = tex_roof;
 		if(wt != WT_DEFAULT)
 			wtp = wt;
 	}
@@ -150,9 +151,9 @@ public:
 		return m_count_cell_y;
 	}
 
-	void append_cell(int x, int y, int idx, int cell_side_size=50)
+	void append_cell(int x, int y, int idx, int cell_side_size=50, int t_floor=-1, int t_wall=-1, int t_roof=-1, WallType wltp=WT_DEFAULT)
 	{
-		cells[wxPoint(x, y)] = Cell(idx, cell_side_size);
+		cells[wxPoint(x, y)] = Cell(idx, cell_side_size, t_floor, t_wall, t_roof, wltp);
 	}
 
 	int append_cell(int x, int y, int cell_side_size=50)
@@ -170,11 +171,6 @@ public:
 	int cell_side_size()
 	{
 		return m_cell_side;
-	}
-
-	int count_textures()
-	{
-		return textures.size();
 	}
 
 	int count_cells()
@@ -200,6 +196,37 @@ public:
 	Cell cell(wxPoint p)
 	{
 		return cells[p];
+	}
+
+	int count_textures()
+	{
+		return textures.size();
+	}
+
+	WallType wall_type(wxPoint p, WallType wt)
+	{
+		// Cell c = cells[p];
+		// if(c.wtp != wt)
+		// {
+		// 	c.wtp = wt;
+		// 	//cells.emplace(p, c);//NOT WORKING
+		// 	cells[p] = c;
+		// }
+		// auto it = cells.find(p);
+		// if(it != cells.end())
+		// {
+		// 	if(it->second.wtp != wt)
+		// 		it->second.wtp = wt;
+		// }
+		//TODO: fix strange behavior
+		if(cells[p].wtp != wt)
+			cells[p].wtp = wt;
+		return cells[p].wtp;//RETURN VALID, BUT NEXT READ RETURN DEFAULT
+	}
+
+	void append_texture(int id, const wxString& path)
+	{
+		textures[id] = Texture(id, wxFileName(path), m_cell_size);
 	}
 
 	const Texture& add_texture(wxPoint p, const wxFileName& path, TextureType tt=TT_FLOOR)

@@ -243,7 +243,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
 
     m_mgr.AddPane(new SettingsPanel(this,this), wxAuiPaneInfo().Name("settings").Caption("Dock Manager Settings").Dockable(false).Float().Hide());
 
-    m_propGridManager = new wxPropertyGridManager(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_AUTO_SORT | wxPG_BOLD_MODIFIED | wxPG_SPLITTER_AUTO_CENTER | wxPG_TOOLBAR | wxPG_DESCRIPTION | wxPGMAN_DEFAULT_STYLE);
+    m_propGridManager = new wxPropertyGridManager(this, PGID, wxDefaultPosition, wxDefaultSize, wxPG_AUTO_SORT | wxPG_BOLD_MODIFIED | wxPG_SPLITTER_AUTO_CENTER | wxPG_TOOLBAR | wxPG_DESCRIPTION | wxPGMAN_DEFAULT_STYLE);
     m_propGridManager->SetExtraStyle(wxPG_EX_MODE_BUTTONS | wxPG_EX_NATIVE_DOUBLE_BUFFERING | wxPG_EX_MULTIPLE_SELECTION);
     wxPropertyGridPage* page = m_propGridManager->AddPage("Common");
     page->Append(new wxStringProperty("coords", wxPG_LABEL, ""));
@@ -259,6 +259,17 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     wxPGProperty* prop2 = page->Append(new wxPropertyCategory("Roof"));
     page->SetPropertyCell(prop2, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
     page->Append(new wxImageFileProperty("path_roof", wxPG_LABEL, ""));
+    /////////////////////////////////
+    wxPGProperty* prop3 = page->Append(new wxPropertyCategory("Wall Type"));
+    page->SetPropertyCell(prop3, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
+    wxPGChoices choices;
+    choices.Add("default", WT_DEFAULT);
+    choices.Add("hero", WT_HERO);
+    choices.Add("door", WT_DOOR);
+    choices.Add("key", WT_KEY);
+    choices.Add("nps", WT_NPS);
+    page->Append(new wxEnumProperty("wall_type", wxPG_LABEL, choices, WT_DEFAULT));
+    //page->Append(new WallTypeProperty("wall_type", wxPG_LABEL, choices, WT_DEFAULT, this));
     /////////////////////////////////
     m_mgr.AddPane(m_propGridManager, wxAuiPaneInfo().Name("property-cell").BestSize(200,200).Right().PaneBorder(false).Caption("properties").Dock().CloseButton(true));
     
@@ -679,13 +690,31 @@ void GBFrame::OnDrawCellCoords(wxCommandEvent& WXUNUSED(event))
     map_board->ToggleDrawCoords();
 }
 
-void GBFrame::OnAddLevel(wxCommandEvent& WXUNUSED(event))
+MapBoardCtrl* GBFrame::NewMapBoard(int id, Data* d)
+{
+    if(id < 0)
+        id = m_notebook_ctrl->GetPageCount();
+    wxString level_name = wxString::Format("level-%d", id);
+    MapBoardCtrl* map_ctrl = new MapBoardCtrl(m_notebook_ctrl, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL, level_name, &m_mgr, m_tree_ctrl, m_propGridManager, d?false:true);
+    if(d)
+        map_ctrl->FillData(d);
+    levels[level_name] = map_ctrl;
+    return map_ctrl;
+}
+
+void GBFrame::AddLevel(int id, Data* d)
 {
     //auto* const m_notebook_ctrl = wxCheckCast<wxAuiNotebook>(m_mgr.GetPane("notebook").window);
-    wxString level_name = wxString::Format("level-%zu", m_notebook_ctrl->GetPageCount());
-    MapBoardCtrl* map_ctrl = new MapBoardCtrl(m_notebook_ctrl, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL, level_name, &m_mgr, m_tree_ctrl, m_propGridManager);
-    m_notebook_ctrl->AddPage(map_ctrl, level_name, true);
-    levels[level_name] = map_ctrl;
+    wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
+    MapBoardCtrl* map_ctrl = NewMapBoard(id, d);
+    m_notebook_ctrl->Freeze();
+    m_notebook_ctrl->AddPage(map_ctrl, map_ctrl->GetName(), true, page_bmp);
+    m_notebook_ctrl->Thaw();
+}
+
+void GBFrame::OnAddLevel(wxCommandEvent& WXUNUSED(event))
+{
+    AddLevel();
 }
 
 void GBFrame::OnDropDownToolbarItem(wxAuiToolBarEvent& evt)
@@ -763,6 +792,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     int id_floor = -1;
     int id_wall = -1;
     int id_roof = -1;
+    WallType wltp = WT_DEFAULT;
     wxString tex_path("");
     wxString tag("levels");
     wxPoint cell_point(0, 0);
@@ -777,6 +807,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     wxRegEx r_id_wall("\"wall\":(\\d+)(,)");
     wxRegEx r_id_roof("\"roof\":(\\d+)(,)");
     wxString str = f.GetNextLine();
+    Data* d;
     while(!tag.empty())
     {
         str.Replace("\t", "");
@@ -855,12 +886,18 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
             {
                 tag = "textures";
                 wxLogMessage("🎨TEXTURES🎨");
+                d = new Data(default_side_size, count_x, count_y);
             }
             else if(r_path.Matches(str))
             {
                 tag = "path";
                 tex_path = r_path.GetMatch(str, 1);
                 wxLogMessage(wxString("🎨🗂") << tex_path);
+                if(d && id_texture > -1)
+                {
+                    d->append_texture(id_texture, tex_path);
+                    id_texture = -1;
+                }
             }
             else if(str.Find("cells") != wxNOT_FOUND)
             {
@@ -870,6 +907,20 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
             else
                 wxLogMessage(str);
         }
+        else if((str == "}" || str == "},") && tag == "cells")
+        {
+            if(d)
+            {
+                d->append_cell(cell_point.x, cell_point.y, id_cell, default_side_size, id_floor, id_wall, id_roof, wltp);
+            }
+            cell_point = wxDefaultPosition;
+            id_cell = -1;
+            id_floor = -1;
+            id_wall = -1;
+            id_roof = -1;
+            if(str == "}")
+                tag = "levels";
+        }
         else if(str == "}")
         {
             if(tag != "levels")
@@ -877,7 +928,11 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
             if(id_texture > -1)
                 id_texture = -1;
             else if(id_level > -1)
+            {
+                if(d)
+                    AddLevel(id_level, d);
                 id_level = -1;
+            }
             else
             {
                 //wxLogMessage(str << " TAG EMPTY");
@@ -1006,18 +1061,40 @@ wxTreeCtrl* GBFrame::CreateTreeCtrl()
 wxAuiNotebook* GBFrame::CreateNotebook()
 {
     wxSize client_size = GetClientSize();
-
     m_notebook_ctrl = new wxAuiNotebook(this, wxID_ANY, wxPoint(client_size.x, client_size.y), FromDIP(wxSize(430,200)), m_notebook_style);
-    m_notebook_ctrl->Freeze();
-
-    wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
-
-    MapBoardCtrl* map_ctrl = new MapBoardCtrl(m_notebook_ctrl, wxID_ANY, wxDefaultPosition, client_size, wxHSCROLL | wxVSCROLL, "level-0", &m_mgr, m_tree_ctrl, m_propGridManager);
-    m_notebook_ctrl->AddPage(map_ctrl, "level-0" , false, page_bmp);
-    levels[wxT("level-0")] = map_ctrl;
-
-    //m_notebook_ctrl->SetPageToolTip(m_notebook_ctrl->GetPageCount()-1, "level-0");
-
-    m_notebook_ctrl->Thaw();
+    //wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
+    //MapBoardCtrl* map_ctrl = new MapBoardCtrl(m_notebook_ctrl, wxID_ANY, wxDefaultPosition, client_size, wxHSCROLL | wxVSCROLL, "level-0", &m_mgr, m_tree_ctrl, m_propGridManager);
+    //m_notebook_ctrl->Freeze();
+    //m_notebook_ctrl->AddPage(map_ctrl, "level-0" , false, page_bmp);
+    //levels[wxT("level-0")] = map_ctrl;
+    ////m_notebook_ctrl->SetPageToolTip(m_notebook_ctrl->GetPageCount()-1, "level-0");
+    //m_notebook_ctrl->Thaw();
     return m_notebook_ctrl;
+}
+
+void GBFrame::SetWallType(WallType wt)
+{
+    MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
+    map_board->set_wall_type(wt);
+}
+
+void GBFrame::OnPropertyGridChanging(wxPropertyGridEvent& event)
+{
+    //wxPGProperty* p = event.GetProperty();
+    //if(p)
+    //{
+    //    if(p->GetName() == "wall_type")
+    //    {
+    //        wxAny v = p->GetValue();
+    //        SetWallType((WallType)v.As<int>());
+    //    }
+    //}
+    //wxASSERT(event.CanVeto());
+    //event.Veto();
+    //event.SetValidationFailureBehavior(wxPGVFBFlags::Null);
+    if(event.GetPropertyName() == "wall_type")
+    {
+        wxAny v = event.GetPropertyValue();
+        SetWallType((WallType)v.As<int>());
+    }
 }

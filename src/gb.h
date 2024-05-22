@@ -93,6 +93,7 @@ class GBFrame : public wxFrame
 
 	enum
 	{
+		PGID = 1,
 		ID_AddLevel = wxID_HIGHEST,
 		ID_ShowLog,
 		ID_ShowTree,
@@ -147,6 +148,7 @@ public:
 	void DoUpdate();
 	//void ActivateTreeItem(wxTreeItemId p);
 
+	void SetWallType(WallType wt);
 
 private:
 
@@ -170,6 +172,8 @@ private:
 	wxPoint GetStartPosition();
 
 	wxAuiNotebook* CreateNotebook();
+	MapBoardCtrl* NewMapBoard(int id=-1, Data* d=nullptr);
+	void AddLevel(int id=-1, Data* d=nullptr);
 
 	void OnSave(wxCommandEvent& event);
 	void OnSaveLevel(wxCommandEvent& event);
@@ -208,6 +212,8 @@ private:
 	void ParseJsonLevels(wxTextFile& f);
 	void ParseJsonFile(wxTextFile& f);
 	void OnOpen(wxCommandEvent& evt);
+
+	void OnPropertyGridChanging(wxPropertyGridEvent& event);
 
 	wxDECLARE_EVENT_TABLE();
 };
@@ -289,6 +295,7 @@ EVT_AUINOTEBOOK_PAGE_CLOSED(wxID_ANY, GBFrame::OnNotebookPageClosed)
 //EVT_AUINOTEBOOK_PAGE_CHANGING(wxID_ANY, GBFrame::OnNotebookPageChanging)
 EVT_ERASE_BACKGROUND(GBFrame::OnEraseBackground)
 EVT_SIZE(GBFrame::OnSize)
+EVT_PG_CHANGING(PGID, GBFrame::OnPropertyGridChanging)
 wxEND_EVENT_TABLE()
 
 
@@ -586,3 +593,22 @@ EVT_BUTTON(ID_ActiveCaptionTextColor, SettingsPanel::OnSetColor)
 EVT_BUTTON(ID_BorderColor, SettingsPanel::OnSetColor)
 EVT_BUTTON(ID_GripperColor, SettingsPanel::OnSetColor)
 wxEND_EVENT_TABLE()
+
+
+// class WallTypeProperty : public wxEnumProperty
+// {
+// public:
+// 	WallTypeProperty(const wxString& label, const wxString& name, wxPGChoices& choices, int value, GBFrame* gbframe) : wxEnumProperty(label, name, choices, value)
+// 	{
+// 		m_gbframe = gbframe;
+// 	}
+// 	virtual ~WallTypeProperty() = default;
+// 	void OnSetValue()
+// 	{
+// 		wxEnumProperty::OnSetValue();
+// 		m_gbframe->SetWallType((WallType)m_value.GetLong());
+// 	}
+// 
+// protected:
+// 	GBFrame* m_gbframe;
+// };

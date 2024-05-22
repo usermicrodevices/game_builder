@@ -41,13 +41,14 @@ class MapBoardCtrl : public wxScrolledWindow
 public:
 		MapBoardCtrl(){};//wxDECLARE_DYNAMIC_CLASS
 
-		MapBoardCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxHSCROLL | wxVSCROLL, const wxString& name = "scrolledWindow", wxAuiManager* mgr = nullptr, wxTreeCtrl* tree = nullptr, wxPropertyGridManager* prop_grid_mgr = nullptr)
-		: wxScrolledWindow(parent, id, pos, size, wxHSCROLL | wxVSCROLL)
+		MapBoardCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxHSCROLL | wxVSCROLL, const wxString& name = "MapBoardCtrl", wxAuiManager* mgr = nullptr, wxTreeCtrl* tree = nullptr, wxPropertyGridManager* prop_grid_mgr = nullptr, bool fill_test_data=false)
+		: wxScrolledWindow(parent, id, pos, size, wxHSCROLL | wxVSCROLL, name)
 		{
 			m_mgr = mgr;
 			m_tree = tree;
 			m_prgrmgr = prop_grid_mgr;
-			FillData();
+			if(fill_test_data)
+				FillData();
 			//FitInside();
 			//SetTargetWindow(parent);
 			//LogMessage(wxString::Format("cells count %d", m_data.count_cells()));
@@ -133,6 +134,13 @@ public:
 			{
 				wxLogMessage(e.what());
 			}
+		}
+
+		void set_wall_type(WallType wt)
+		{
+			wxLogMessage(wxString("🤡 set_wall_type 🤡 ") << wt);
+			WallType wtp = m_data.wall_type(m_current_cell_position, wt);
+			wxLogMessage(wxString("🫥 wall_type 🫥 ") << wtp);
 		}
 
 	private:
@@ -318,6 +326,14 @@ public:
 			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_floor"), m_data.get_texture(cell.texture_floor));
 			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_wall"), m_data.get_texture(cell.texture_wall));
 			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_roof"), m_data.get_texture(cell.texture_roof));
+			wxPGProperty* prop_wt = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("wall_type");
+			wxAny v = prop_wt->GetValue();
+			//if(prop_wt->GetChoiceSelection() != (int)cell.wtp)
+			wxLogMessage(wxString("📑 cell wall_type 📑 ") << cell.wtp);
+			if(v.As<int>() != (int)cell.wtp)
+			{
+				prop_wt->SetValue(WXVARIANT((int)cell.wtp));
+			}
 			if(m_current_cell_position.x > -1 && m_current_cell_position.y > -1)
 			{
 				wxPGProperty* coords = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("coords");
@@ -371,12 +387,10 @@ public:
 		void OnLeftUp(wxMouseEvent& WXUNUSED(event))
 		{
 			m_current_click_position = m_current_cell_position;
-
 			if(!m_prgrmgr)
 				wxLogError(wxT("wxPropertyGridManager error"));
 			else
 				refresh_pgproperty(m_data.cell(m_current_cell_position));
-
 			wxTreeItemId id = m_tree_items.IsEmpty() ? nullptr : m_tree_items.Item(m_data.cell(m_current_cell_position).id);
 			if(id)
 			{
@@ -384,8 +398,8 @@ public:
 				m_tree->ScrollTo(id);
 				m_tree->SelectItem(id);
 			}
-
 			m_togle_mouse = false;
+			Refresh();
 		}
 
 		void OpenTexureFile(TextureType tt=TT_FLOOR)
