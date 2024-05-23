@@ -138,9 +138,7 @@ public:
 
 		void set_wall_type(WallType wt)
 		{
-			wxLogMessage(wxString("🤡 set_wall_type 🤡 ") << wt);
-			WallType wtp = m_data.wall_type(m_current_cell_position, wt);
-			wxLogMessage(wxString("🫥 wall_type 🫥 ") << wtp);
+			m_data.set_wall_type(m_current_click_position, wt);
 		}
 
 	private:
@@ -328,8 +326,6 @@ public:
 			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_roof"), m_data.get_texture(cell.texture_roof));
 			wxPGProperty* prop_wt = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("wall_type");
 			wxAny v = prop_wt->GetValue();
-			//if(prop_wt->GetChoiceSelection() != (int)cell.wtp)
-			wxLogMessage(wxString("📑 cell wall_type 📑 ") << cell.wtp);
 			if(v.As<int>() != (int)cell.wtp)
 			{
 				prop_wt->SetValue(WXVARIANT((int)cell.wtp));
@@ -390,13 +386,16 @@ public:
 			if(!m_prgrmgr)
 				wxLogError(wxT("wxPropertyGridManager error"));
 			else
-				refresh_pgproperty(m_data.cell(m_current_cell_position));
-			wxTreeItemId id = m_tree_items.IsEmpty() ? nullptr : m_tree_items.Item(m_data.cell(m_current_cell_position).id);
-			if(id)
 			{
-				m_tree->EnsureVisible(id);
-				m_tree->ScrollTo(id);
-				m_tree->SelectItem(id);
+				Cell c = m_data.cell(m_current_cell_position);
+				refresh_pgproperty(c);
+				wxTreeItemId id = m_tree_items.IsEmpty() ? nullptr : m_tree_items.Item(c.id);
+				if(id)
+				{
+					m_tree->EnsureVisible(id);
+					m_tree->ScrollTo(id);
+					m_tree->SelectItem(id);
+				}
 			}
 			m_togle_mouse = false;
 			Refresh();

@@ -792,7 +792,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     int id_floor = -1;
     int id_wall = -1;
     int id_roof = -1;
-    WallType wltp = WT_DEFAULT;
+    WallType wall_type = WT_DEFAULT;
     wxString tex_path("");
     wxString tag("levels");
     wxPoint cell_point(0, 0);
@@ -806,6 +806,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     wxRegEx r_id_floor("\"floor\":(\\d+)(,)");
     wxRegEx r_id_wall("\"wall\":(\\d+)(,)");
     wxRegEx r_id_roof("\"roof\":(\\d+)(,)");
+    wxRegEx r_wall_type("\"type\":(\\d+)(,)");
     wxString str = f.GetNextLine();
     Data* d;
     while(!tag.empty())
@@ -823,28 +824,29 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                     wxLogMessage(wxString("🅧") << cell_point.x << "; 🅨" << cell_point.y);
                 }
                 else if(r_id_cell.Matches(str))
-                {
-                    //tag = "id";
+                {//tag = "id";
                     id_cell = wxAtoi(r_id_cell.GetMatch(str, 1));
                     wxLogMessage(wxString("🆔") << id_cell);
                 }
                 else if(r_id_floor.Matches(str))
-                {
-                    //tag = "floor";
+                {//tag = "floor";
                     id_floor = wxAtoi(r_id_floor.GetMatch(str, 1));
                     wxLogMessage(wxString("🆔🖼") << id_floor);
                 }
                 else if(r_id_wall.Matches(str))
-                {
-                    //tag = "wall";
+                {//tag = "wall";
                     id_wall = wxAtoi(r_id_wall.GetMatch(str, 1));
                     wxLogMessage(wxString("🆔🧱") << id_wall);
                 }
                 else if(r_id_roof.Matches(str))
-                {
-                    //tag = "roof";
+                {//tag = "roof";
                     id_roof = wxAtoi(r_id_roof.GetMatch(str, 1));
                     wxLogMessage(wxString("🆔🏗") << id_roof);
+                }
+                else if(r_wall_type.Matches(str))
+                {//tag = "type";
+                    wall_type = (WallType)wxAtoi(r_wall_type.GetMatch(str, 1));
+                    wxLogMessage(wxString("🆔🃏") << wall_type);
                 }
             }
             else if(r_id_int.Matches(str))
@@ -911,7 +913,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
         {
             if(d)
             {
-                d->append_cell(cell_point.x, cell_point.y, id_cell, default_side_size, id_floor, id_wall, id_roof, wltp);
+                d->append_cell(cell_point.x, cell_point.y, id_cell, default_side_size, id_floor, id_wall, id_roof, wall_type);
             }
             cell_point = wxDefaultPosition;
             id_cell = -1;

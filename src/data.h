@@ -203,25 +203,10 @@ public:
 		return textures.size();
 	}
 
-	WallType wall_type(wxPoint p, WallType wt)
+	void set_wall_type(wxPoint p, WallType wt)
 	{
-		// Cell c = cells[p];
-		// if(c.wtp != wt)
-		// {
-		// 	c.wtp = wt;
-		// 	//cells.emplace(p, c);//NOT WORKING
-		// 	cells[p] = c;
-		// }
-		// auto it = cells.find(p);
-		// if(it != cells.end())
-		// {
-		// 	if(it->second.wtp != wt)
-		// 		it->second.wtp = wt;
-		// }
-		//TODO: fix strange behavior
 		if(cells[p].wtp != wt)
 			cells[p].wtp = wt;
-		return cells[p].wtp;//RETURN VALID, BUT NEXT READ RETURN DEFAULT
 	}
 
 	void append_texture(int id, const wxString& path)
