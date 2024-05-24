@@ -57,9 +57,16 @@ public:
 
 		void FillData(Data* d=nullptr)
 		{
-			m_level_tree_item = m_tree->AppendItem(m_tree->GetRootItem(), "Level 0", 0);
+			m_level_tree_item = m_tree->AppendItem(m_tree->GetRootItem(), GetName(), 0);
 			if(d)
+			{
 				m_data = *d;
+				for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
+				{
+					auto point = iter->first;
+					m_tree_items.Add(m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", point.x, point.y), 1));
+				}
+			}
 			else
 			{
 				int cell_side_size=50;
@@ -136,9 +143,14 @@ public:
 			}
 		}
 
-		void set_wall_type(WallType wt)
+		void set_cell_wall_type(WallType value)
 		{
-			m_data.set_wall_type(m_current_click_position, wt);
+			m_data.set_cell_wall_type(m_current_click_position, value);
+		}
+
+		void set_cell_script(const wxString& value)
+		{
+			m_data.set_cell_script(m_current_click_position, value.ToStdWstring());
 		}
 
 	private:
@@ -327,9 +339,7 @@ public:
 			wxPGProperty* prop_wt = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("wall_type");
 			wxAny v = prop_wt->GetValue();
 			if(v.As<int>() != (int)cell.wtp)
-			{
 				prop_wt->SetValue(WXVARIANT((int)cell.wtp));
-			}
 			if(m_current_cell_position.x > -1 && m_current_cell_position.y > -1)
 			{
 				wxPGProperty* coords = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("coords");
@@ -337,6 +347,11 @@ public:
 					wxLogError("wxPGProperty coords");
 				coords->SetValueFromString(wxString::Format("%d x %d", m_current_cell_position.x, m_current_cell_position.y));
 			}
+			wxPGProperty* prop_script = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("script");
+			if(cell.script.empty())
+				prop_script->SetValueFromString(wxString(""));
+			else
+				prop_script->SetValueFromString(wxString(cell.script));
 		}
 
 		void store_currents()
@@ -389,12 +404,22 @@ public:
 			{
 				Cell c = m_data.cell(m_current_cell_position);
 				refresh_pgproperty(c);
-				wxTreeItemId id = m_tree_items.IsEmpty() ? nullptr : m_tree_items.Item(c.id);
+				wxTreeItemId id = nullptr;
+				if(m_tree_items.size() < c.id)
+				{
+					id = m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", m_current_cell_position.x, m_current_cell_position.y), 1);
+					m_tree_items.Add(id);
+				}
+				else
+					id = m_tree_items.Item((size_t)c.id);
 				if(id)
 				{
-					m_tree->EnsureVisible(id);
-					m_tree->ScrollTo(id);
-					m_tree->SelectItem(id);
+					if(id.IsOk())
+					{
+						m_tree->EnsureVisible(id);
+						m_tree->ScrollTo(id);
+						m_tree->SelectItem(id);
+					}
 				}
 			}
 			m_togle_mouse = false;

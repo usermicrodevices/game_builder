@@ -9,14 +9,13 @@
 
 #include "gb.h"
 
+void GBApp::OnInitCmdLine(wxCmdLineParser& parser)
+{
+    wxApp::OnInitCmdLine(parser);
+    parser.AddParam("project", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL);
+}
 
-// void MyApp::OnInitCmdLine(wxCmdLineParser& parser)
-// {
-//     parser.AddSwitch("n", OPTION_1, _("desc1"));
-//     parser.AddSwitch("y", OPTION_2, _("desk2"));
-//     wxApp::OnInitCmdLine(parser);
-// }
-// bool MyApp::OnCmdLineParsed(wxCmdLineParser& parser)
+// bool GBApp::OnCmdLineParsed(wxCmdLineParser& parser)
 // {
 //     if ( !wxApp::OnCmdLineParsed(parser) )
 //         return false;
@@ -121,6 +120,15 @@ bool GBApp::OnInit()
             wxLogMessage("✅"+assets_images);
         else
             wxLogMessage("❌"+assets_images);
+    }
+
+    wxString plugins(wxGetCwd()+"/plugins");
+    if(!wxFileName::DirExists(plugins))
+    {
+        if(wxFileName::Mkdir(plugins))
+            wxLogMessage("✅"+plugins);
+        else
+            wxLogMessage("❌"+plugins);
     }
 
     return true;
@@ -247,18 +255,22 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     m_propGridManager->SetExtraStyle(wxPG_EX_MODE_BUTTONS | wxPG_EX_NATIVE_DOUBLE_BUFFERING | wxPG_EX_MULTIPLE_SELECTION);
     wxPropertyGridPage* page = m_propGridManager->AddPage("Common");
     page->Append(new wxStringProperty("coords", wxPG_LABEL, ""));
+    page->SetPropertyHelpString("coords", _("coords of cell"));
     /////////////////////////////////
     wxPGProperty* prop0 = page->Append(new wxPropertyCategory("Floor"));
     page->SetPropertyCell(prop0, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
     page->Append(new wxImageFileProperty("path_floor", wxPG_LABEL, ""));
+    page->SetPropertyHelpString("path_floor", _("this is floor image file"));
     /////////////////////////////////
     wxPGProperty* prop1 = page->Append(new wxPropertyCategory("Wall"));
     page->SetPropertyCell(prop1, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
     page->Append(new wxImageFileProperty("path_wall", wxPG_LABEL, ""));
+    page->SetPropertyHelpString("path_wall", _("this is wall image file"));
     /////////////////////////////////
     wxPGProperty* prop2 = page->Append(new wxPropertyCategory("Roof"));
     page->SetPropertyCell(prop2, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
     page->Append(new wxImageFileProperty("path_roof", wxPG_LABEL, ""));
+    page->SetPropertyHelpString("path_roof", _("this is roof image file"));
     /////////////////////////////////
     wxPGProperty* prop3 = page->Append(new wxPropertyCategory("Wall Type"));
     page->SetPropertyCell(prop3, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
@@ -269,7 +281,12 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     choices.Add("key", WT_KEY);
     choices.Add("nps", WT_NPS);
     page->Append(new wxEnumProperty("wall_type", wxPG_LABEL, choices, WT_DEFAULT));
-    //page->Append(new WallTypeProperty("wall_type", wxPG_LABEL, choices, WT_DEFAULT, this));
+    page->SetPropertyHelpString("wall_type", _("this is wall type, like hero, wall, key, nps"));
+    /////////////////////////////////
+    wxPGProperty* prop4 = page->Append(new wxPropertyCategory("Script"));
+    page->SetPropertyCell(prop4, 0, wxPG_LABEL, wxArtProvider::GetBitmap(wxART_REPORT_VIEW));
+    page->Append(new wxLongStringProperty("script", wxPG_LABEL, ""));
+    page->SetPropertyHelpString("script", _("this is script content, may be any programming code"));
     /////////////////////////////////
     m_mgr.AddPane(m_propGridManager, wxAuiPaneInfo().Name("property-cell").BestSize(200,200).Right().PaneBorder(false).Caption("properties").Dock().CloseButton(true));
     
@@ -788,12 +805,13 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     int count_x = 0;
     int count_y = 0;
     int default_side_size = 0;
-    size_t id_cell = -1;
+    int id_cell = -1;
     int id_floor = -1;
     int id_wall = -1;
     int id_roof = -1;
     WallType wall_type = WT_DEFAULT;
     wxString tex_path("");
+    wxString script("");
     wxString tag("levels");
     wxPoint cell_point(0, 0);
     wxRegEx r_id_int("(\\d+)(:)");
@@ -807,6 +825,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     wxRegEx r_id_wall("\"wall\":(\\d+)(,)");
     wxRegEx r_id_roof("\"roof\":(\\d+)(,)");
     wxRegEx r_wall_type("\"type\":(\\d+)(,)");
+    wxRegEx r_script("\"script\":\"(.+)\"(,)");
     wxString str = f.GetNextLine();
     Data* d;
     while(!tag.empty())
@@ -821,32 +840,37 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                 {
                     cell_point.x = wxAtoi(r_id_coords.GetMatch(str, 1));
                     cell_point.y = wxAtoi(r_id_coords.GetMatch(str, 2));
-                    wxLogMessage(wxString("🅧") << cell_point.x << "; 🅨" << cell_point.y);
+                    wxLogDebug(wxString("🅧") << cell_point.x << "; 🅨" << cell_point.y);
                 }
-                else if(r_id_cell.Matches(str))
-                {//tag = "id";
-                    id_cell = wxAtoi(r_id_cell.GetMatch(str, 1));
-                    wxLogMessage(wxString("🆔") << id_cell);
-                }
+                // else if(r_id_cell.Matches(str))
+                // {//tag = "id";
+                //     id_cell = wxAtoi(r_id_cell.GetMatch(str, 1));
+                //     wxLogDebug(wxString("🆔") << id_cell);
+                // }
                 else if(r_id_floor.Matches(str))
                 {//tag = "floor";
                     id_floor = wxAtoi(r_id_floor.GetMatch(str, 1));
-                    wxLogMessage(wxString("🆔🖼") << id_floor);
+                    wxLogDebug(wxString("🆔🖼") << id_floor);
                 }
                 else if(r_id_wall.Matches(str))
                 {//tag = "wall";
                     id_wall = wxAtoi(r_id_wall.GetMatch(str, 1));
-                    wxLogMessage(wxString("🆔🧱") << id_wall);
+                    wxLogDebug(wxString("🆔🧱") << id_wall);
                 }
                 else if(r_id_roof.Matches(str))
                 {//tag = "roof";
                     id_roof = wxAtoi(r_id_roof.GetMatch(str, 1));
-                    wxLogMessage(wxString("🆔🏗") << id_roof);
+                    wxLogDebug(wxString("🆔🏗") << id_roof);
                 }
                 else if(r_wall_type.Matches(str))
                 {//tag = "type";
                     wall_type = (WallType)wxAtoi(r_wall_type.GetMatch(str, 1));
-                    wxLogMessage(wxString("🆔🃏") << wall_type);
+                    wxLogDebug(wxString("🆔🃏") << wall_type);
+                }
+                else if(r_script.Matches(str))
+                {//tag = "script";
+                    script = r_wall_type.GetMatch(str, 1);
+                    wxLogMessage(wxString("🆔🧩") << script);
                 }
             }
             else if(r_id_int.Matches(str))
@@ -858,43 +882,43 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                     default_side_size = 0;
                     tex_path = "";
                     id_level = wxAtoi(r_id_int.GetMatch(str, 1));
-                    wxLogMessage(wxString("🔝🆔 ") << id_level);
+                    wxLogDebug(wxString("🔝🆔 ") << id_level);
                 }
                 else
                 {
                     id_texture = wxAtoi(r_id_int.GetMatch(str, 1));
-                    wxLogMessage(wxString("🎨🆔 ") << id_texture);
+                    wxLogDebug(wxString("🎨🆔 ") << id_texture);
                 }
             }
             else if(r_count_x.Matches(str))
             {
                 tag = "count_x";
                 count_x = wxAtoi(r_count_x.GetMatch(str, 1));
-                wxLogMessage(wxString("🔝🅧") << count_x);
+                wxLogDebug(wxString("🔝🅧") << count_x);
             }
             else if(r_count_y.Matches(str))
             {
                 tag = "count_y";
                 count_y = wxAtoi(r_count_y.GetMatch(str, 1));
-                wxLogMessage(wxString("🔝🅨") << count_y);
+                wxLogDebug(wxString("🔝🅨") << count_y);
             }
             else if(r_default_side_size.Matches(str))
             {
                 tag = "default_side_size";
                 default_side_size = wxAtoi(r_default_side_size.GetMatch(str, 1));
-                wxLogMessage(wxString("🔝🅩") << default_side_size);
+                wxLogDebug(wxString("🔝🅩") << default_side_size);
             }
             else if(str.Find("textures") != wxNOT_FOUND)
             {
                 tag = "textures";
-                wxLogMessage("🎨TEXTURES🎨");
+                wxLogDebug("🎨TEXTURES🎨");
                 d = new Data(default_side_size, count_x, count_y);
             }
             else if(r_path.Matches(str))
             {
                 tag = "path";
                 tex_path = r_path.GetMatch(str, 1);
-                wxLogMessage(wxString("🎨🗂") << tex_path);
+                wxLogDebug(wxString("🎨🗂") << tex_path);
                 if(d && id_texture > -1)
                 {
                     d->append_texture(id_texture, tex_path);
@@ -904,22 +928,24 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
             else if(str.Find("cells") != wxNOT_FOUND)
             {
                 tag = "cells";
-                wxLogMessage("🛟CELLS🛟");
+                wxLogDebug("🛟CELLS🛟");
             }
             else
-                wxLogMessage(str);
+                wxLogDebug(str);
         }
         else if((str == "}" || str == "},") && tag == "cells")
         {
             if(d)
             {
-                d->append_cell(cell_point.x, cell_point.y, id_cell, default_side_size, id_floor, id_wall, id_roof, wall_type);
+                id_cell++;
+                d->append_cell(cell_point.x, cell_point.y, id_cell, default_side_size, id_floor, id_wall, id_roof, wall_type, script.ToStdWstring());
             }
             cell_point = wxDefaultPosition;
-            id_cell = -1;
+            //id_cell = -1;
             id_floor = -1;
             id_wall = -1;
             id_roof = -1;
+            wall_type = WT_DEFAULT;
             if(str == "}")
                 tag = "levels";
         }
@@ -934,10 +960,11 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                 if(d)
                     AddLevel(id_level, d);
                 id_level = -1;
+                id_cell = -1;
             }
             else
             {
-                //wxLogMessage(str << " TAG EMPTY");
+                //wxLogDebug(str << " TAG EMPTY");
                 tag = "";
             }
         }
@@ -953,16 +980,16 @@ void GBFrame::ParseJsonFile(wxTextFile& f)
         str.Replace("\t", "");
         str.Replace("\n", "");
         if(str == "{")
-            wxLogMessage("🎬");
+            wxLogDebug("🎬");
         else if(str == "}" || str == "},")
-            wxLogMessage("🛑");
+            wxLogDebug("🛑");
         else if(str.Find("levels") != wxNOT_FOUND)
         {
-            wxLogMessage("🎒LEVELS🎒");
+            wxLogDebug("🎒LEVELS🎒");
             ParseJsonLevels(f);
         }
         else
-            wxLogMessage(str);
+            wxLogDebug(str);
         str = f.GetNextLine();
     }
 }
@@ -973,7 +1000,7 @@ void GBFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
     wxFileDialog dlg(this, "Open JSON project", wxEmptyString, wxEmptyString, wildCard, wxFD_OPEN);
     if(dlg.ShowModal() == wxID_OK)
     {
-        wxLogMessage(dlg.GetPath());
+        wxLogDebug(dlg.GetPath());
         wxTextFile f(dlg.GetPath());
         if(f.Open())
             ParseJsonFile(f);
@@ -1074,29 +1101,28 @@ wxAuiNotebook* GBFrame::CreateNotebook()
     return m_notebook_ctrl;
 }
 
-void GBFrame::SetWallType(WallType wt)
+void GBFrame::SetCellWallType(WallType value)
 {
     MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
-    map_board->set_wall_type(wt);
+    map_board->set_cell_wall_type(value);
+}
+
+void GBFrame::SetCellScript(const wxString& value)
+{
+    MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
+    map_board->set_cell_script(value);
 }
 
 void GBFrame::OnPropertyGridChanging(wxPropertyGridEvent& event)
 {
-    //wxPGProperty* p = event.GetProperty();
-    //if(p)
-    //{
-    //    if(p->GetName() == "wall_type")
-    //    {
-    //        wxAny v = p->GetValue();
-    //        SetWallType((WallType)v.As<int>());
-    //    }
-    //}
-    //wxASSERT(event.CanVeto());
-    //event.Veto();
-    //event.SetValidationFailureBehavior(wxPGVFBFlags::Null);
     if(event.GetPropertyName() == "wall_type")
     {
         wxAny v = event.GetPropertyValue();
-        SetWallType((WallType)v.As<int>());
+        SetCellWallType((WallType)v.As<int>());
+    }
+    if(event.GetPropertyName() == "script")
+    {
+        wxAny v = event.GetPropertyValue();
+        SetCellScript(v.As<wxString>());
     }
 }

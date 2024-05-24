@@ -15,6 +15,7 @@
 #include <wx/file.h>
 
 #include <unordered_map>
+#include <string>
 
 enum TextureType
 {
@@ -78,8 +79,9 @@ public:
 	int texture_wall = -1;
 	int texture_roof = -1;
 	WallType wtp = WT_DEFAULT;
+	std::wstring script;
 
-	Cell(int idx=0, int side_size=50, int tex_floor=-1, int tex_wall=-1, int tex_roof=-1, WallType wt=WT_DEFAULT)
+	Cell(int idx=0, int side_size=50, int tex_floor=-1, int tex_wall=-1, int tex_roof=-1, WallType wt=WT_DEFAULT, const std::wstring& scrpt=std::wstring())
 	{
 		id = idx;
 		side = side_size;
@@ -91,6 +93,8 @@ public:
 			texture_roof = tex_roof;
 		if(wt != WT_DEFAULT)
 			wtp = wt;
+		if(!scrpt.empty())
+			script = scrpt;
 	}
 
 	int get_visible_texture()
@@ -151,9 +155,9 @@ public:
 		return m_count_cell_y;
 	}
 
-	void append_cell(int x, int y, int idx, int cell_side_size=50, int t_floor=-1, int t_wall=-1, int t_roof=-1, WallType wltp=WT_DEFAULT)
+	void append_cell(int x, int y, int idx, int cell_side_size=50, int t_floor=-1, int t_wall=-1, int t_roof=-1, WallType wltp=WT_DEFAULT, const std::wstring& scrpt=std::wstring())
 	{
-		cells[wxPoint(x, y)] = Cell(idx, cell_side_size, t_floor, t_wall, t_roof, wltp);
+		cells[wxPoint(x, y)] = Cell(idx, cell_side_size, t_floor, t_wall, t_roof, wltp, scrpt);
 	}
 
 	int append_cell(int x, int y, int cell_side_size=50)
@@ -203,10 +207,16 @@ public:
 		return textures.size();
 	}
 
-	void set_wall_type(wxPoint p, WallType wt)
+	void set_cell_wall_type(wxPoint p, WallType value)
 	{
-		if(cells[p].wtp != wt)
-			cells[p].wtp = wt;
+		if(cells[p].wtp != value)
+			cells[p].wtp = value;
+	}
+
+	void set_cell_script(wxPoint p, std::wstring value)
+	{
+		if(cells[p].script != value)
+			cells[p].script = value;
 	}
 
 	void append_texture(int id, const wxString& path)
@@ -353,7 +363,7 @@ public:
 					else
 						content.Append(",\n");
 					content.Append(indentation+"\t\t\""<<k.x<<"-"<<k.y<<"\":\n"+indentation+"\t\t{\n");
-					content.Append(indentation+"\t\t\t\"id\":"<<v.id<<",\n");
+					//content.Append(indentation+"\t\t\t\"id\":"<<v.id<<",\n");
 					if(v.side != m_cell_side)
 						content.Append(indentation+"\t\t\t\"side\":"<<v.side<<",\n");
 					if(v.texture_floor > -1)
@@ -364,6 +374,8 @@ public:
 						content.Append(indentation+"\t\t\t\"wall\":"<<v.texture_wall<<",\n");
 					if(v.wtp != WT_DEFAULT)
 						content.Append(indentation+"\t\t\t\"type\":"<<v.wtp<<",\n");
+					if(!v.script.empty())
+						content.Append(indentation+"\t\t\t\"script\":\""<<v.script<<"\",\n");
 					content.Append(indentation+"\t\t}");
 				}
 			}

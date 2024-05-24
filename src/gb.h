@@ -9,6 +9,11 @@
 
 #pragma once
 
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
+#define wxDEBUG_LEVEL 1
+
 // For compilers that support precompilation, includes "wx/wx.h".
 #ifndef WX_PRECOMP
 #include "wx/wx.h"
@@ -21,8 +26,12 @@
 #endif
 
 #include <wx/debug.h>
+
 #include <wx/regex.h>
-#include "wx/app.h"
+
+#include <wx/cmdline.h>
+#include <wx/app.h>
+
 #include "wx/grid.h"
 #include "wx/treectrl.h"
 #include "wx/spinctrl.h"
@@ -61,7 +70,6 @@
 
 #include <map>
 #include <string>
-#include <regex>
 
 // Under Linux we demonstrate loading an existing message catalog using
 // coreutils package (which is always installed) as an example.
@@ -82,6 +90,8 @@ class GBApp : public wxApp
 {
 public:
 	bool OnInit() override;
+private:
+	void OnInitCmdLine(wxCmdLineParser& parser);
 };
 
 wxDECLARE_APP(GBApp);
@@ -148,7 +158,8 @@ public:
 	void DoUpdate();
 	//void ActivateTreeItem(wxTreeItemId p);
 
-	void SetWallType(WallType wt);
+	void SetCellWallType(WallType value);
+	void SetCellScript(const wxString& value);
 
 private:
 
@@ -593,22 +604,3 @@ EVT_BUTTON(ID_ActiveCaptionTextColor, SettingsPanel::OnSetColor)
 EVT_BUTTON(ID_BorderColor, SettingsPanel::OnSetColor)
 EVT_BUTTON(ID_GripperColor, SettingsPanel::OnSetColor)
 wxEND_EVENT_TABLE()
-
-
-// class WallTypeProperty : public wxEnumProperty
-// {
-// public:
-// 	WallTypeProperty(const wxString& label, const wxString& name, wxPGChoices& choices, int value, GBFrame* gbframe) : wxEnumProperty(label, name, choices, value)
-// 	{
-// 		m_gbframe = gbframe;
-// 	}
-// 	virtual ~WallTypeProperty() = default;
-// 	void OnSetValue()
-// 	{
-// 		wxEnumProperty::OnSetValue();
-// 		m_gbframe->SetWallType((WallType)m_value.GetLong());
-// 	}
-// 
-// protected:
-// 	GBFrame* m_gbframe;
-// };
