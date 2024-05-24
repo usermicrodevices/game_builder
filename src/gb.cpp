@@ -815,17 +815,17 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     wxString tag("levels");
     wxPoint cell_point(0, 0);
     wxRegEx r_id_int("(\\d+)(:)");
-    wxRegEx r_count_x("\"count_x\":(\\d+)(,)");
-    wxRegEx r_count_y("\"count_y\":(\\d+)(,)");
-    wxRegEx r_default_side_size("\"default_side_size\":(\\d+)(,)");
+    wxRegEx r_count_x("\"count_x\":(\\d+)");
+    wxRegEx r_count_y("\"count_y\":(\\d+)");
+    wxRegEx r_default_side_size("\"default_side_size\":(\\d+)");
     wxRegEx r_path("\"path\":\"(.*?)\"");
     wxRegEx r_id_coords("\"(\\d+)-(\\d+)\"(:)");
-    wxRegEx r_id_cell("\"id\":(\\d+)(,)");
-    wxRegEx r_id_floor("\"floor\":(\\d+)(,)");
-    wxRegEx r_id_wall("\"wall\":(\\d+)(,)");
-    wxRegEx r_id_roof("\"roof\":(\\d+)(,)");
-    wxRegEx r_wall_type("\"type\":(\\d+)(,)");
-    wxRegEx r_script("\"script\":\"(.+)\"(,)");
+    wxRegEx r_id_cell("\"id\":(\\d+)");
+    wxRegEx r_id_floor("\"floor\":(\\d+)");
+    wxRegEx r_id_wall("\"wall\":(\\d+)");
+    wxRegEx r_id_roof("\"roof\":(\\d+)");
+    wxRegEx r_wall_type("\"type\":(\\d+)");
+    wxRegEx r_script("\"script\":\"([^\"]+)", wxRE_ADVANCED+wxRE_ICASE);
     wxString str = f.GetNextLine();
     Data* d;
     while(!tag.empty())
@@ -836,44 +836,44 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
         {
             if(tag == "cells")
             {
-                if(r_id_coords.Matches(str))
+                if(r_id_coords.Matches(str, wxRE_NOTEMPTY))
                 {
                     cell_point.x = wxAtoi(r_id_coords.GetMatch(str, 1));
                     cell_point.y = wxAtoi(r_id_coords.GetMatch(str, 2));
                     wxLogDebug(wxString("🅧") << cell_point.x << "; 🅨" << cell_point.y);
                 }
-                // else if(r_id_cell.Matches(str))
+                // else if(r_id_cell.Matches(str, wxRE_NOTEMPTY))
                 // {//tag = "id";
                 //     id_cell = wxAtoi(r_id_cell.GetMatch(str, 1));
                 //     wxLogDebug(wxString("🆔") << id_cell);
                 // }
-                else if(r_id_floor.Matches(str))
+                else if(r_id_floor.Matches(str, wxRE_NOTEMPTY))
                 {//tag = "floor";
                     id_floor = wxAtoi(r_id_floor.GetMatch(str, 1));
                     wxLogDebug(wxString("🆔🖼") << id_floor);
                 }
-                else if(r_id_wall.Matches(str))
+                else if(r_id_wall.Matches(str, wxRE_NOTEMPTY))
                 {//tag = "wall";
                     id_wall = wxAtoi(r_id_wall.GetMatch(str, 1));
                     wxLogDebug(wxString("🆔🧱") << id_wall);
                 }
-                else if(r_id_roof.Matches(str))
+                else if(r_id_roof.Matches(str, wxRE_NOTEMPTY))
                 {//tag = "roof";
                     id_roof = wxAtoi(r_id_roof.GetMatch(str, 1));
                     wxLogDebug(wxString("🆔🏗") << id_roof);
                 }
-                else if(r_wall_type.Matches(str))
+                else if(r_wall_type.Matches(str, wxRE_NOTEMPTY))
                 {//tag = "type";
                     wall_type = (WallType)wxAtoi(r_wall_type.GetMatch(str, 1));
                     wxLogDebug(wxString("🆔🃏") << wall_type);
                 }
-                else if(r_script.Matches(str))
+                else if(r_script.Matches(str, wxRE_NOTEMPTY))
                 {//tag = "script";
                     script = r_wall_type.GetMatch(str, 1);
                     wxLogMessage(wxString("🆔🧩") << script);
                 }
             }
-            else if(r_id_int.Matches(str))
+            else if(r_id_int.Matches(str, wxRE_NOTEMPTY))
             {
                 if(tag == "levels")
                 {
@@ -890,19 +890,19 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                     wxLogDebug(wxString("🎨🆔 ") << id_texture);
                 }
             }
-            else if(r_count_x.Matches(str))
+            else if(r_count_x.Matches(str, wxRE_NOTEMPTY))
             {
                 tag = "count_x";
                 count_x = wxAtoi(r_count_x.GetMatch(str, 1));
                 wxLogDebug(wxString("🔝🅧") << count_x);
             }
-            else if(r_count_y.Matches(str))
+            else if(r_count_y.Matches(str, wxRE_NOTEMPTY))
             {
                 tag = "count_y";
                 count_y = wxAtoi(r_count_y.GetMatch(str, 1));
                 wxLogDebug(wxString("🔝🅨") << count_y);
             }
-            else if(r_default_side_size.Matches(str))
+            else if(r_default_side_size.Matches(str, wxRE_NOTEMPTY))
             {
                 tag = "default_side_size";
                 default_side_size = wxAtoi(r_default_side_size.GetMatch(str, 1));
@@ -914,7 +914,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                 wxLogDebug("🎨TEXTURES🎨");
                 d = new Data(default_side_size, count_x, count_y);
             }
-            else if(r_path.Matches(str))
+            else if(r_path.Matches(str, wxRE_NOTEMPTY))
             {
                 tag = "path";
                 tex_path = r_path.GetMatch(str, 1);
