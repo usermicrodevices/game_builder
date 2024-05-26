@@ -79,9 +79,9 @@ public:
 	int texture_wall = -1;
 	int texture_roof = -1;
 	WallType wtp = WT_DEFAULT;
-	std::wstring script;
+	std::string script;
 
-	Cell(int idx=0, int side_size=50, int tex_floor=-1, int tex_wall=-1, int tex_roof=-1, WallType wt=WT_DEFAULT, const std::wstring& scrpt=std::wstring())
+	Cell(int idx=0, int side_size=50, int tex_floor=-1, int tex_wall=-1, int tex_roof=-1, WallType wt=WT_DEFAULT, const std::string& scrpt=std::string())
 	{
 		id = idx;
 		side = side_size;
@@ -155,7 +155,7 @@ public:
 		return m_count_cell_y;
 	}
 
-	void append_cell(int x, int y, int idx, int cell_side_size=50, int t_floor=-1, int t_wall=-1, int t_roof=-1, WallType wltp=WT_DEFAULT, const std::wstring& scrpt=std::wstring())
+	void append_cell(int x, int y, int idx, int cell_side_size=50, int t_floor=-1, int t_wall=-1, int t_roof=-1, WallType wltp=WT_DEFAULT, const std::string& scrpt=std::string())
 	{
 		cells[wxPoint(x, y)] = Cell(idx, cell_side_size, t_floor, t_wall, t_roof, wltp, scrpt);
 	}
@@ -213,7 +213,7 @@ public:
 			cells[p].wtp = value;
 	}
 
-	void set_cell_script(wxPoint p, std::wstring value)
+	void set_cell_script(wxPoint p, std::string value)
 	{
 		if(cells[p].script != value)
 			cells[p].script = value;

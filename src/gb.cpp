@@ -814,18 +814,18 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     wxString script("");
     wxString tag("levels");
     wxPoint cell_point(0, 0);
-    wxRegEx r_id_int("(\\d+)(:)");
-    wxRegEx r_count_x("\"count_x\":(\\d+)");
-    wxRegEx r_count_y("\"count_y\":(\\d+)");
-    wxRegEx r_default_side_size("\"default_side_size\":(\\d+)");
-    wxRegEx r_path("\"path\":\"(.*?)\"");
-    wxRegEx r_id_coords("\"(\\d+)-(\\d+)\"(:)");
-    wxRegEx r_id_cell("\"id\":(\\d+)");
-    wxRegEx r_id_floor("\"floor\":(\\d+)");
-    wxRegEx r_id_wall("\"wall\":(\\d+)");
-    wxRegEx r_id_roof("\"roof\":(\\d+)");
-    wxRegEx r_wall_type("\"type\":(\\d+)");
-    wxRegEx r_script("\"script\":\"([^\"]+)", wxRE_ADVANCED+wxRE_ICASE);
+    wxRegEx r_id_int("^.*(\\d+)(:)");
+    wxRegEx r_count_x("^.*\"count_x\":(\\d+)");
+    wxRegEx r_count_y("^.*\"count_y\":(\\d+)");
+    wxRegEx r_default_side_size("^.*\"default_side_size\":(\\d+)");
+    wxRegEx r_path("^.*\"path\":\"(.*)\"");
+    wxRegEx r_id_coords("^.*\"(\\d+)-(\\d+)\"(:)");
+    wxRegEx r_id_cell("^.*\"id\":(\\d+)");
+    wxRegEx r_id_floor("^.*\"floor\":(\\d+)");
+    wxRegEx r_id_wall("^.*\"wall\":(\\d+)");
+    wxRegEx r_id_roof("^.*\"roof\":(\\d+)");
+    wxRegEx r_wall_type("^.*\"type\":(\\d+)");
+    wxRegEx r_script("^.*\"script\":\"(.*)\"");
     wxString str = f.GetNextLine();
     Data* d;
     while(!tag.empty())
@@ -869,8 +869,8 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                 }
                 else if(r_script.Matches(str, wxRE_NOTEMPTY))
                 {//tag = "script";
-                    script = r_wall_type.GetMatch(str, 1);
-                    wxLogMessage(wxString("🆔🧩") << script);
+                    script = r_script.GetMatch(str, 1);
+                    wxLogDebug(wxString("🆔🧩") << script);
                 }
             }
             else if(r_id_int.Matches(str, wxRE_NOTEMPTY))
@@ -938,7 +938,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
             if(d)
             {
                 id_cell++;
-                d->append_cell(cell_point.x, cell_point.y, id_cell, default_side_size, id_floor, id_wall, id_roof, wall_type, script.ToStdWstring());
+                d->append_cell(cell_point.x, cell_point.y, id_cell, default_side_size, id_floor, id_wall, id_roof, wall_type, script.utf8_string());
             }
             cell_point = wxDefaultPosition;
             //id_cell = -1;
@@ -946,6 +946,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
             id_wall = -1;
             id_roof = -1;
             wall_type = WT_DEFAULT;
+            script = "";
             if(str == "}")
                 tag = "levels";
         }

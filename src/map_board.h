@@ -150,7 +150,7 @@ public:
 
 		void set_cell_script(const wxString& value)
 		{
-			m_data.set_cell_script(m_current_click_position, value.ToStdWstring());
+			m_data.set_cell_script(m_current_click_position, value.utf8_string());
 		}
 
 	private:
