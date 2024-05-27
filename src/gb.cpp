@@ -731,7 +731,11 @@ void GBFrame::AddLevel(int id, Data* d)
 
 void GBFrame::OnAddLevel(wxCommandEvent& WXUNUSED(event))
 {
-    AddLevel();
+    MapSettingsDialog d(this, m_map_settings_data);
+    if(d.ShowModal() == wxID_OK)
+    {
+        AddLevel(-1, new Data(d.m_sdata.m_cell_side_size, d.m_sdata.m_count_cell_x, d.m_sdata.m_count_cell_y));
+    }
 }
 
 void GBFrame::OnDropDownToolbarItem(wxAuiToolBarEvent& evt)

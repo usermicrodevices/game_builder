@@ -66,6 +66,7 @@
 
 #include "gb.xpm"
 
+#include "map_settings_dialog.h"
 #include "map_board.h"
 
 #include <map>
@@ -174,6 +175,7 @@ private:
 	wxAuiNotebook* m_notebook_ctrl;
 	LevelContainer levels = {};
 	wxPropertyGridManager* m_propGridManager;
+	MapSettingsData m_map_settings_data;
 
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
 
