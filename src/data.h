@@ -80,7 +80,7 @@ public:
 	int texture_roof = -1;
 	WallType wtp = WT_DEFAULT;
 	std::string script;
- 
+
 	Cell(int idx=0, int side_size=50, int tex_floor=-1, int tex_wall=-1, int tex_roof=-1, WallType wt=WT_DEFAULT, const std::string& scrpt=std::string())
 	{
 		id = idx;
