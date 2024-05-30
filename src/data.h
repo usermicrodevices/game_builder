@@ -157,12 +157,12 @@ public:
 
 	void append_cell(int x, int y, int cell_side_size=50, int t_floor=-1, int t_wall=-1, int t_roof=-1, WallType wltp=WT_DEFAULT, const std::string& scrpt=std::string())
 	{
-		cells[wxPoint(x, y)] = Cell((int)cells.size(), cell_side_size, t_floor, t_wall, t_roof, wltp, scrpt);
+		cells[wxPoint(x, y)] = Cell(cells.size(), cell_side_size, t_floor, t_wall, t_roof, wltp, scrpt);
 	}
 
 	void append_cell_default(int x, int y)
 	{
-		cells[wxPoint(x, y)] = Cell((int)cells.size(), m_cell_side);
+		cells[wxPoint(x, y)] = Cell(cells.size(), m_cell_side);
 	}
 
 	bool has_data()
