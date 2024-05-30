@@ -809,7 +809,6 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     int count_x = 0;
     int count_y = 0;
     int default_side_size = 0;
-    int id_cell = -1;
     int id_floor = -1;
     int id_wall = -1;
     int id_roof = -1;
@@ -846,11 +845,6 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                     cell_point.y = wxAtoi(r_id_coords.GetMatch(str, 2));
                     wxLogDebug(wxString("🅧") << cell_point.x << "; 🅨" << cell_point.y);
                 }
-                // else if(r_id_cell.Matches(str, wxRE_NOTEMPTY))
-                // {//tag = "id";
-                //     id_cell = wxAtoi(r_id_cell.GetMatch(str, 1));
-                //     wxLogDebug(wxString("🆔") << id_cell);
-                // }
                 else if(r_id_floor.Matches(str, wxRE_NOTEMPTY))
                 {//tag = "floor";
                     id_floor = wxAtoi(r_id_floor.GetMatch(str, 1));
@@ -941,11 +935,9 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
         {
             if(d)
             {
-                id_cell++;
-                d->append_cell(cell_point.x, cell_point.y, id_cell, default_side_size, id_floor, id_wall, id_roof, wall_type, script.utf8_string());
+                d->append_cell(cell_point.x, cell_point.y, default_side_size, id_floor, id_wall, id_roof, wall_type, script.utf8_string());
             }
             cell_point = wxDefaultPosition;
-            //id_cell = -1;
             id_floor = -1;
             id_wall = -1;
             id_roof = -1;
@@ -965,7 +957,6 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
                 if(d)
                     AddLevel(id_level, d);
                 id_level = -1;
-                id_cell = -1;
             }
             else
             {
@@ -1120,14 +1111,11 @@ void GBFrame::SetCellScript(const wxString& value)
 
 void GBFrame::OnPropertyGridChanging(wxPropertyGridEvent& event)
 {
+    wxAny v = event.GetPropertyValue();
     if(event.GetPropertyName() == "wall_type")
-    {
-        wxAny v = event.GetPropertyValue();
         SetCellWallType((WallType)v.As<int>());
-    }
-    if(event.GetPropertyName() == "script")
-    {
-        wxAny v = event.GetPropertyValue();
+    else if(event.GetPropertyName() == "script")
         SetCellScript(v.As<wxString>());
-    }
+    else
+        wxLogMessage(event.GetPropertyName() << " " << v.As<wxString>());
 }

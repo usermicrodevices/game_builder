@@ -73,17 +73,15 @@ public:
 				int count_x=100;
 				int count_y=100;
 				m_data = Data(cell_side_size, count_x, count_y);
-				int idx = 0;
 				int x = 0, y = 0;
 				for(int i=0; i<count_x; ++i)
 				{
+					x = i * cell_side_size;
 					for(int j=0; j<count_y; ++j)
 					{
-						x = i * cell_side_size;
 						y = j * cell_side_size;
-						m_data.append_cell(x, y, idx, cell_side_size);
+						m_data.append_cell_default(x, y);
 						m_tree_items.Add(m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", x, y), 1));
-						++idx;
 					}
 				}
 			}
@@ -357,7 +355,14 @@ public:
 		void store_currents()
 		{
 			if(m_current_texture.IsOk())
+			{
 				m_data.set_texture(m_current_cell_position, m_current_texture, m_current_texture_type);
+				if(m_tree_items.size() <= m_data.cell(m_current_cell_position).id)
+				{
+					wxTreeItemId id = m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", m_current_cell_position.x, m_current_cell_position.y), 1);
+					m_tree_items.Add(id);
+				}
+			}
 			else
 			{
 				switch(m_eraser)
@@ -404,14 +409,17 @@ public:
 			{
 				Cell c = m_data.cell(m_current_cell_position);
 				refresh_pgproperty(c);
-				wxTreeItemId id = nullptr;
-				if(m_tree_items.size() < c.id)
-				{
-					id = m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", m_current_cell_position.x, m_current_cell_position.y), 1);
-					m_tree_items.Add(id);
-				}
-				else
-					id = m_tree_items.Item((size_t)c.id);
+				//wxTreeItemId id = nullptr;
+				// if(m_tree_items.size() <= c.id)
+				// {
+				// 	id = m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", m_current_cell_position.x, m_current_cell_position.y), 1);
+				// 	m_tree_items.Add(id);
+				// }
+				// else
+				// {
+				// 	wxLogMessage(wxString("size=") << m_tree_items.size() << "; id=" << c.id);
+				wxTreeItemId id = m_tree_items.Item((size_t)c.id);
+				// }
 				if(id)
 				{
 					if(id.IsOk())

@@ -80,7 +80,7 @@ public:
 	int texture_roof = -1;
 	WallType wtp = WT_DEFAULT;
 	std::string script;
-
+ 
 	Cell(int idx=0, int side_size=50, int tex_floor=-1, int tex_wall=-1, int tex_roof=-1, WallType wt=WT_DEFAULT, const std::string& scrpt=std::string())
 	{
 		id = idx;
@@ -155,16 +155,14 @@ public:
 		return m_count_cell_y;
 	}
 
-	void append_cell(int x, int y, int idx, int cell_side_size=50, int t_floor=-1, int t_wall=-1, int t_roof=-1, WallType wltp=WT_DEFAULT, const std::string& scrpt=std::string())
+	void append_cell(int x, int y, int cell_side_size=50, int t_floor=-1, int t_wall=-1, int t_roof=-1, WallType wltp=WT_DEFAULT, const std::string& scrpt=std::string())
 	{
-		cells[wxPoint(x, y)] = Cell(idx, cell_side_size, t_floor, t_wall, t_roof, wltp, scrpt);
+		cells[wxPoint(x, y)] = Cell((int)cells.size(), cell_side_size, t_floor, t_wall, t_roof, wltp, scrpt);
 	}
 
-	int append_cell(int x, int y, int cell_side_size=50)
+	void append_cell_default(int x, int y)
 	{
-		int idx = count_cells();
-		cells[wxPoint(x, y)] = Cell(idx, cell_side_size);
-		return idx;
+		cells[wxPoint(x, y)] = Cell((int)cells.size(), m_cell_side);
 	}
 
 	bool has_data()
@@ -315,6 +313,8 @@ public:
 
 	void set_texture(wxPoint p, const Texture& tex, TextureType tt=TT_FLOOR)
 	{
+		if(cells.find(p) == cells.end())
+			cells[p] = Cell(cells.size(), m_cell_side);
 		switch(tt)
 		{
 			case TT_WALL:

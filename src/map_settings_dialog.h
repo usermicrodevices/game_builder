@@ -173,4 +173,4 @@ protected:
 };
 wxIMPLEMENT_CLASS(MapSettingsDialog, wxPropertySheetDialog);
 wxBEGIN_EVENT_TABLE(MapSettingsDialog, wxPropertySheetDialog)
-wxEND_EVENT_TABLE()	  
+wxEND_EVENT_TABLE()
