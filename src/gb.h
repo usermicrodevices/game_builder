@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "gb.xpm"
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
@@ -63,8 +65,6 @@
 #include "wx/propgrid/propgrid.h"
 #include "wx/propgrid/advprops.h"
 #include "wx/propgrid/manager.h"
-
-#include "gb.xpm"
 
 #include "map_settings_dialog.h"
 #include "map_board.h"

@@ -1,8 +1,5 @@
 aaaaaaaa ICON "gb.ico"
 
-// this icon is used with wxFrame::SetIcon()
-gb ICON "gb.ico"
-
 #define wxUSE_NO_MANIFEST 0
 
 #ifndef wxUSE_DPI_AWARE_MANIFEST

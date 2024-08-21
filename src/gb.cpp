@@ -140,7 +140,8 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
 {
     m_mgr.SetManagedWindow(this);
 
-    SetIcon(wxIcon(sample_xpm));
+    //SetIcon(wxIcon(gb_icon_xpm));
+    SetIcons(wxIconBundle(gb_icon_xpm));
 
     m_notebook_style = wxAUI_NB_DEFAULT_STYLE | wxAUI_NB_TAB_EXTERNAL_MOVE | wxNO_BORDER;
     m_notebook_theme = 0;
