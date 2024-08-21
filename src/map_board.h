@@ -40,6 +40,17 @@ class MapBoardCtrl : public wxScrolledWindow
 
 public:
 		MapBoardCtrl(){};//wxDECLARE_DYNAMIC_CLASS
+		~MapBoardCtrl()
+		{
+			m_tree->UnselectAll();
+			if(m_level_tree_item.IsOk())
+			{
+				m_tree->DeleteChildren(m_level_tree_item);
+				m_tree->Delete(m_level_tree_item);
+			}
+			m_prgrmgr->GetGrid()->Freeze();
+			m_prgrmgr->GetGrid()->Refresh();
+		}
 
 		MapBoardCtrl(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxHSCROLL | wxVSCROLL, const wxString& name = "MapBoardCtrl", wxAuiManager* mgr = nullptr, wxTreeCtrl* tree = nullptr, wxPropertyGridManager* prop_grid_mgr = nullptr, bool fill_test_data=false)
 		: wxScrolledWindow(parent, id, pos, size, wxHSCROLL | wxVSCROLL, name)
@@ -61,10 +72,13 @@ public:
 			if(d)
 			{
 				m_data = *d;
-				for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
+				if(m_level_tree_item.IsOk())
 				{
-					auto point = iter->first;
-					m_tree_items.Add(m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", point.x, point.y), 1));
+					for(auto iter = m_data.cells_begin(); iter != m_data.cells_end(); ++iter)
+					{
+						auto point = iter->first;
+						m_tree_items.Add(m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", point.x, point.y), 1));
+					}
 				}
 			}
 			else
@@ -81,7 +95,8 @@ public:
 					{
 						y = j * cell_side_size;
 						m_data.append_cell_default(x, y);
-						m_tree_items.Add(m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", x, y), 1));
+						if(m_level_tree_item.IsOk())
+							m_tree_items.Add(m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", x, y), 1));
 					}
 				}
 			}
@@ -89,6 +104,12 @@ public:
 			m_virtual_size = wxSize(cell_side*m_data.count_cell_x(), cell_side*m_data.count_cell_y());
 			SetVirtualSize(m_virtual_size);
 			SetScrollbars(cell_side, cell_side, m_virtual_size.x/cell_side, m_virtual_size.y/cell_side);
+			if(m_level_tree_item.IsOk())
+			{
+				m_tree->EnsureVisible(m_level_tree_item);
+				m_tree->ScrollTo(m_level_tree_item);
+				m_tree->SelectItem(m_level_tree_item);
+			}
 		}
 
 		void LogMessage(const wxString &value)
@@ -331,6 +352,8 @@ public:
 
 		void refresh_pgproperty(const Cell& cell)
 		{
+			if(m_prgrmgr->GetGrid()->IsFrozen())
+				m_prgrmgr->GetGrid()->Thaw();
 			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_floor"), m_data.get_texture(cell.texture_floor));
 			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_wall"), m_data.get_texture(cell.texture_wall));
 			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_roof"), m_data.get_texture(cell.texture_roof));

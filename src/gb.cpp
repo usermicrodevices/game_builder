@@ -151,8 +151,9 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     wxMenu* file_menu = new wxMenu;
     file_menu->Append(ID_AddLevel, wxT("➕New Level\tCtrl-N"));
     file_menu->Append(wxID_OPEN, wxT("📂Open\tCtrl-O"));
+    file_menu->Append(ID_OpenLevel, wxT("🗂Open Level\tCtrl-L"));
     file_menu->Append(wxID_SAVE, wxT("💾Save\tCtrl-S"));
-    file_menu->Append(wxID_FILE, wxT("📥Save level\tCtrl-L"));
+    file_menu->Append(wxID_FILE, wxT("📥Save level\tCtrl-M"));
     file_menu->Append(wxID_EXIT, wxT("🚫Quit\tCtrl-Q"));
 
     wxMenu* view_menu = new wxMenu;
@@ -230,6 +231,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     wxAuiToolBar* tb1 = new wxAuiToolBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxAUI_TB_DEFAULT_STYLE | wxAUI_TB_OVERFLOW);
     tb1->AddTool(ID_AddLevel, "&New Level", wxArtProvider::GetBitmapBundle(wxART_NEW), _("New Level"));
     tb1->AddTool(wxID_OPEN, "&Open", wxArtProvider::GetBitmapBundle(wxART_FILE_OPEN), _("Open another project from file"));
+    tb1->AddTool(ID_OpenLevel, "Open Level", wxArtProvider::GetBitmapBundle(wxART_FOLDER_OPEN), _("Open another level from file"));
     tb1->AddTool(wxID_SAVE, "&Save", wxArtProvider::GetBitmapBundle(wxART_FLOPPY), _("Save current project to file"));
     tb1->AddTool(wxID_FILE, "Save &Level", wxArtProvider::GetBitmapBundle(wxART_CDROM), _("Save current level to file"));
     tb1->AddSeparator();
@@ -289,6 +291,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     page->Append(new wxLongStringProperty("script", wxPG_LABEL, ""));
     page->SetPropertyHelpString("script", _("this is script content, may be any programming code"));
     /////////////////////////////////
+    m_propGridManager->GetGrid()->Freeze();
     m_mgr.AddPane(m_propGridManager, wxAuiPaneInfo().Name("property-cell").BestSize(200,200).Right().PaneBorder(false).Caption("properties").Dock().CloseButton(true));
     
     m_mgr.AddPane(CreateNotebook(), wxAuiPaneInfo().Name("notebook").CenterPane().PaneBorder(false).Caption("notebook").Dock().CloseButton(true).MaximizeButton(true));
@@ -803,9 +806,8 @@ void GBFrame::OnTabAlignment(wxCommandEvent &evt)
     }
 }
 
-void GBFrame::ParseJsonLevels(wxTextFile& f)
+void GBFrame::ParseJsonLevels(wxTextFile& f, int id_level)
 {
-    int id_level = -1;
     int id_texture = -1;
     int count_x = 0;
     int count_y = 0;
@@ -834,6 +836,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f)
     Data* d;
     while(!tag.empty())
     {
+        //wxLogDebug(wxString("📌 ") << str);
         str.Replace("\t", "");
         str.Replace("\n", "");
         if(str != "{" && str != "}" && str != "},")
@@ -988,6 +991,21 @@ void GBFrame::ParseJsonFile(wxTextFile& f)
         else
             wxLogDebug(str);
         str = f.GetNextLine();
+    }
+}
+
+void GBFrame::OnOpenLevel(wxCommandEvent& WXUNUSED(event))
+{
+    wxString wildCard = "JSON file (*.json)|*.json;*.JSON";
+    wxFileDialog dlg(this, "Open JSON level", wxEmptyString, wxEmptyString, wildCard, wxFD_OPEN);
+    if(dlg.ShowModal() == wxID_OK)
+    {
+        wxLogDebug(dlg.GetPath());
+        wxTextFile f(dlg.GetPath());
+        if(f.Open())
+            ParseJsonLevels(f, m_notebook_ctrl->GetPageCount());
+        else
+            wxLogWarning("JSON file not opened");
     }
 }
 

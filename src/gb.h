@@ -106,6 +106,7 @@ class GBFrame : public wxFrame
 	{
 		PGID = 1,
 		ID_AddLevel = wxID_HIGHEST,
+		ID_OpenLevel,
 		ID_ShowLog,
 		ID_ShowTree,
 		ID_ShowNotebook,
@@ -222,9 +223,10 @@ private:
 	//void OnNotebookDeleteTab(wxCommandEvent& evt);
 	//void OnPaneClose(wxAuiManagerEvent& evt);
 
-	void ParseJsonLevels(wxTextFile& f);
+	void ParseJsonLevels(wxTextFile& f, int id_level=-1);
 	void ParseJsonFile(wxTextFile& f);
 	void OnOpen(wxCommandEvent& evt);
+	void OnOpenLevel(wxCommandEvent& evt);
 
 	void OnPropertyGridChanging(wxPropertyGridEvent& event);
 
@@ -233,6 +235,7 @@ private:
 
 wxBEGIN_EVENT_TABLE(GBFrame, wxFrame)
 EVT_MENU(wxID_OPEN, GBFrame::OnOpen)
+EVT_MENU(GBFrame::ID_OpenLevel, GBFrame::OnOpenLevel)
 EVT_MENU(wxID_SAVE, GBFrame::OnSave)
 EVT_MENU(wxID_FILE, GBFrame::OnSaveLevel)
 EVT_MENU(wxID_EXIT, GBFrame::OnExit)
