@@ -432,17 +432,18 @@ public:
 			{
 				Cell c = m_data.cell(m_current_cell_position);
 				refresh_pgproperty(c);
-				//wxTreeItemId id = nullptr;
-				// if(m_tree_items.size() <= c.id)
-				// {
-				// 	id = m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", m_current_cell_position.x, m_current_cell_position.y), 1);
-				// 	m_tree_items.Add(id);
-				// }
-				// else
-				// {
-				// 	wxLogMessage(wxString("size=") << m_tree_items.size() << "; id=" << c.id);
-				wxTreeItemId id = m_tree_items.Item((size_t)c.id);
-				// }
+				wxTreeItemId id = nullptr;
+				if(m_tree_items.size() <= c.id)
+				{
+					id = m_tree->AppendItem(m_level_tree_item, wxString::Format("%d-%d", m_current_cell_position.x, m_current_cell_position.y), 1);
+					m_tree_items.Add(id);
+					wxLogDebug(wxString("🌿size=") << m_tree_items.size() << "; id=" << c.id);
+				}
+				else
+				{
+					wxLogDebug(wxString("🧊size=") << m_tree_items.size() << "; id=" << c.id);
+					id = m_tree_items.Item((size_t)c.id);
+				}
 				if(id)
 				{
 					if(id.IsOk())
