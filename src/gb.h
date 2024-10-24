@@ -11,8 +11,10 @@
 
 #include "gb.xpm"
 
+#ifdef PLUGINS_PYTHON
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#endif // PLUGINS_PYTHON
 
 #define wxDEBUG_LEVEL 1
 
@@ -33,7 +35,7 @@
 
 #include <wx/cmdline.h>
 #include <wx/app.h>
-
+#include <wx/dir.h>
 #include "wx/grid.h"
 #include "wx/treectrl.h"
 #include "wx/spinctrl.h"
@@ -90,7 +92,9 @@ typedef std::map<wxString, MapBoardCtrl*> LevelContainer;
 class GBApp : public wxApp
 {
 public:
+	wxString path_projects, path_assets, path_assets_images, path_plugins;
 	bool OnInit() override;
+
 private:
 	void OnInitCmdLine(wxCmdLineParser& parser);
 };
@@ -98,6 +102,7 @@ private:
 wxDECLARE_APP(GBApp);
 wxIMPLEMENT_APP(GBApp);
 
+typedef std::unordered_map<int, wxString> PluginContainer;
 
 class GBFrame : public wxFrame
 {
@@ -144,8 +149,8 @@ class GBFrame : public wxFrame
 		ID_NotebookArtSimple,
 		ID_NotebookAlignTop,
 		ID_NotebookAlignBottom,
-
-		ID_FirstPerspective = ID_CreatePerspective+1000
+		ID_FirstPerspective = ID_CreatePerspective+1000,
+		ID_FirstPlugin = wxID_HIGHEST+10000
 	};
 
 public:
@@ -168,7 +173,7 @@ private:
 	long m_notebook_style;
 	long m_notebook_theme;
 	wxArrayString m_perspectives;
-	wxMenu* m_perspectives_menu;
+	wxMenu *menu_perspectives, *menu_plugins;
 	wxTreeCtrl* m_tree_ctrl;
 	wxLog* m_log;
 	wxTextCtrl* m_logTextCtrl;
@@ -177,6 +182,7 @@ private:
 	LevelContainer levels = {};
 	wxPropertyGridManager* m_propGridManager;
 	MapSettingsData m_map_settings_data;
+	PluginContainer m_plugins = {};
 
 	wxTextCtrl* CreateTextCtrl(const wxString& text = wxEmptyString);
 
@@ -229,6 +235,8 @@ private:
 	void OnOpenLevel(wxCommandEvent& evt);
 
 	void OnPropertyGridChanging(wxPropertyGridEvent& event);
+
+	void OnPluginRun(wxCommandEvent& event);
 
 	wxDECLARE_EVENT_TABLE();
 };
@@ -303,6 +311,7 @@ EVT_UPDATE_UI(ID_VerticalGradient, GBFrame::OnUpdateUI)
 EVT_UPDATE_UI(ID_HorizontalGradient, GBFrame::OnUpdateUI)
 EVT_UPDATE_UI(ID_AllowToolbarResizing, GBFrame::OnUpdateUI)
 EVT_MENU_RANGE(GBFrame::ID_FirstPerspective, GBFrame::ID_FirstPerspective+1000, GBFrame::OnRestorePerspective)
+EVT_MENU_RANGE(GBFrame::ID_FirstPlugin, GBFrame::ID_FirstPlugin+1000, GBFrame::OnPluginRun)
 EVT_AUITOOLBAR_TOOL_DROPDOWN(ID_DropDownToolbarItem, GBFrame::OnDropDownToolbarItem)
 //EVT_AUI_PANE_CLOSE(GBFrame::OnPaneClose)
 EVT_AUINOTEBOOK_ALLOW_DND(wxID_ANY, GBFrame::OnAllowNotebookDnD)

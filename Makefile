@@ -14,7 +14,8 @@ CXXFLAGS = -ggdb -std=c++20
 CPPFLAGS = 
 LDFLAGS = 
 USE_DPI_AWARE_MANIFEST = 2
-WX_LIB_FLAVOUR = 
+PLUGINS_PYTHON = 1
+WX_LIB_FLAVOUR =
 TOOLKIT = GTK
 TOOLKIT_LOWERCASE = gtk
 TOOLKIT_VERSION = 3
@@ -24,7 +25,12 @@ EXTRALIBS = -pthread -Wl,--version-script,$(wx_top_builddir)/version-script
 EXTRALIBS_XML = -lexpat
 EXTRALIBS_HTML = 
 EXTRALIBS_GUI = -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lX11 -lgthread-2.0 -lglib-2.0 -lXxf86vm -lSM -lxkbcommon -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lXtst -lpangoft2-1.0 -lpango-1.0 -lgobject-2.0 -lglib-2.0 -lharfbuzz -lfontconfig -lfreetype -lpng -ljpeg -ltiff -ljbig
-WX_CPPFLAGS = -I${wx_top_builddir}/lib/wx/include/gtk3-unicode-3.3 -I${top_srcdir}/include -D_FILE_OFFSET_BITS=64 -pthread -I/usr/include/gtk-3.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/at-spi-2.0 -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/fribidi -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libpng16 -I/usr/include/x86_64-linux-gnu -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/python3.10 -I/usr/include/x86_64-linux-gnu/python3.10
+WX_CPPFLAGS = -I${wx_top_builddir}/lib/wx/include/gtk3-unicode-3.3 -I${top_srcdir}/include -D_FILE_OFFSET_BITS=64 -pthread -I/usr/include/gtk-3.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/at-spi-2.0 -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/fribidi -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libpng16 -I/usr/include/x86_64-linux-gnu -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include
+
+ifeq ($(PLUGINS_PYTHON), 1)
+WX_CPPFLAGS += -DPLUGINS_PYTHON -I/usr/include/python3.12 -I/usr/include/x86_64-linux-gnu/python3.12 -L/usr/lib/python3.12 -lpython3.12
+endif
+
 HOST_SUFFIX = 
 RPATH_FLAG = -Wl,-rpath,$(wx_top_builddir)/lib
 #PIC_CXXFLAGS = -fPIC -DPIC

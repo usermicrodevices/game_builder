@@ -11,8 +11,8 @@
 
 void GBApp::OnInitCmdLine(wxCmdLineParser& parser)
 {
-    wxApp::OnInitCmdLine(parser);
-    parser.AddParam("project", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL);
+	wxApp::OnInitCmdLine(parser);
+	parser.AddParam("project", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL);
 }
 
 // bool GBApp::OnCmdLineParsed(wxCmdLineParser& parser)
@@ -36,102 +36,68 @@ void GBApp::OnInitCmdLine(wxCmdLineParser& parser)
 
 bool GBApp::OnInit()
 {
-    if ( !wxApp::OnInit() )
-        return false;
+	if ( !wxApp::OnInit() )
+		return false;
 
-// #if wxUSE_LIBPNG
-//     wxImage::AddHandler( new wxPNGHandler );
-// #endif
-// #if wxUSE_LIBJPEG
-//     wxImage::AddHandler(new wxJPEGHandler);
-// #endif
-// #if wxUSE_GIF
-//     wxImage::AddHandler(new wxGIFHandler);
-// #endif
-// #if wxUSE_PCX
-//     wxImage::AddHandler(new wxPCXHandler);
-// #endif
-// #if wxUSE_PNM
-//     wxImage::AddHandler(new wxPNMHandler);
-// #endif
-// #if wxUSE_LIBTIFF
-//     wxImage::AddHandler(new wxTIFFHandler);
-// #endif
-// #if wxUSE_TGA
-//     wxImage::AddHandler(new wxTGAHandler);
-// #endif
-// #if wxUSE_IFF
-//     wxImage::AddHandler(new wxIFFHandler);
-// #endif
-// #if wxUSE_XPM
-//     wxImage::AddHandler(new wxXPMHandler);
-// #endif
-// #if wxUSE_ICO_CUR
-//     wxImage::AddHandler(new wxICOHandler);
-//     wxImage::AddHandler(new wxCURHandler);
-//     wxImage::AddHandler(new wxANIHandler);
-// #endif
-    wxInitAllImageHandlers();
+	wxInitAllImageHandlers();
 
-    const wxLanguageInfo* langInfo = wxUILocale::GetLanguageInfo(wxLANGUAGE_DEFAULT);
-    const wxString langDesc = langInfo ? langInfo->Description : wxString("the default system language");
-    if ( !wxUILocale::UseDefault() )
-    {
-        wxLogWarning("Failed to initialize the default system locale.");
-    }
-    wxFileTranslationsLoader::AddCatalogLookupPathPrefix(".");
-    wxTranslations* const trans = new wxTranslations();
-    wxTranslations::Set(trans);
-    if ( !trans->AddCatalog("internat") )
-    {
-        wxLogError(_("Couldn't find/load 'internat' catalog for %s."), langDesc);
-    }
-    trans->AddCatalog("wxstd");
+	const wxLanguageInfo* langInfo = wxUILocale::GetLanguageInfo(wxLANGUAGE_DEFAULT);
+	const wxString langDesc = langInfo ? langInfo->Description : wxString("the default system language");
+	if ( !wxUILocale::UseDefault() )
+		wxLogWarning("Failed to initialize the default system locale.");
+
+	wxFileTranslationsLoader::AddCatalogLookupPathPrefix(".");
+	wxTranslations* const trans = new wxTranslations();
+	wxTranslations::Set(trans);
+	if ( !trans->AddCatalog("internat") )
+		wxLogError(_("Couldn't find/load 'internat' catalog for %s."), langDesc);
+	trans->AddCatalog("wxstd");
 #ifdef USE_COREUTILS_MO
-    wxFileTranslationsLoader::AddCatalogLookupPathPrefix("/usr/share/locale");
-    g_loadedCoreutilsMO = trans->AddCatalog("coreutils");
+	wxFileTranslationsLoader::AddCatalogLookupPathPrefix("/usr/share/locale");
+	g_loadedCoreutilsMO = trans->AddCatalog("coreutils");
 #endif // USE_COREUTILS_MO
 
-    GBFrame* frame = new GBFrame(nullptr, wxID_ANY, _("Game Builder Application"), wxDefaultPosition, wxWindow::FromDIP(wxSize(800, 600), nullptr));
-    frame->Show();
+	path_projects = wxGetCwd()+"/projects";
+	path_assets = wxGetCwd()+"/assets";
+	path_assets_images = path_assets+"/images";
+	path_plugins = wxGetCwd()+"/plugins";
 
-    wxString projects(wxGetCwd()+"/projects");
-    if(!wxFileName::DirExists(projects))
-    {
-        if(wxFileName::Mkdir(projects))
-            wxLogMessage("✅"+projects);
-        else
-            wxLogMessage("❌"+projects);
-    }
+	GBFrame* frame = new GBFrame(nullptr, wxID_ANY, _("Game Builder Application"), wxDefaultPosition, wxWindow::FromDIP(wxSize(800, 600), nullptr));
+	frame->Show();
 
-    wxString assets(wxGetCwd()+"/assets");
-    if(!wxFileName::DirExists(assets))
-    {
-        if(wxFileName::Mkdir(assets))
-            wxLogMessage("✅"+assets);
-        else
-            wxLogMessage("❌"+assets);
-    }
+	if(!wxFileName::DirExists(path_projects))
+	{
+		if(wxFileName::Mkdir(path_projects))
+			wxLogMessage("✅"+path_projects);
+		else
+			wxLogMessage("❌"+path_projects);
+	}
 
-    wxString assets_images(assets+"/images");
-    if(!wxFileName::DirExists(assets_images))
-    {
-        if(wxFileName::Mkdir(assets_images))
-            wxLogMessage("✅"+assets_images);
-        else
-            wxLogMessage("❌"+assets_images);
-    }
+	if(!wxFileName::DirExists(path_assets))
+	{
+		if(wxFileName::Mkdir(path_assets))
+			wxLogMessage("✅"+path_assets);
+		else
+			wxLogMessage("❌"+path_assets);
+	}
 
-    wxString plugins(wxGetCwd()+"/plugins");
-    if(!wxFileName::DirExists(plugins))
-    {
-        if(wxFileName::Mkdir(plugins))
-            wxLogMessage("✅"+plugins);
-        else
-            wxLogMessage("❌"+plugins);
-    }
+	if(!wxFileName::DirExists(path_assets_images))
+	{
+		if(wxFileName::Mkdir(path_assets_images))
+			wxLogMessage("✅"+path_assets_images);
+		else
+			wxLogMessage("❌"+path_assets_images);
+	}
 
-    return true;
+	if(!wxFileName::DirExists(path_plugins))
+	{
+		if(wxFileName::Mkdir(path_plugins))
+			wxLogMessage("✅"+path_plugins);
+		else
+			wxLogMessage("❌"+path_plugins);
+	}
+
+	return true;
 }
 
 
@@ -148,77 +114,91 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
 
     wxMenuBar* mb = new wxMenuBar;
 
-    wxMenu* file_menu = new wxMenu;
-    file_menu->Append(ID_AddLevel, wxT("➕New Level\tCtrl-N"));
-    file_menu->Append(wxID_OPEN, wxT("📂Open\tCtrl-O"));
-    file_menu->Append(ID_OpenLevel, wxT("🗂Open Level\tCtrl-L"));
-    file_menu->Append(wxID_SAVE, wxT("💾Save\tCtrl-S"));
-    file_menu->Append(wxID_FILE, wxT("📥Save level\tCtrl-M"));
-    file_menu->Append(wxID_EXIT, wxT("🚫Quit\tCtrl-Q"));
+    wxMenu* menu_file = new wxMenu;
+    menu_file->Append(ID_AddLevel, wxT("➕New Level\tCtrl-N"));
+    menu_file->Append(wxID_OPEN, wxT("📂Open\tCtrl-O"));
+    menu_file->Append(ID_OpenLevel, wxT("🗂Open Level\tCtrl-L"));
+    menu_file->Append(wxID_SAVE, wxT("💾Save\tCtrl-S"));
+    menu_file->Append(wxID_FILE, wxT("📥Save level\tCtrl-M"));
+    menu_file->Append(wxID_EXIT, wxT("🚫Quit\tCtrl-Q"));
 
-    wxMenu* view_menu = new wxMenu;
-    view_menu->Append(ID_ShowLog, _("Show Log"));
-    view_menu->Append(ID_ShowTree, _("Show Tree"));
-    view_menu->Append(ID_ShowNotebook, _("Show Notebook"));
-    view_menu->Append(ID_ShowNotebook, _("Show Cell Properties"));
-    view_menu->Append(ID_DrawCellCoords, _("Draw Cell Coords on/off"));
+    wxMenu* menu_view = new wxMenu;
+    menu_view->Append(ID_ShowLog, _("Show Log"));
+    menu_view->Append(ID_ShowTree, _("Show Tree"));
+    menu_view->Append(ID_ShowNotebook, _("Show Notebook"));
+    menu_view->Append(ID_ShowNotebook, _("Show Cell Properties"));
+    menu_view->Append(ID_DrawCellCoords, _("Draw Cell Coords on/off"));
 
-    wxMenu* options_menu = new wxMenu;
-    options_menu->AppendRadioItem(ID_TransparentHint, _("Transparent Hint"));
-    options_menu->AppendRadioItem(ID_VenetianBlindsHint, _("Venetian Blinds Hint"));
-    options_menu->AppendRadioItem(ID_RectangleHint, _("Rectangle Hint"));
-    options_menu->AppendRadioItem(ID_NoHint, _("No Hint"));
-    options_menu->AppendSeparator();
-    options_menu->AppendCheckItem(ID_HintFade, _("Hint Fade-in"));
-    options_menu->AppendCheckItem(ID_AllowFloating, _("Allow Floating"));
-    options_menu->AppendCheckItem(ID_NoVenetianFade, _("Disable Venetian Blinds Hint Fade-in"));
-    options_menu->AppendCheckItem(ID_TransparentDrag, _("Transparent Drag"));
-    options_menu->AppendCheckItem(ID_AllowActivePane, _("Allow Active Pane"));
+    wxMenu* menu_options = new wxMenu;
+    menu_options->AppendRadioItem(ID_TransparentHint, _("Transparent Hint"));
+    menu_options->AppendRadioItem(ID_VenetianBlindsHint, _("Venetian Blinds Hint"));
+    menu_options->AppendRadioItem(ID_RectangleHint, _("Rectangle Hint"));
+    menu_options->AppendRadioItem(ID_NoHint, _("No Hint"));
+    menu_options->AppendSeparator();
+    menu_options->AppendCheckItem(ID_HintFade, _("Hint Fade-in"));
+    menu_options->AppendCheckItem(ID_AllowFloating, _("Allow Floating"));
+    menu_options->AppendCheckItem(ID_NoVenetianFade, _("Disable Venetian Blinds Hint Fade-in"));
+    menu_options->AppendCheckItem(ID_TransparentDrag, _("Transparent Drag"));
+    menu_options->AppendCheckItem(ID_AllowActivePane, _("Allow Active Pane"));
     if ( !wxAuiManager::AlwaysUsesLiveResize() )
-        options_menu->AppendCheckItem(ID_LiveUpdate, _("Live Resize Update"));
-    options_menu->AppendSeparator();
-    options_menu->AppendRadioItem(ID_NoGradient, _("No Caption Gradient"));
-    options_menu->AppendRadioItem(ID_VerticalGradient, _("Vertical Caption Gradient"));
-    options_menu->AppendRadioItem(ID_HorizontalGradient, _("Horizontal Caption Gradient"));
-    options_menu->AppendSeparator();
-    options_menu->AppendCheckItem(ID_AllowToolbarResizing, _("Allow Toolbar Resizing"));
-    options_menu->AppendSeparator();
-    options_menu->Append(ID_Settings, _("Settings Pane"));
+        menu_options->AppendCheckItem(ID_LiveUpdate, _("Live Resize Update"));
+    menu_options->AppendSeparator();
+    menu_options->AppendRadioItem(ID_NoGradient, _("No Caption Gradient"));
+    menu_options->AppendRadioItem(ID_VerticalGradient, _("Vertical Caption Gradient"));
+    menu_options->AppendRadioItem(ID_HorizontalGradient, _("Horizontal Caption Gradient"));
+    menu_options->AppendSeparator();
+    menu_options->AppendCheckItem(ID_AllowToolbarResizing, _("Allow Toolbar Resizing"));
+    menu_options->AppendSeparator();
+    menu_options->Append(ID_Settings, _("Settings Pane"));
 
-    wxMenu* notebook_menu = new wxMenu;
-    notebook_menu->AppendRadioItem(ID_NotebookArtGloss, _("Glossy Theme (Default)"));
-    notebook_menu->AppendRadioItem(ID_NotebookArtSimple, _("Simple Theme"));
-    notebook_menu->AppendSeparator();
-    notebook_menu->AppendRadioItem(ID_NotebookNoCloseButton, _("No Close Button"));
-    notebook_menu->AppendRadioItem(ID_NotebookCloseButton, _("Close Button at Right"));
-    notebook_menu->AppendRadioItem(ID_NotebookCloseButtonAll, _("Close Button on All Tabs"));
-    notebook_menu->AppendRadioItem(ID_NotebookCloseButtonActive, _("Close Button on Active Tab"));
-    notebook_menu->AppendSeparator();
-    notebook_menu->AppendRadioItem(ID_NotebookAlignTop, _("Tab Top Alignment"));
-    notebook_menu->AppendRadioItem(ID_NotebookAlignBottom, _("Tab Bottom Alignment"));
-    notebook_menu->AppendSeparator();
-    notebook_menu->AppendCheckItem(ID_NotebookAllowTabMove, _("Allow Tab Move"));
-    notebook_menu->AppendCheckItem(ID_NotebookAllowTabExternalMove, _("Allow External Tab Move"));
-    notebook_menu->AppendCheckItem(ID_NotebookAllowTabSplit, _("Allow Notebook Split"));
-    notebook_menu->AppendCheckItem(ID_NotebookScrollButtons, _("Scroll Buttons Visible"));
-    notebook_menu->AppendCheckItem(ID_NotebookWindowList, _("Window List Button Visible"));
-    notebook_menu->AppendCheckItem(ID_NotebookTabFixedWidth, _("Fixed-width Tabs"));
+    wxMenu* menu_notebook = new wxMenu;
+    menu_notebook->AppendRadioItem(ID_NotebookArtGloss, _("Glossy Theme (Default)"));
+    menu_notebook->AppendRadioItem(ID_NotebookArtSimple, _("Simple Theme"));
+    menu_notebook->AppendSeparator();
+    menu_notebook->AppendRadioItem(ID_NotebookNoCloseButton, _("No Close Button"));
+    menu_notebook->AppendRadioItem(ID_NotebookCloseButton, _("Close Button at Right"));
+    menu_notebook->AppendRadioItem(ID_NotebookCloseButtonAll, _("Close Button on All Tabs"));
+    menu_notebook->AppendRadioItem(ID_NotebookCloseButtonActive, _("Close Button on Active Tab"));
+    menu_notebook->AppendSeparator();
+    menu_notebook->AppendRadioItem(ID_NotebookAlignTop, _("Tab Top Alignment"));
+    menu_notebook->AppendRadioItem(ID_NotebookAlignBottom, _("Tab Bottom Alignment"));
+    menu_notebook->AppendSeparator();
+    menu_notebook->AppendCheckItem(ID_NotebookAllowTabMove, _("Allow Tab Move"));
+    menu_notebook->AppendCheckItem(ID_NotebookAllowTabExternalMove, _("Allow External Tab Move"));
+    menu_notebook->AppendCheckItem(ID_NotebookAllowTabSplit, _("Allow Notebook Split"));
+    menu_notebook->AppendCheckItem(ID_NotebookScrollButtons, _("Scroll Buttons Visible"));
+    menu_notebook->AppendCheckItem(ID_NotebookWindowList, _("Window List Button Visible"));
+    menu_notebook->AppendCheckItem(ID_NotebookTabFixedWidth, _("Fixed-width Tabs"));
 
-    m_perspectives_menu = new wxMenu;
-    m_perspectives_menu->Append(ID_CreatePerspective, _("Create Perspective"));
-    m_perspectives_menu->Append(ID_CopyPerspectiveCode, _("Copy Perspective Data To Clipboard"));
-    m_perspectives_menu->AppendSeparator();
-    m_perspectives_menu->Append(ID_FirstPerspective+0, _("Default Startup"));
-    m_perspectives_menu->Append(ID_FirstPerspective+1, _("All Panes"));
+    menu_perspectives = new wxMenu;
+    menu_perspectives->Append(ID_CreatePerspective, _("Create Perspective"));
+    menu_perspectives->Append(ID_CopyPerspectiveCode, _("Copy Perspective Data To Clipboard"));
+    menu_perspectives->AppendSeparator();
+    menu_perspectives->Append(ID_FirstPerspective+0, _("Default Startup"));
+    menu_perspectives->Append(ID_FirstPerspective+1, _("All Panes"));
+
+    menu_plugins = new wxMenu;
+    wxArrayString files;
+    if(wxDir::GetAllFiles(wxGetApp().path_plugins, &files, "*.py"))
+    {
+        for(size_t i = 0; i < files.GetCount(); i++)
+        {
+            wxString fpath = files.Item(i);
+            int id = ID_FirstPlugin+1+i;
+            m_plugins[id] = fpath;
+            menu_plugins->Append(id, fpath.AfterLast('/').BeforeLast('.'));
+        }
+    }
 
     wxMenu* help_menu = new wxMenu;
     help_menu->Append(wxID_ABOUT, wxT("ℹ️About"));
 
-    mb->Append(file_menu, _("&File"));
-    mb->Append(view_menu, _("&View"));
-    mb->Append(m_perspectives_menu, _("&Perspectives"));
-    mb->Append(options_menu, _("&Options"));
-    mb->Append(notebook_menu, _("&Notebook"));
+    mb->Append(menu_file, _("&File"));
+    mb->Append(menu_view, _("&View"));
+    mb->Append(menu_perspectives, _("&Perspectives"));
+    mb->Append(menu_options, _("&Options"));
+    mb->Append(menu_notebook, _("&Notebook"));
+    mb->Append(menu_plugins, _("P&lugins"));
     mb->Append(help_menu, _("&Help"));
 
     SetMenuBar(mb);
@@ -429,6 +409,47 @@ void GBFrame::OnManagerFlag(wxCommandEvent& event)
     m_mgr.Update();
 }
 
+void GBFrame::OnPluginRun(wxCommandEvent& event)
+{
+#ifdef PLUGINS_PYTHON
+    int id = event.GetId();
+    wxLogInfo(m_plugins[id]);
+    FILE* pfp = fopen(m_plugins[id], "r");
+
+    PyStatus status;
+
+    PyConfig config;
+    PyConfig_InitPythonConfig(&config);
+    //config.isolated = 1;
+
+    status = PyConfig_SetString(&config, &config.program_name, m_plugins[id].AfterLast('/').BeforeLast('.').wc_str());
+    if (PyStatus_Exception(status)) {
+        goto exception;
+    }
+
+    status = PyConfig_SetString(&config, &config.run_filename, m_plugins[id].wc_str());
+    if (PyStatus_Exception(status)) {
+        goto exception;
+    }
+
+    status = Py_InitializeFromConfig(&config);
+    if (PyStatus_Exception(status)) {
+        goto exception;
+    }
+    PyConfig_Clear(&config);
+
+    wxLogInfo(wxT("Py_RunMain result = ")+PyRun_SimpleFile(pfp, m_plugins[id]));
+
+exception:
+    PyConfig_Clear(&config);
+    if (PyStatus_IsExit(status))
+        wxLogInfo(wxT("Py_ExitStatusException = ")+status.exitcode);
+    Py_ExitStatusException(status);
+
+#else
+    wxLogWarning(_("Required rebuild with Python support"));
+#endif // PLUGINS_PYTHON
+}
 
 void GBFrame::OnNotebookFlag(wxCommandEvent& event)
 {
@@ -614,10 +635,10 @@ void GBFrame::OnCreatePerspective(wxCommandEvent& WXUNUSED(event))
 
     if (m_perspectives.GetCount() == 0)
     {
-        m_perspectives_menu->AppendSeparator();
+        menu_perspectives->AppendSeparator();
     }
 
-    m_perspectives_menu->Append(ID_FirstPerspective + m_perspectives.GetCount(), dlg.GetValue());
+    menu_perspectives->Append(ID_FirstPerspective + m_perspectives.GetCount(), dlg.GetValue());
     m_perspectives.Add(m_mgr.SavePerspective());
 }
 
@@ -1076,7 +1097,7 @@ void GBFrame::OnExit(wxCommandEvent& WXUNUSED(event))
 void GBFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
     wxString msg;
-    msg.Printf("Game Builder\ncreate game without programming, but optional you always can replace core engine (source code included)\nBuild with GCC %s\nRun under %s\n(c) Copyright 2024, Maxim Kolosov", __VERSION__, wxPlatformInfo::Get().GetOperatingSystemIdName());
+    msg.Printf("Game Builder\ncreate game without programming, but optional you always can replace core engine (source code included)\n🤖Compiler %s\n🚀Run under %s\n🗂️%s (%s)\n©️ Maxim Kolosov", __VERSION__, wxPlatformInfo::Get().GetOperatingSystemIdName(), wxVERSION_STRING, wxPlatformInfo::Get().GetBitnessName());
     wxMessageBox(msg, _("About Game Builder"), wxOK, this);
 }
 
