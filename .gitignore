@@ -36,6 +36,7 @@ gb
 # Directories
 .deps/
 wxWidgets/
+Python-*/
 json/
 build/
 bin/

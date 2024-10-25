@@ -420,7 +420,7 @@ void GBFrame::OnPluginRun(wxCommandEvent& event)
 
     PyConfig config;
     PyConfig_InitPythonConfig(&config);
-    //config.isolated = 1;
+    config.isolated = 1;
 
     status = PyConfig_SetString(&config, &config.program_name, m_plugins[id].AfterLast('/').BeforeLast('.').wc_str());
     if (PyStatus_Exception(status)) {
@@ -438,7 +438,7 @@ void GBFrame::OnPluginRun(wxCommandEvent& event)
     }
     PyConfig_Clear(&config);
 
-    wxLogInfo(wxT("Py_RunMain result = ")+PyRun_SimpleFile(pfp, m_plugins[id]));
+    wxLogInfo(wxT("PyRun_SimpleFile result = ")+PyRun_SimpleFile(pfp, m_plugins[id]));
 
 exception:
     PyConfig_Clear(&config);
