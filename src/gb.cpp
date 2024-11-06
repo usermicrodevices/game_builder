@@ -421,26 +421,46 @@ void GBFrame::OnPluginRun(wxCommandEvent& event)
     PyConfig config;
     PyConfig_InitPythonConfig(&config);
     config.isolated = 1;
+    config.module_search_paths_set = 1;
+
+    //config.home = (wchar_t*).wc_str();
+    status = PyConfig_SetString(&config, &config.home, (wxGetCwd()+"/python").wc_str());
+    if (PyStatus_Exception(status)) {goto exception;}
+
+    status = PyConfig_SetString(&config, &config.platlibdir, (wxGetCwd()+"/python/lib").wc_str());
+    if (PyStatus_Exception(status)) {goto exception;}
+
+    status = PyConfig_SetString(&config, &config.prefix, wxGetCwd().wc_str());
+    if (PyStatus_Exception(status)) {goto exception;}
+
+    status = PyWideStringList_Append(&(config.module_search_paths), (wxGetCwd()+"/python").wc_str());
+    if (PyStatus_Exception(status)) {goto exception;}
+
+    status = PyWideStringList_Append(&(config.module_search_paths), (wxGetCwd()+"/python/modules").wc_str());
+    if (PyStatus_Exception(status)) {goto exception;}
+
+    status = PyWideStringList_Append(&(config.module_search_paths), (wxGetCwd()+"/python/modules/site-packages").wc_str());
+    if (PyStatus_Exception(status)) {goto exception;}
 
     status = PyConfig_SetString(&config, &config.program_name, m_plugins[id].AfterLast('/').BeforeLast('.').wc_str());
-    if (PyStatus_Exception(status)) {
-        goto exception;
-    }
+    if (PyStatus_Exception(status)) {goto exception;}
 
     status = PyConfig_SetString(&config, &config.run_filename, m_plugins[id].wc_str());
-    if (PyStatus_Exception(status)) {
-        goto exception;
-    }
+    if (PyStatus_Exception(status)) {goto exception;}
 
     status = Py_InitializeFromConfig(&config);
-    if (PyStatus_Exception(status)) {
-        goto exception;
-    }
+    //std::cout << "Py_InitializeFromConfig" << std::endl;
+    if (PyStatus_Exception(status)) {goto exception;}
     PyConfig_Clear(&config);
 
+    //std::cout << "PyRun_SimpleFile" << std::endl;
     wxLogInfo(wxT("PyRun_SimpleFile result = ")+PyRun_SimpleFile(pfp, m_plugins[id]));
 
+    wxLogInfo(wxT("Py_FinalizeEx result = ")+Py_FinalizeEx());
+    return;
+
 exception:
+    //std::cout << "EXCEPTION status.exitcode " << static_cast<int16_t>(status.exitcode) << std::endl;
     PyConfig_Clear(&config);
     if (PyStatus_IsExit(status))
         wxLogInfo(wxT("Py_ExitStatusException = ")+status.exitcode);
