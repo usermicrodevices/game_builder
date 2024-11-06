@@ -412,13 +412,13 @@ void GBFrame::OnManagerFlag(wxCommandEvent& event)
 void GBFrame::OnPluginRun(wxCommandEvent& event)
 {
 #ifdef PLUGINS_PYTHON
+    int status_code = 0;
     int id = event.GetId();
     wxLogInfo(m_plugins[id]);
     FILE* pfp = fopen(m_plugins[id], "r");
-
     PyStatus status;
-
     PyConfig config;
+
     PyConfig_InitPythonConfig(&config);
     config.isolated = 1;
     config.module_search_paths_set = 1;
@@ -447,6 +447,12 @@ void GBFrame::OnPluginRun(wxCommandEvent& event)
 
     status = PyConfig_SetString(&config, &config.run_filename, m_plugins[id].wc_str());
     if (PyStatus_Exception(status)) {goto exception;}
+
+    status_code = PyImport_AppendInittab("game_builder", &PyInit_gb);
+    if (status_code > -1)
+        wxLogInfo(wxString::Format("PyImport_AppendInittab success: %d; now you can 'import game_builder'", status_code));
+    else
+        wxLogInfo(wxT("PyImport_AppendInittab error: table of built-in modules could not be extended"));
 
     status = Py_InitializeFromConfig(&config);
     //std::cout << "Py_InitializeFromConfig" << std::endl;

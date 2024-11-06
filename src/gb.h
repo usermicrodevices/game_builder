@@ -618,3 +618,47 @@ EVT_BUTTON(ID_ActiveCaptionTextColor, SettingsPanel::OnSetColor)
 EVT_BUTTON(ID_BorderColor, SettingsPanel::OnSetColor)
 EVT_BUTTON(ID_GripperColor, SettingsPanel::OnSetColor)
 wxEND_EVENT_TABLE()
+
+
+#ifdef PLUGINS_PYTHON
+
+static PyObject* get_main_frame(PyObject *self, PyObject *args)
+{
+	return PyCapsule_New((void*)wxApp::GetMainTopWindow(), "game_builder.main_frame", NULL);
+}
+
+static PyMethodDef GbMethods[] =
+{
+	{
+		"main_frame",
+		get_main_frame,
+		METH_VARARGS,
+		"Return main frame pointer."
+	},
+	{
+		NULL,
+		NULL,
+		0,
+		NULL
+	}
+};
+
+static PyModuleDef GbModule =
+{
+	PyModuleDef_HEAD_INIT,
+	"game_builder",
+	NULL,
+	-1,
+	GbMethods,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+static PyObject* PyInit_gb(void)
+{
+	return PyModule_Create(&GbModule);
+}
+
+#endif // PLUGINS_PYTHON
