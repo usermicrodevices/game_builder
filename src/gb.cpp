@@ -460,16 +460,16 @@ void GBFrame::OnPluginRun(wxCommandEvent& event)
     PyConfig_Clear(&config);
 
     //std::cout << "PyRun_SimpleFile" << std::endl;
-    wxLogInfo(wxT("PyRun_SimpleFile result = ")+PyRun_SimpleFile(pfp, m_plugins[id]));
+    wxLogInfo(wxString::Format("PyRun_SimpleFile result = %d", PyRun_SimpleFile(pfp, m_plugins[id])));
 
-    wxLogInfo(wxT("Py_FinalizeEx result = ")+Py_FinalizeEx());
+    wxLogInfo(wxString::Format("Py_FinalizeEx result = %d", Py_FinalizeEx()));
     return;
 
 exception:
     //std::cout << "EXCEPTION status.exitcode " << static_cast<int16_t>(status.exitcode) << std::endl;
     PyConfig_Clear(&config);
     if (PyStatus_IsExit(status))
-        wxLogInfo(wxT("Py_ExitStatusException = ")+status.exitcode);
+        wxLogError(wxString::Format("Py_ExitStatusException = %d", status.exitcode));
     Py_ExitStatusException(status);
 
 #else
