@@ -412,66 +412,7 @@ void GBFrame::OnManagerFlag(wxCommandEvent& event)
 void GBFrame::OnPluginRun(wxCommandEvent& event)
 {
 #ifdef PLUGINS_PYTHON
-    int status_code = 0;
-    int id = event.GetId();
-    wxLogInfo(m_plugins[id]);
-    FILE* pfp = fopen(m_plugins[id], "r");
-    PyStatus status;
-    PyConfig config;
-
-    PyConfig_InitPythonConfig(&config);
-    config.isolated = 1;
-    config.module_search_paths_set = 1;
-
-    //config.home = (wchar_t*).wc_str();
-    status = PyConfig_SetString(&config, &config.home, (wxGetCwd()+"/python").wc_str());
-    if (PyStatus_Exception(status)) {goto exception;}
-
-    status = PyConfig_SetString(&config, &config.platlibdir, (wxGetCwd()+"/python/lib").wc_str());
-    if (PyStatus_Exception(status)) {goto exception;}
-
-    status = PyConfig_SetString(&config, &config.prefix, wxGetCwd().wc_str());
-    if (PyStatus_Exception(status)) {goto exception;}
-
-    status = PyWideStringList_Append(&(config.module_search_paths), (wxGetCwd()+"/python").wc_str());
-    if (PyStatus_Exception(status)) {goto exception;}
-
-    status = PyWideStringList_Append(&(config.module_search_paths), (wxGetCwd()+"/python/modules").wc_str());
-    if (PyStatus_Exception(status)) {goto exception;}
-
-    status = PyWideStringList_Append(&(config.module_search_paths), (wxGetCwd()+"/python/modules/site-packages").wc_str());
-    if (PyStatus_Exception(status)) {goto exception;}
-
-    status = PyConfig_SetString(&config, &config.program_name, m_plugins[id].AfterLast('/').BeforeLast('.').wc_str());
-    if (PyStatus_Exception(status)) {goto exception;}
-
-    status = PyConfig_SetString(&config, &config.run_filename, m_plugins[id].wc_str());
-    if (PyStatus_Exception(status)) {goto exception;}
-
-    status_code = PyImport_AppendInittab("game_builder", &PyInit_gb);
-    if (status_code > -1)
-        wxLogInfo(wxString::Format("PyImport_AppendInittab success: %d; now you can 'import game_builder'", status_code));
-    else
-        wxLogInfo(wxT("PyImport_AppendInittab error: table of built-in modules could not be extended"));
-
-    status = Py_InitializeFromConfig(&config);
-    //std::cout << "Py_InitializeFromConfig" << std::endl;
-    if (PyStatus_Exception(status)) {goto exception;}
-    PyConfig_Clear(&config);
-
-    //std::cout << "PyRun_SimpleFile" << std::endl;
-    wxLogInfo(wxString::Format("PyRun_SimpleFile result = %d", PyRun_SimpleFile(pfp, m_plugins[id])));
-
-    wxLogInfo(wxString::Format("Py_FinalizeEx result = %d", Py_FinalizeEx()));
-    return;
-
-exception:
-    //std::cout << "EXCEPTION status.exitcode " << static_cast<int16_t>(status.exitcode) << std::endl;
-    PyConfig_Clear(&config);
-    if (PyStatus_IsExit(status))
-        wxLogError(wxString::Format("Py_ExitStatusException = %d", status.exitcode));
-    Py_ExitStatusException(status);
-
+    run_plugin(m_plugins[event.GetId()]);
 #else
     wxLogWarning(_("Required rebuild with Python support"));
 #endif // PLUGINS_PYTHON
