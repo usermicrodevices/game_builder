@@ -64,11 +64,17 @@ typedef struct
 	PyObject *name; /* name */
 } MainFrame;
 
-static void MainFrame_dealloc(MainFrame *self)
+static void MainFrame_dealloc(MainFrame* self)
 {
+#if DEBUG
+	std::cout << "!!! MainFrame_dealloc " << self->name << std::endl;
+#endif
 	//Py_XDECREF(self->ptr);
 	Py_XDECREF(self->name);
 	Py_TYPE(self)->tp_free((PyObject *) self);
+#if DEBUG
+	std::cout << "	MainFrame_dealloc !!!" << std::endl;
+#endif
 }
 
 static PyObject* MainFrame_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -107,7 +113,7 @@ static PyObject* MainFrame_levels(MainFrame *self, PyObject *Py_UNUSED(ignored))
 		return NULL;
 	}
 	PyObject *dict = Py_BuildValue("{}");
-	for(const auto& [k, map_board] : self->ptr->GetLevels())
+	for(const auto& [k, map_board] : self->ptr->GetBoards())
 	{
 		if (PyMapping_SetItemString(dict, k, PyLong_FromVoidPtr(map_board)) < 0)
 			return NULL;

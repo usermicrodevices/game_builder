@@ -3,16 +3,17 @@ exec_prefix = ${prefix}
 datarootdir = ${prefix}/share
 INSTALL = /usr/bin/install -c
 NM = nm
-srcdir = src
-top_srcdir = wxWidgets
-wx_top_builddir = wxWidgets
-BK_DEPS = wxWidgets/bk-deps
+CUR_DIR = $(shell pwd)
+srcdir = $(CUR_DIR)/src
+top_srcdir = $(CUR_DIR)/wxWidgets
+wx_top_builddir = $(CUR_DIR)/wxWidgets
+BK_DEPS = $(CUR_DIR)/wxWidgets/bk-deps
 LIBS = -lz -lcurl -lm
-LDFLAGS_GUI = 
+LDFLAGS_GUI =
 CXX = g++
-CXXFLAGS = -ggdb -std=c++20
-CPPFLAGS = 
-LDFLAGS = 
+CXXFLAGS = -pthread -std=c++20 -DNDEBUG -ggdb -O0 -DDEBUG
+CPPFLAGS = -Wall -D_FILE_OFFSET_BITS=64
+LDFLAGS =
 USE_DPI_AWARE_MANIFEST = 2
 WX_LIB_FLAVOUR =
 TOOLKIT = GTK
@@ -24,10 +25,11 @@ EXTRALIBS = -pthread -Wl,--version-script,$(wx_top_builddir)/version-script
 EXTRALIBS_XML = -lexpat
 EXTRALIBS_HTML = 
 EXTRALIBS_GUI = -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lX11 -lgthread-2.0 -lglib-2.0 -lXxf86vm -lSM -lxkbcommon -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-gobject -lcairo -lgdk_pixbuf-2.0 -lgio-2.0 -lgobject-2.0 -lglib-2.0 -lXtst -lpangoft2-1.0 -lpango-1.0 -lgobject-2.0 -lglib-2.0 -lharfbuzz -lfontconfig -lfreetype -lpng -ljpeg -ltiff -ljbig
-WX_CPPFLAGS = -I${wx_top_builddir}/lib/wx/include/gtk3-unicode-3.3 -I${top_srcdir}/include -D_FILE_OFFSET_BITS=64 -pthread -I/usr/include/gtk-3.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/at-spi-2.0 -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/fribidi -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libpng16 -I/usr/include/x86_64-linux-gnu -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include
+
+WX_CPPFLAGS = -DwxUSE_UNICODE -DwxUSE_EXCEPTIONS -DwxUSE_DEBUGREPORT -DwxUSE_ON_FATAL_EXCEPTION -I${wx_top_builddir}/lib/wx/include/gtk3-unicode-3.3 -I${top_srcdir}/include -I/usr/include/gtk-3.0 -I/usr/include/gtk-3.0/unix-print -I/usr/include/at-spi2-atk/2.0 -I/usr/include/at-spi-2.0 -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/fribidi -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libpng16 -I/usr/include/x86_64-linux-gnu -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/gstreamer-1.0 -I/usr/include/orc-0.4 -I/usr/include/webp
 
 PLUGINS_PYTHON = 1
-PY_ROOT_DIR = Python-3.13.0
+PY_ROOT_DIR = $(CUR_DIR)/Python-3.13.0
 
 ifeq ($(PLUGINS_PYTHON), 1)
 WX_CPPFLAGS += -DPLUGINS_PYTHON -I$(PY_ROOT_DIR) -I$(PY_ROOT_DIR)/Include
@@ -37,9 +39,11 @@ endif
 
 HOST_SUFFIX = 
 RPATH_FLAG = -Wl,-rpath,$(wx_top_builddir)/lib
-#PIC_CXXFLAGS = -fPIC -DPIC
+PIC_CXXFLAGS = -fPIC -DPIC
 
 ### Variables: ###
+__DLLFLAG_p = -DWXUSINGDLL
+__DLLFLAG_p_1 = --define WXUSINGDLL
 
 WX_RELEASE = 3.3
 WX_VERSION = $(WX_RELEASE).0
@@ -47,7 +51,7 @@ LIBDIRNAME = $(wx_top_builddir)/lib
 EDITOR_CXXFLAGS = $(WX_CPPFLAGS) -D__WX$(TOOLKIT)__ $(__WXUNIV_DEFINE_p) \
 	$(__DEBUG_DEFINE_p) $(__EXCEPTIONS_DEFINE_p) $(__RTTI_DEFINE_p) \
 	$(__THREAD_DEFINE_p) -I$(srcdir) $(__DLLFLAG_p) \
-	$(CPPFLAGS) $(CXXFLAGS)# $(PIC_CXXFLAGS)
+	$(CPPFLAGS) $(CXXFLAGS) $(PIC_CXXFLAGS)
 EDITOR_OBJECTS = build/gb_gb.o
 
 ### Conditionally set variables: ###
@@ -56,8 +60,6 @@ CXXC = $(BK_DEPS) $(CXX)
 PORTNAME = $(TOOLKIT_LOWERCASE)$(TOOLKIT_VERSION)
 EXTRALIBS_FOR_BASE = $(EXTRALIBS)
 EXTRALIBS_FOR_GUI = $(EXTRALIBS_GUI)
-__DLLFLAG_p = -DWXUSINGDLL
-__DLLFLAG_p_1 = --define WXUSINGDLL
 COND_PLATFORM_OS2_1___gb___os2_emxbindcmd = $(NM) gb | if \
 	grep -q pmwin.763 ; then emxbind -ep gb ; fi
 COND_MONOLITHIC_0___WXLIB_PROPGRID_p = \

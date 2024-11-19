@@ -15,7 +15,7 @@
 
 // For compilers that support precompilation, includes "wx/wx.h".
 #ifndef WX_PRECOMP
-#include "wx/wx.h"
+#include <wx/wx.h>
 #else
 #include "wx/wxprec.h"
 #endif
@@ -25,11 +25,11 @@
 #endif
 
 #include <wx/debug.h>
+#include <wx/app.h>
 
 #include <wx/regex.h>
-
 #include <wx/cmdline.h>
-#include <wx/app.h>
+
 #include <wx/dir.h>
 #include "wx/grid.h"
 #include "wx/treectrl.h"
@@ -55,19 +55,13 @@
 
 #include "wx/aui/aui.h"
 
-#include "wx/translation.h"
-#include "wx/uilocale.h"
-
 #include <wx/propgrid/props.h>
 #include "wx/propgrid/propgrid.h"
 #include "wx/propgrid/advprops.h"
 #include "wx/propgrid/manager.h"
 
-#include "map_settings_dialog.h"
-#include "map_board.h"
-
-#include <map>
-#include <string>
+#include "wx/translation.h"
+#include "wx/uilocale.h"
 
 // Under Linux we demonstrate loading an existing message catalog using
 // coreutils package (which is always installed) as an example.
@@ -82,7 +76,11 @@ static bool g_loadedCoreutilsMO = false;
 #define wxDRAWING_DC_SUPPORTS_ALPHA 0
 #endif // __WXOSX__ || __WXGTK3__
 
-typedef std::map<wxString, MapBoardCtrl*> LevelContainer;
+#include <map>
+#include <string>
+
+#include "map_settings_dialog.h"
+
 
 class GBApp : public wxApp
 {
@@ -97,10 +95,15 @@ private:
 wxDECLARE_APP(GBApp);
 wxIMPLEMENT_APP(GBApp);
 
+class MapBoardCtrl;
+#include "data.h"
+typedef std::map<uint, std::shared_ptr<Data>> LevelDatas;
+typedef std::map<wxString, MapBoardCtrl*> LevelBoards;
 typedef std::unordered_map<int, wxString> PluginContainer;
 
 class GBFrame : public wxFrame
 {
+	wxDECLARE_DYNAMIC_CLASS(GBFrame);
 
 	enum
 	{
@@ -149,12 +152,8 @@ class GBFrame : public wxFrame
 	};
 
 public:
-	GBFrame(wxWindow* parent,
-		wxWindowID id,
-		const wxString& title,
-		const wxPoint& pos = wxDefaultPosition,
-		const wxSize& size = wxDefaultSize,
-		long style = wxDEFAULT_FRAME_STYLE | wxSUNKEN_BORDER);
+	GBFrame(){};
+	GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = wxDEFAULT_FRAME_STYLE | wxSUNKEN_BORDER);
 
 	wxAuiDockArt* GetDockArt();
 	void DoUpdate();
@@ -163,7 +162,7 @@ public:
 	void SetCellWallType(WallType value);
 	void SetCellScript(const wxString& value);
 
-	LevelContainer GetLevels(){return levels;}
+	LevelBoards GetBoards(){return m_boards;}
 
 private:
 
@@ -172,11 +171,11 @@ private:
 	wxArrayString m_perspectives;
 	wxMenu *menu_perspectives, *menu_plugins;
 	wxTreeCtrl* m_tree_ctrl;
-	wxLog* m_log;
 	wxTextCtrl* m_logTextCtrl;
 	wxAuiManager m_mgr;
 	wxAuiNotebook* m_notebook_ctrl;
-	LevelContainer levels = {};
+	LevelDatas m_datas = {};
+	LevelBoards m_boards = {};
 	wxPropertyGridManager* m_propGridManager;
 	MapSettingsData m_map_settings_data;
 	PluginContainer m_plugins = {};
@@ -189,8 +188,8 @@ private:
 	wxPoint GetStartPosition();
 
 	wxAuiNotebook* CreateNotebook();
-	MapBoardCtrl* NewMapBoard(int id=-1, Data* d=nullptr);
-	void AddLevel(int id=-1, Data* d=nullptr);
+	MapBoardCtrl* NewMapBoard(int id, std::shared_ptr<Data> d = std::make_shared<Data>());
+	void AddLevel(int id=-1, std::shared_ptr<Data> d = std::make_shared<Data>());
 
 	void OnSave(wxCommandEvent& event);
 	void OnSaveLevel(wxCommandEvent& event);
@@ -226,7 +225,7 @@ private:
 	//void OnNotebookDeleteTab(wxCommandEvent& evt);
 	//void OnPaneClose(wxAuiManagerEvent& evt);
 
-	void ParseJsonLevels(wxTextFile& f, int id_level=-1);
+	void ParseJsonBoards(wxTextFile& f, int id_level=-1);
 	void ParseJsonFile(wxTextFile& f);
 	void OnOpen(wxCommandEvent& evt);
 	void OnOpenLevel(wxCommandEvent& evt);
@@ -319,6 +318,9 @@ EVT_ERASE_BACKGROUND(GBFrame::OnEraseBackground)
 EVT_SIZE(GBFrame::OnSize)
 EVT_PG_CHANGING(PGID, GBFrame::OnPropertyGridChanging)
 wxEND_EVENT_TABLE()
+
+
+#include "map_board.h"
 
 
 class SettingsPanel : public wxPanel

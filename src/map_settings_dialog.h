@@ -10,6 +10,7 @@
 
 #include <wx/valgen.h>
 #include <wx/propdlg.h>
+#include <wx/radiobox.h>
 
 struct MapSettingsData
 {
@@ -39,7 +40,7 @@ struct MapSettingsData
 
 class MapSettingsDialog: public wxPropertySheetDialog
 {
-	wxDECLARE_CLASS(MapSettingsDialog);
+	//wxDECLARE_CLASS(MapSettingsDialog);
 public:
 	MapSettingsData& m_sdata;
 
@@ -52,7 +53,7 @@ public:
 		CreateButtons(wxOK | wxCANCEL | wxHELP);
 		wxBookCtrlBase* notebook = GetBookCtrl();
 		wxPanel* generalSettings = CreateGeneralSettingsPage(notebook);
-		wxPanel* advancedSettings = CreateAdvancedSettingsPage(notebook);
+		//wxPanel* advancedSettings = CreateAdvancedSettingsPage(notebook);
 		notebook->AddPage(generalSettings, _("General"), true);
 		//notebook->AddPage(advancedSettings, _("Advanced"), false);
 		LayoutDialog();
@@ -136,15 +137,15 @@ public:
 		wxStaticBox* const styleSizerBox = styleSizer->GetStaticBox();
 		item0->Add(styleSizer, 0, wxGROW|wxALL, 5);
 		wxBoxSizer* itemSizer2 = new wxBoxSizer( wxHORIZONTAL );
-		wxChoice* choice2 = new wxChoice(styleSizerBox, ID_BACKGROUND_STYLE, wxDefaultPosition, wxDefaultSize, backgroundStyleChoices);
+		wxChoice* choice2 = new wxChoice((wxWindow*)styleSizerBox, (wxWindowID)ID_BACKGROUND_STYLE, wxDefaultPosition, wxDefaultSize, backgroundStyleChoices);
 		//choice2->SetValidator(wxGenericValidator(&m_sdata.m_bgStyle));
-		itemSizer2->Add(new wxStaticText(styleSizerBox, wxID_ANY, "&Window:"), 0, wxALL|wxALIGN_CENTER_VERTICAL, 5);
+		itemSizer2->Add(new wxStaticText((wxWindow*)styleSizerBox, (wxWindowID)wxID_ANY, "&Window:"), 0, wxALL|wxALIGN_CENTER_VERTICAL, 5);
 		itemSizer2->Add(5, 5, 1, wxALL, 0);
 		itemSizer2->Add(choice2, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5);
 		styleSizer->Add(itemSizer2, 0, wxGROW|wxALL, 5);
 		//// FONT SIZE SELECTION
 		wxStaticBoxSizer* itemSizer5 = new wxStaticBoxSizer(wxHORIZONTAL, panel, "Tile font size:");
-		wxSpinCtrl* spinCtrl = new wxSpinCtrl(itemSizer5->GetStaticBox(), ID_FONT_SIZE, wxEmptyString);
+		wxSpinCtrl* spinCtrl = new wxSpinCtrl((wxWindow*)itemSizer5->GetStaticBox(), (wxWindowID)ID_FONT_SIZE, wxEmptyString);
 		//spinCtrl->SetValidator(wxGenericValidator(&m_sdata.m_titleFontSize));
 		itemSizer5->Add(spinCtrl, 0, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
 		item0->Add(itemSizer5, 0, wxGROW|wxLEFT|wxRIGHT, 5);
@@ -171,6 +172,6 @@ protected:
 
 	wxDECLARE_EVENT_TABLE();
 };
-wxIMPLEMENT_CLASS(MapSettingsDialog, wxPropertySheetDialog);
+//wxIMPLEMENT_CLASS(MapSettingsDialog, wxPropertySheetDialog);
 wxBEGIN_EVENT_TABLE(MapSettingsDialog, wxPropertySheetDialog)
 wxEND_EVENT_TABLE()

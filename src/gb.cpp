@@ -100,6 +100,7 @@ bool GBApp::OnInit()
 	return true;
 }
 
+wxIMPLEMENT_DYNAMIC_CLASS(GBFrame, wxFrame);
 
 GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style)
 : wxFrame(parent, id, title, pos, size, style)
@@ -228,7 +229,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     iconSize &= ~1;
 
     wxTextCtrl* m_logTextCtrl = CreateTextCtrl("Start from \""+wxGetCwd()+"\"\n");
-    m_log = wxLog::SetActiveTarget(new wxLogTextCtrl(m_logTextCtrl));
+    wxLog::SetActiveTarget(new wxLogTextCtrl(m_logTextCtrl));
 
     m_mgr.AddPane(m_logTextCtrl, wxAuiPaneInfo().Name("log").Caption("Log").Bottom().Layer(1).Position(1).Icon(wxArtProvider::GetBitmapBundle(wxART_WARNING, wxART_OTHER, wxSize(iconSize, iconSize))));
 
@@ -631,7 +632,7 @@ void GBFrame::OnNotebookPageClose(wxAuiNotebookEvent& evt)
 {
     //wxAuiNotebook* m_notebook_ctrl = (wxAuiNotebook*)evt.GetEventObject();
     //if(m_notebook_ctrl->GetPage(evt.GetSelection())->IsKindOf(CLASSINFO(MapBoardCtrl)))
-    levels.erase(m_notebook_ctrl->GetPageText(evt.GetSelection()));
+    m_boards.erase(m_notebook_ctrl->GetPageText(evt.GetSelection()));
     //evt.Veto();
 }
 
@@ -695,24 +696,25 @@ void GBFrame::OnShowProperties(wxCommandEvent& event)
 
 void GBFrame::OnDrawCellCoords(wxCommandEvent& WXUNUSED(event))
 {
-    MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
+    MapBoardCtrl* map_board = m_boards[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
     map_board->ToggleDrawCoords();
 }
 
-MapBoardCtrl* GBFrame::NewMapBoard(int id, Data* d)
+MapBoardCtrl* GBFrame::NewMapBoard(int id, std::shared_ptr<Data> d)
 {
     if(id < 0)
         id = m_notebook_ctrl->GetPageCount();
     wxString level_name = wxString::Format("level-%d", id);
-    MapBoardCtrl* map_ctrl = new MapBoardCtrl(m_notebook_ctrl, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL, level_name, &m_mgr, m_tree_ctrl, m_propGridManager, d?false:true);
-    if(d)
-        map_ctrl->FillData(d);
-    levels[level_name] = map_ctrl;
+    MapBoardCtrl* map_ctrl = new MapBoardCtrl(m_notebook_ctrl, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL|wxVSCROLL, level_name, m_tree_ctrl, m_propGridManager, d->has_data());
+    map_ctrl->FillData(d);
+    m_boards[level_name] = map_ctrl;
     return map_ctrl;
 }
 
-void GBFrame::AddLevel(int id, Data* d)
+void GBFrame::AddLevel(int id, std::shared_ptr<Data> d)
 {
+    if(id < 0)
+        id = m_notebook_ctrl->GetPageCount();
     //auto* const m_notebook_ctrl = wxCheckCast<wxAuiNotebook>(m_mgr.GetPane("notebook").window);
     wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
     MapBoardCtrl* map_ctrl = NewMapBoard(id, d);
@@ -723,10 +725,13 @@ void GBFrame::AddLevel(int id, Data* d)
 
 void GBFrame::OnAddLevel(wxCommandEvent& WXUNUSED(event))
 {
-    MapSettingsDialog d(this, m_map_settings_data);
-    if(d.ShowModal() == wxID_OK)
+    MapSettingsDialog dlg(this, m_map_settings_data);
+    if(dlg.ShowModal() == wxID_OK)
     {
-        AddLevel(-1, new Data(d.m_sdata.m_cell_side_size, d.m_sdata.m_count_cell_x, d.m_sdata.m_count_cell_y));
+        int id = m_notebook_ctrl->GetPageCount();
+        std::shared_ptr<Data> d = std::make_shared<Data>(dlg.m_sdata.m_cell_side_size, dlg.m_sdata.m_count_cell_x, dlg.m_sdata.m_count_cell_y);
+        m_datas[id] = d;
+        AddLevel(id, d);
     }
 }
 
@@ -794,7 +799,7 @@ void GBFrame::OnTabAlignment(wxCommandEvent &evt)
     }
 }
 
-void GBFrame::ParseJsonLevels(wxTextFile& f, int id_level)
+void GBFrame::ParseJsonBoards(wxTextFile& f, int id_level)
 {
     int id_texture = -1;
     int count_x = 0;
@@ -821,7 +826,7 @@ void GBFrame::ParseJsonLevels(wxTextFile& f, int id_level)
     wxRegEx r_wall_type("^.*\"type\":(\\d+)");
     wxRegEx r_script("^.*\"script\":\"(.*)\"");
     wxString str = f.GetNextLine();
-    Data* d;
+    std::shared_ptr<Data> data;
     while(!tag.empty())
     {
         //wxLogDebug(wxString("📌 ") << str);
@@ -902,16 +907,16 @@ void GBFrame::ParseJsonLevels(wxTextFile& f, int id_level)
             {
                 tag = "textures";
                 wxLogDebug("🎨TEXTURES🎨");
-                d = new Data(default_side_size, count_x, count_y);
+                data = std::make_shared<Data>(default_side_size, count_x, count_y);
             }
             else if(r_path.Matches(str, wxRE_NOTEMPTY))
             {
                 tag = "path";
                 tex_path = r_path.GetMatch(str, 1);
                 wxLogDebug(wxString("🎨🗂") << tex_path);
-                if(d && id_texture > -1)
+                if(data->has_data() && id_texture > -1)
                 {
-                    d->append_texture(id_texture, tex_path);
+                    data->append_texture(id_texture, tex_path);
                     id_texture = -1;
                 }
             }
@@ -925,9 +930,9 @@ void GBFrame::ParseJsonLevels(wxTextFile& f, int id_level)
         }
         else if((str == "}" || str == "},") && tag == "cells")
         {
-            if(d)
+            if(data->has_data())
             {
-                d->append_cell(cell_point.x, cell_point.y, default_side_size, id_floor, id_wall, id_roof, wall_type, script.utf8_string());
+                data->append_cell(cell_point.x, cell_point.y, default_side_size, id_floor, id_wall, id_roof, wall_type, script.utf8_string());
             }
             cell_point = wxDefaultPosition;
             id_floor = -1;
@@ -946,8 +951,8 @@ void GBFrame::ParseJsonLevels(wxTextFile& f, int id_level)
                 id_texture = -1;
             else if(id_level > -1)
             {
-                if(d)
-                    AddLevel(id_level, d);
+                if(data->has_data())
+                    AddLevel(id_level, data);
                 id_level = -1;
             }
             else
@@ -974,7 +979,7 @@ void GBFrame::ParseJsonFile(wxTextFile& f)
         else if(str.Find("levels") != wxNOT_FOUND)
         {
             wxLogDebug("🎒LEVELS🎒");
-            ParseJsonLevels(f);
+            ParseJsonBoards(f);
         }
         else
             wxLogDebug(str);
@@ -991,7 +996,7 @@ void GBFrame::OnOpenLevel(wxCommandEvent& WXUNUSED(event))
         wxLogDebug(dlg.GetPath());
         wxTextFile f(dlg.GetPath());
         if(f.Open())
-            ParseJsonLevels(f, m_notebook_ctrl->GetPageCount());
+            ParseJsonBoards(f, m_notebook_ctrl->GetPageCount());
         else
             wxLogWarning("JSON file not opened");
     }
@@ -1023,7 +1028,7 @@ void GBFrame::OnSave(wxCommandEvent& WXUNUSED(event))
         {
             f.Write("{\n\t\"levels\":\n\t{\n");
             bool first_line = true;
-			for(const auto& [k, map_board] : levels)
+			for(const auto& [k, map_board] : m_boards)
             {
                 if(map_board->HasData())
                 {
@@ -1048,7 +1053,7 @@ void GBFrame::OnSaveLevel(wxCommandEvent& WXUNUSED(event))
     if(dlg.ShowModal() == wxID_OK)
     {
         //wxWindow* current_page = m_notebook_ctrl->GetCurrentPage();
-        MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
+        MapBoardCtrl* map_board = m_boards[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
         if(map_board->HasData())
             map_board->LevelToFile(dlg.GetPath());
         else
@@ -1058,7 +1063,28 @@ void GBFrame::OnSaveLevel(wxCommandEvent& WXUNUSED(event))
 
 void GBFrame::OnExit(wxCommandEvent& WXUNUSED(event))
 {
+    wxBusyCursor busy;
+    wxStopWatch stopwatch;
+    m_tree_ctrl->Disable();
+    m_propGridManager->Disable();
+    for(const auto& [k, map_board] : m_boards)
+    {
+        map_board->Destroy();
+        //delete map_board;//ERROR: double free or corruption (!prev)
+    }
+    //for(const auto& [k, data] : m_datas)
+        //delete data;
+    m_datas.clear();
+    m_boards.clear();
+    m_tree_ctrl->Destroy();
+    m_propGridManager->Clear();
+    m_propGridManager->Destroy();
+    //m_logTextCtrl->Close();
+    m_mgr.UnInit();
+    wxYield();
     Close(true);
+    long t = stopwatch.Time();
+    std::cout << "!!! GBFrame::OnExit " << t << " ms" << std::endl;
 }
 
 void GBFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
@@ -1094,25 +1120,18 @@ wxAuiNotebook* GBFrame::CreateNotebook()
 {
     wxSize client_size = GetClientSize();
     m_notebook_ctrl = new wxAuiNotebook(this, wxID_ANY, wxPoint(client_size.x, client_size.y), FromDIP(wxSize(430,200)), m_notebook_style);
-    //wxBitmapBundle page_bmp = wxArtProvider::GetBitmapBundle(wxART_NORMAL_FILE, wxART_OTHER, wxSize(16,16));
-    //MapBoardCtrl* map_ctrl = new MapBoardCtrl(m_notebook_ctrl, wxID_ANY, wxDefaultPosition, client_size, wxHSCROLL | wxVSCROLL, "level-0", &m_mgr, m_tree_ctrl, m_propGridManager);
-    //m_notebook_ctrl->Freeze();
-    //m_notebook_ctrl->AddPage(map_ctrl, "level-0" , false, page_bmp);
-    //levels[wxT("level-0")] = map_ctrl;
-    ////m_notebook_ctrl->SetPageToolTip(m_notebook_ctrl->GetPageCount()-1, "level-0");
-    //m_notebook_ctrl->Thaw();
     return m_notebook_ctrl;
 }
 
 void GBFrame::SetCellWallType(WallType value)
 {
-    MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
+    MapBoardCtrl* map_board = m_boards[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
     map_board->set_cell_wall_type(value);
 }
 
 void GBFrame::SetCellScript(const wxString& value)
 {
-    MapBoardCtrl* map_board = levels[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
+    MapBoardCtrl* map_board = m_boards[wxString::Format("level-%d", m_notebook_ctrl->GetSelection())];
     map_board->set_cell_script(value);
 }
 
