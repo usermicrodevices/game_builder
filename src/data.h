@@ -14,6 +14,7 @@
 #include <wx/image.h>
 #include <wx/file.h>
 
+#include <memory>
 #include <unordered_map>
 #include <string>
 
@@ -36,7 +37,13 @@ enum WallType
 class Texture
 {
 public:
-	Texture(){};
+	Texture(const wxString& own = "Data")
+	{
+		owner = own;
+#if DEBUG
+		std::cout << "!!! new Texture() " << owner << " !!!" << std::endl;
+#endif
+	}
 
 	Texture(int index, const wxFileName& fullpath, const wxSize& size)
 	{
@@ -55,6 +62,9 @@ public:
 				bitmap = wxBitmap(thumbnail);
 			}
 		}
+#if DEBUG
+		std::cout << "!!! new Texture(...) " << path.GetFullPath() << " !!!" << std::endl;
+#endif
 	}
 
 	~Texture()
@@ -65,7 +75,7 @@ public:
 		path.Clear();
 		thumbnail.Destroy();
 #if DEBUG
-		std::cout << "	~Texture !!!" << std::endl;
+		std::cout << owner << "	~Texture !!!" << std::endl;
 #endif
 	}
 
@@ -78,9 +88,10 @@ public:
 	wxFileName path;
 	wxImage thumbnail = wxNullImage;
 	wxBitmap bitmap;
+	wxString owner = wxString("Data");
 };
 
-typedef std::unordered_map<int, Texture> TextureContainer;
+typedef std::unordered_map<int, std::shared_ptr<Texture>> TextureContainer;
 
 class Cell
 {
@@ -111,13 +122,13 @@ public:
 
 	~Cell()
 	{
-#if DEBUG
-		std::cout << "!!! ~Cell " << id << std::endl;
-#endif
+//#if DEBUG
+//		std::cout << "!!! ~Cell " << id << std::endl;
+//#endif
 		script.clear();
-#if DEBUG
-		std::cout << "	~Cell !!!" << std::endl;
-#endif
+//#if DEBUG
+//		std::cout << "	~Cell !!!" << std::endl;
+//#endif
 	}
 
 	int get_visible_texture()
@@ -143,7 +154,7 @@ typedef std::unordered_map<wxPoint, std::shared_ptr<Cell>, wxPointHash> CellCont
 class Data
 {
 private:
-	Texture m_empty_texture;
+	std::shared_ptr<Texture> m_empty_texture = std::make_shared<Texture>();
 	int m_cell_side;//cell side size in DIPs
 	int m_count_cell_x, m_count_cell_y;
 	wxSize m_cell_size;
@@ -151,14 +162,9 @@ private:
 	CellContainer m_cells = {};
 
 public:
-	// Data()
-	// {
-	// 	m_empty_texture = Texture();
-	// }
-
 	Data(int cell_side_size=50, int count_x=100, int count_y=100)
 	{
-		m_empty_texture = Texture();
+		m_empty_texture = std::make_shared<Texture>();
 		init(cell_side_size, count_x, count_y);
 	}
 
@@ -174,7 +180,7 @@ public:
 	{
 		m_count_cell_x = other.count_cell_x();
 		m_count_cell_y = other.count_cell_y();
-		m_empty_texture = other.get_empty_texture();
+		m_empty_texture = std::make_shared<Texture>();//other.get_empty_texture();
 		m_cell_side = other.cell_side_size();
 		m_cell_size = other.get_cell_size();
 		m_textures = other.get_textures();
@@ -188,6 +194,7 @@ public:
 			//delete &v;//ERROR: double free or corruption (!prev)
 		m_textures.clear();
 		m_cells.clear();
+		//delete m_empty_texture;
 #if DEBUG
 		std::cout << "!!! ~Data !!!" << std::endl;
 #endif
@@ -282,10 +289,10 @@ public:
 
 	void append_texture(int id, const wxString& path)
 	{
-		m_textures[id] = Texture(id, wxFileName(path), m_cell_size);
+		m_textures[id] = std::make_shared<Texture>(id, wxFileName(path), m_cell_size);
 	}
 
-	const Texture& add_texture(wxPoint p, const wxFileName& path, TextureType tt=TT_FLOOR)
+	std::shared_ptr<Texture> add_texture(wxPoint p, const wxFileName& path, TextureType tt=TT_FLOOR)
 	{
 		bool texture_exists = false;
 		int texid = m_textures.size();
@@ -293,7 +300,7 @@ public:
 		{
 			for(const auto& [k, v] : m_textures)
 			{
-				if(v.path == path)
+				if(v->path == path)
 				{
 					texid = k;
 					texture_exists = true;
@@ -301,7 +308,7 @@ public:
 			}
 		}
 		if(!texture_exists)
-			m_textures[texid] = Texture(texid, path, m_cell_size);
+			m_textures[texid] = std::make_shared<Texture>(texid, path, m_cell_size);
 		switch(tt)
 		{
 			case TT_WALL:
@@ -321,25 +328,25 @@ public:
 
 	const wxBitmap& get_texture_bitmap(int id)
 	{
-		return m_textures[id].bitmap;
+		return m_textures[id]->bitmap;
 	}
 
 	const wxBitmap& get_visible_texture_bitmap(const std::shared_ptr<Cell>& cell)
 	{
-		return m_textures[cell->get_visible_texture()].bitmap;
+		return m_textures[cell->get_visible_texture()]->bitmap;
 	}
 
-	const Texture& get_texture(int id)
+	std::shared_ptr<Texture> get_texture(int id)
 	{
 		return m_textures[id];
 	}
 
-	const Texture& get_empty_texture() const
+	std::shared_ptr<Texture> get_empty_texture()
 	{
-		return const_cast<Data*>(this)->m_empty_texture;
+		return m_empty_texture;
 	}
 
-	const Texture& get_texture(wxPoint p, TextureType tt=TT_FLOOR)
+	std::shared_ptr<Texture> get_texture(wxPoint p, TextureType tt=TT_FLOOR)
 	{
 		int texid = -1;
 		switch(tt)
@@ -379,20 +386,20 @@ public:
 		}
 	}
 
-	void set_texture(wxPoint p, const Texture& tex, TextureType tt=TT_FLOOR)
+	void set_texture(wxPoint p, std::shared_ptr<Texture> tex, TextureType tt=TT_FLOOR)
 	{
 		if(m_cells.find(p) == m_cells.end())
 			m_cells[p] = std::make_shared<Cell>(m_cells.size(), m_cell_side);
 		switch(tt)
 		{
 			case TT_WALL:
-				m_cells[p]->texture_wall = tex.id;
+				m_cells[p]->texture_wall = tex->id;
 				break;
 			case TT_ROOF:
-				m_cells[p]->texture_roof = tex.id;
+				m_cells[p]->texture_roof = tex->id;
 				break;
 			case TT_FLOOR:
-				m_cells[p]->texture_floor = tex.id;
+				m_cells[p]->texture_floor = tex->id;
 				break;
 			default:
 				break;
@@ -410,8 +417,8 @@ public:
 		{
 			for(const auto& [k, v] : m_textures)
 			{
-				if(!v.path.GetFullPath().IsEmpty())
-					content.Append(indentation+"\t\t"<<k<<":\n"+indentation+"\t\t{\n"+indentation+"\t\t\t\"path\":\""<<v.path.GetFullPath()<<"\"\n"+indentation+"\t\t},\n");
+				if(!v->path.GetFullPath().IsEmpty())
+					content.Append(indentation+"\t\t"<<k<<":\n"+indentation+"\t\t{\n"+indentation+"\t\t\t\"path\":\""<<v->path.GetFullPath()<<"\"\n"+indentation+"\t\t},\n");
 			}
 		}
 		content.Append(indentation+"\t},\n");

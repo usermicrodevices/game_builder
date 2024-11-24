@@ -12,6 +12,7 @@
 #include "gb.xpm"
 
 #define wxDEBUG_LEVEL 1
+#define wxUSE_ON_FATAL_EXCEPTION 1
 
 // For compilers that support precompilation, includes "wx/wx.h".
 #ifndef WX_PRECOMP
@@ -87,9 +88,13 @@ class GBApp : public wxApp
 public:
 	wxString path_projects, path_assets, path_assets_images, path_plugins;
 	bool OnInit() override;
+	int OnExit() override;
+	void OnFatalException() override;
+	bool OnExceptionInMainLoop() override;
 
 private:
 	void OnInitCmdLine(wxCmdLineParser& parser);
+	void ShowException();
 };
 
 wxDECLARE_APP(GBApp);
@@ -162,6 +167,7 @@ public:
 	void SetCellWallType(WallType value);
 	void SetCellScript(const wxString& value);
 
+	LevelDatas GetDatas(){return m_datas;}
 	LevelBoards GetBoards(){return m_boards;}
 
 private:

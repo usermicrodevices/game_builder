@@ -36,6 +36,9 @@ void GBApp::OnInitCmdLine(wxCmdLineParser& parser)
 
 bool GBApp::OnInit()
 {
+    if(!wxHandleFatalExceptions())
+		return false;
+
 	if ( !wxApp::OnInit() )
 		return false;
 
@@ -99,6 +102,46 @@ bool GBApp::OnInit()
 
 	return true;
 }
+
+int GBApp::OnExit()
+{
+#if DEBUG
+    std::cout << "!!! GBApp::OnExit !!!" << std::endl;
+#endif
+    return 0;
+}
+
+void GBApp::ShowException()
+{
+    wxString error;
+    try {
+        throw;
+    } catch (const std::exception& e) {
+        error = e.what();
+    } catch ( ... ) {
+        error = "UNKNOWN ERROR";
+    }
+    wxLogError("Unexpected exception has occurred: %s, the program will terminate.", error);
+#if DEBUG
+    std::cout << "!!! GBApp::OnExceptionInMainLoop !!!" << std::endl;
+    std::cout << "!!! " << error << " !!!" << std::endl;
+#endif
+}
+
+void GBApp::OnFatalException()
+{
+#if DEBUG
+    std::cout << "!!! GBApp::OnFatalException !!!" << std::endl;
+#endif
+    ShowException();
+}
+
+bool GBApp::OnExceptionInMainLoop()
+{
+    ShowException();
+    return false;
+}
+
 
 wxIMPLEMENT_DYNAMIC_CLASS(GBFrame, wxFrame);
 
@@ -1074,8 +1117,8 @@ void GBFrame::OnExit(wxCommandEvent& WXUNUSED(event))
     }
     //for(const auto& [k, data] : m_datas)
         //delete data;
-    m_datas.clear();
     m_boards.clear();
+    m_datas.clear();
     m_tree_ctrl->Destroy();
     m_propGridManager->Clear();
     m_propGridManager->Destroy();
@@ -1084,7 +1127,9 @@ void GBFrame::OnExit(wxCommandEvent& WXUNUSED(event))
     wxYield();
     Close(true);
     long t = stopwatch.Time();
+#if DEBUG
     std::cout << "!!! GBFrame::OnExit " << t << " ms" << std::endl;
+#endif
 }
 
 void GBFrame::OnAbout(wxCommandEvent& WXUNUSED(event))

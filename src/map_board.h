@@ -53,7 +53,9 @@ public:
 		//SetTargetWindow(parent);
 		//LogMessage(wxString::Format("cells count %d", m_data->count_cells()));
 		//LogMessage(wxString::Format("virtual_size %dx%d", m_virtual_size.x, m_virtual_size.y));
-		std::cout << wxString(wxTheApp->GetTopWindow()->GetClassInfo()->GetClassName()) << std::endl;
+#if DEBUG
+		std::cout << "!!! MapBoardCtrl parent " << wxString(wxTheApp->GetTopWindow()->GetClassInfo()->GetClassName()) << " !!!" << std::endl;
+#endif
 	}
 
 	~MapBoardCtrl()
@@ -192,7 +194,7 @@ private:
 	EraserType m_eraser = ET_NONE;
 	bool m_togle_mouse = false;
 	TextureType m_current_texture_type = TT_FLOOR;
-	Texture m_current_texture = Texture();
+	std::shared_ptr<Texture> m_current_texture = std::make_shared<Texture>("MapBoardCtrl");
 	std::shared_ptr<Data> m_data;
 	wxSize m_virtual_size;
 	wxArrayTreeItemIds m_tree_items;
@@ -345,19 +347,19 @@ private:
 	{ ShowContextMenu(event.GetPosition()); }
 #endif
 
-	void set_pgprop_tex(wxPGProperty* pgprop, const Texture& texture)
+	void set_pgprop_tex(wxPGProperty* pgprop, std::shared_ptr<Texture> texture)
 	{
-		//std::cout << "texture " << texture.id << std::endl;
+		//std::cout << "texture " << texture->id << std::endl;
 		if(!pgprop)
 			wxLogError("wxPGProperty path");
 		else
 		{
-			if(texture.id > -1)
+			if(texture->id > -1)
 			{
-				//wxLogMessage("🩸"+texture.path.GetFullPath()+"🩸");
-				//if(!pgprop->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue|wxPGPropValFormatFlags::ReportError))
-					//wxLogError("🩸wxPGProperty.SetValueFromString 🧵" + texture.path.GetFullPath()+"🧵");
-				pgprop->SetValueFromString(texture.path.GetFullPath(), wxPGPropValFormatFlags::FullValue);
+				//wxLogMessage("🩸"+texture->path.GetFullPath()+"🩸");
+				//if(!pgprop->SetValueFromString(texture->path.GetFullPath(), wxPGPropValFormatFlags::FullValue|wxPGPropValFormatFlags::ReportError))
+					//wxLogError("🩸wxPGProperty.SetValueFromString 🧵" + texture->path.GetFullPath()+"🧵");
+				pgprop->SetValueFromString(texture->path.GetFullPath(), wxPGPropValFormatFlags::FullValue);
 			}
 			else
 				pgprop->SetValueFromString("", wxPGPropValFormatFlags::FullValue);
@@ -391,7 +393,7 @@ private:
 
 	void store_currents()
 	{
-		if(m_current_texture.IsOk())
+		if(m_current_texture->IsOk())
 		{
 			m_data->set_texture(m_current_cell_position, m_current_texture, m_current_texture_type);
 			if((int)m_tree_items.size() <= m_data->cell(m_current_cell_position)->id)
@@ -492,8 +494,8 @@ private:
 			}
 			m_current_texture_type = tt;
 			m_current_texture = m_data->add_texture(m_current_cell_position, wxFileName(path_result), m_current_texture_type);
-			if(m_current_texture.IsOk())
-				SetCursor(wxCursor(m_current_texture.thumbnail));
+			if(m_current_texture->IsOk())
+				SetCursor(wxCursor(m_current_texture->thumbnail));
 			//refresh_pgproperty(m_current_texture);
 			refresh_pgproperty(m_data->cell(m_current_cell_position));
 			m_eraser = ET_NONE;
@@ -503,8 +505,8 @@ private:
 
 	void SetEraser(EraserType et=ET_FLOOR)
 	{
-		if(m_current_texture.id > -1)
-			m_current_texture = Texture();
+		if(m_current_texture->id > -1)
+			m_current_texture = m_data->get_empty_texture();
 		SetCursor(wxCURSOR_NO_ENTRY);
 		m_eraser = et;
 	}
@@ -541,8 +543,8 @@ private:
 
 	void OnSetDefaultCursor(wxCommandEvent& WXUNUSED(event))
 	{
-		if(m_current_texture.id > -1)
-			m_current_texture = Texture();
+		if(m_current_texture->id > -1)
+			m_current_texture = m_data->get_empty_texture();
 		SetCursor(*wxSTANDARD_CURSOR);
 		m_eraser = ET_NONE;
 	}

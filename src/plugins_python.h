@@ -12,7 +12,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-static PyObject* log_message(PyObject *self, PyObject *args)
+static PyObject* log_message(PyObject* self, PyObject* args)
 {
 	const char* text;
 	if (PyArg_ParseTuple(args, "s:log_message", &text))
@@ -22,7 +22,7 @@ static PyObject* log_message(PyObject *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
-static PyObject* log_info(PyObject *self, PyObject *args)
+static PyObject* log_info(PyObject* self, PyObject* args)
 {
 	const char* text;
 	if (PyArg_ParseTuple(args, "s:log_info", &text))
@@ -32,7 +32,7 @@ static PyObject* log_info(PyObject *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
-static PyObject* log_error(PyObject *self, PyObject *args)
+static PyObject* log_error(PyObject* self, PyObject* args)
 {
 	const char* text;
 	if (PyArg_ParseTuple(args, "s:log_error", &text))
@@ -42,7 +42,7 @@ static PyObject* log_error(PyObject *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
-static PyObject* log_warning(PyObject *self, PyObject *args)
+static PyObject* log_warning(PyObject* self, PyObject* args)
 {
 	const char* text;
 	if (PyArg_ParseTuple(args, "s:log_warning", &text))
@@ -52,35 +52,107 @@ static PyObject* log_warning(PyObject *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
-//static PyObject* get_main_frame(PyObject *self, PyObject *args)
-//{
-//	return PyCapsule_New((void*)wxApp::GetMainTopWindow(), "game_builder.main_frame", NULL);
-//}
+///////////////// MapCell /////////////////
+typedef struct
+{
+	PyObject_HEAD
+	std::shared_ptr<Cell> ptr;
+	PyObject* idx;
+	PyObject* side;
+	PyObject* texture_floor;
+	PyObject* texture_wall;
+	PyObject* texture_roof;
+	PyObject* wtp;
+	PyObject* script;
+} MapCell;
 
+static PyObject* MapCell_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+{
+	MapCell* self = (MapCell*)type->tp_alloc(type, 0);
+	// if (self != NULL)
+	// {
+	// 	self->ptr = (std::shared_ptr<Cell>)args[0];
+	// 	self->script = PyUnicode_FromString(self->ptr->script.c_str());
+	// }
+	return (PyObject*)self;
+}
+
+static void MapCell_dealloc(MapCell* self)
+{
+#if DEBUG
+	std::cout << "!!! MapCell_dealloc " << self->idx << std::endl;
+#endif
+	Py_XDECREF(self->script);
+	Py_TYPE(self)->tp_free((PyObject*) self);
+#if DEBUG
+	std::cout << "	MapCell_dealloc !!!" << std::endl;
+#endif
+}
+
+static int MapCell_init(MapCell* self, PyObject* args, PyObject* Py_UNUSED(kwds) = nullptr)
+{
+	self->idx = PyTuple_GetItem(args, 0);
+	self->side = PyTuple_GetItem(args, 1);
+	self->texture_floor = PyTuple_GetItem(args, 2);
+	self->texture_wall = PyTuple_GetItem(args, 3);
+	self->texture_roof = PyTuple_GetItem(args, 4);
+	self->wtp = PyTuple_GetItem(args, 5);
+	self->script = PyTuple_GetItem(args, 6);
+	return 0;
+}
+
+static PyMemberDef MapCell_members[] =
+{
+	{"idx", Py_T_OBJECT_EX, offsetof(MapCell, idx), 0, "cell index"},
+	{"side", Py_T_OBJECT_EX, offsetof(MapCell, side), 0, "cell side"},
+	{"texture_floor", Py_T_OBJECT_EX, offsetof(MapCell, texture_floor), 0, "cell texture_floor"},
+	{"texture_wall", Py_T_OBJECT_EX, offsetof(MapCell, texture_wall), 0, "cell texture_wall"},
+	{"texture_roof", Py_T_OBJECT_EX, offsetof(MapCell, texture_roof), 0, "cell texture_roof"},
+	{"wtp", Py_T_OBJECT_EX, offsetof(MapCell, wtp), 0, "cell wall type"},
+	{"script", Py_T_OBJECT_EX, offsetof(MapCell, script), 0, "script code"},
+	{NULL}
+};
+
+static PyObject* MapCell_get_visible_texture(MapCell* self, PyObject* Py_UNUSED(ignored))
+{
+	if (self->ptr == NULL)
+	{
+		PyErr_SetString(PyExc_AttributeError, "ptr");
+		return NULL;
+	}
+	return PyLong_FromLong(self->ptr->get_visible_texture());
+}
+
+static PyMethodDef MapCell_methods[] = {
+	{"get_visible_texture", (PyCFunction) MapCell_get_visible_texture, METH_NOARGS, "get visible texture"},
+	{NULL}
+};
+
+static PyTypeObject MapCellType = {
+	.ob_base = PyVarObject_HEAD_INIT(NULL, 0)
+	.tp_name = "MapCell",
+	.tp_basicsize = sizeof(MapCell),
+	.tp_itemsize = 0,
+	.tp_dealloc = (destructor) MapCell_dealloc,
+	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.tp_doc = PyDoc_STR("Cell objects"),
+	.tp_methods = MapCell_methods,
+	.tp_members = MapCell_members,
+	.tp_init = (initproc) MapCell_init,
+	.tp_new = MapCell_new
+};
+
+///////////////// MainFrame /////////////////
 typedef struct
 {
 	PyObject_HEAD
 	GBFrame* ptr;
-	PyObject *name; /* name */
+	PyObject* name;
 } MainFrame;
 
-static void MainFrame_dealloc(MainFrame* self)
+static PyObject* MainFrame_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
-#if DEBUG
-	std::cout << "!!! MainFrame_dealloc " << self->name << std::endl;
-#endif
-	//Py_XDECREF(self->ptr);
-	Py_XDECREF(self->name);
-	Py_TYPE(self)->tp_free((PyObject *) self);
-#if DEBUG
-	std::cout << "	MainFrame_dealloc !!!" << std::endl;
-#endif
-}
-
-static PyObject* MainFrame_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{
-	MainFrame *self;
-	self = (MainFrame *) type->tp_alloc(type, 0);
+	MainFrame* self = (MainFrame*)type->tp_alloc(type, 0);
 	if (self != NULL)
 	{
 		self->ptr = (GBFrame*)wxApp::GetMainTopWindow();
@@ -91,10 +163,23 @@ static PyObject* MainFrame_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 			return NULL;
 		}
 	}
-	return (PyObject *) self;
+	return (PyObject*)self;
 }
 
-static int MainFrame_init(MainFrame *self, PyObject *Py_UNUSED(args), PyObject *Py_UNUSED(kwds))
+static void MainFrame_dealloc(MainFrame* self)
+{
+#if DEBUG
+	std::cout << "!!! MainFrame_dealloc " << self->name << std::endl;
+#endif
+	//Py_XDECREF(self->ptr);
+	Py_XDECREF(self->name);
+	Py_TYPE(self)->tp_free((PyObject*) self);
+#if DEBUG
+	std::cout << "	MainFrame_dealloc !!!" << std::endl;
+#endif
+}
+
+static int MainFrame_init(MainFrame* self, PyObject* Py_UNUSED(args), PyObject* Py_UNUSED(kwds))
 {
 	return 0;
 }
@@ -105,24 +190,53 @@ static PyMemberDef MainFrame_members[] =
 	{NULL}
 };
 
-static PyObject* MainFrame_levels(MainFrame *self, PyObject *Py_UNUSED(ignored))
+static PyObject* MainFrame_levels(MainFrame* self, PyObject* Py_UNUSED(ignored))
 {
 	if (self->ptr == NULL)
 	{
 		PyErr_SetString(PyExc_AttributeError, "ptr");
 		return NULL;
 	}
-	PyObject *dict = Py_BuildValue("{}");
-	for(const auto& [k, map_board] : self->ptr->GetBoards())
+	PyObject* levels = PyDict_New();//Py_BuildValue("{}");
+	for(const auto& [idx, level_data] : self->ptr->GetDatas())
 	{
-		if (PyMapping_SetItemString(dict, k, PyLong_FromVoidPtr(map_board)) < 0)
+		PyObject* level = PyDict_New();
+		for(const auto& [point, cell] : level_data->get_cells())
+		{
+			PyObject* map_cell = MapCell_new(&MapCellType, nullptr, nullptr);
+			((MapCell*)map_cell)->ptr = cell;
+			PyObject* args = PyTuple_Pack(7, PyLong_FromLong(cell->id), PyLong_FromLong(cell->side), PyLong_FromLong(cell->texture_floor), PyLong_FromLong(cell->texture_wall), PyLong_FromLong(cell->texture_roof), PyLong_FromLong(cell->wtp), PyUnicode_FromString(cell->script.c_str()));
+			MapCell_init((MapCell*)map_cell, args);
+			std::string key = std::to_string(point.x) + "-" + std::to_string(point.x);
+			//PyDict_SetItemString(level, key.c_str(), PyLong_FromLong(cell->id));
+			//PyDict_SetItemString(level, key.c_str(), (PyObject*) &MapCellType);
+			PyDict_SetItemString(level, key.c_str(), map_cell);
+		}
+		if(PyDict_SetItem(levels, PyLong_FromLong(idx), level) < 0)
 			return NULL;
 	}
-	return dict;
+	return levels;
+}
+
+static PyObject* MainFrame_boards(MainFrame* self, PyObject* Py_UNUSED(ignored))
+{
+	if (self->ptr == NULL)
+	{
+		PyErr_SetString(PyExc_AttributeError, "ptr");
+		return NULL;
+	}
+	PyObject* boards = PyDict_New();//Py_BuildValue("{}");
+	for(const auto& [k, map_board] : self->ptr->GetBoards())
+	{
+		if (PyMapping_SetItemString(boards, k, PyLong_FromVoidPtr(map_board)) < 0)
+			return NULL;
+	}
+	return boards;
 }
 
 static PyMethodDef MainFrame_methods[] = {
-	{"levels", (PyCFunction) MainFrame_levels, METH_NOARGS, "Return the levels"},
+	{"levels", (PyCFunction) MainFrame_levels, METH_NOARGS, "list of the levels"},
+	{"boards", (PyCFunction) MainFrame_boards, METH_NOARGS, "list of the boards"},
 	{NULL}
 };
 
@@ -137,7 +251,7 @@ static PyTypeObject MainFrameType = {
 	.tp_methods = MainFrame_methods,
 	.tp_members = MainFrame_members,
 	.tp_init = (initproc) MainFrame_init,
-	.tp_new = MainFrame_new,
+	.tp_new = MainFrame_new
 };
 
 static PyMethodDef GbMethods[] = {
@@ -164,13 +278,15 @@ static PyModuleDef GbModule =
 
 PyMODINIT_FUNC PyInit_gb(void)
 {
-	PyObject *m;
+	PyObject* m;
+	if (PyType_Ready(&MapCellType) < 0)
+		return NULL;
 	if (PyType_Ready(&MainFrameType) < 0)
 		return NULL;
 	m = PyModule_Create(&GbModule);
 	if (m == NULL)
 		return NULL;
-	if (PyModule_AddObjectRef(m, "MainFrame", (PyObject *) &MainFrameType) < 0)
+	if (PyModule_AddObjectRef(m, "MainFrame", (PyObject*) &MainFrameType) < 0)
 	{
 		Py_DECREF(m);
 		return NULL;
