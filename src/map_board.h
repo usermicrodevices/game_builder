@@ -349,17 +349,31 @@ private:
 
 	void set_pgprop_tex(wxPGProperty* pgprop, std::shared_ptr<Texture> texture)
 	{
-		//std::cout << "texture " << texture->id << std::endl;
 		if(!pgprop)
 			wxLogError("wxPGProperty path");
+		else if(!texture)
+		{
+#if DEBUG
+			std::cout << "!!! MapBoardCtrl::set_pgprop_tex texture is nullptr !!!" << std::endl;
+#endif
+			wxLogError("MapBoardCtrl::set_pgprop_tex texture is nullptr");
+		}
 		else
 		{
+#if DEBUG
+			std::cout << "!!! MapBoardCtrl::set_pgprop_tex " << texture->id << " !!!" << std::endl;
+#endif
 			if(texture->id > -1)
 			{
-				//wxLogMessage("🩸"+texture->path.GetFullPath()+"🩸");
+#if DEBUG
+				wxLogMessage("🩸"+texture->path.GetFullPath()+"🩸");
+#endif
 				//if(!pgprop->SetValueFromString(texture->path.GetFullPath(), wxPGPropValFormatFlags::FullValue|wxPGPropValFormatFlags::ReportError))
 					//wxLogError("🩸wxPGProperty.SetValueFromString 🧵" + texture->path.GetFullPath()+"🧵");
 				pgprop->SetValueFromString(texture->path.GetFullPath(), wxPGPropValFormatFlags::FullValue);
+#if DEBUG
+				std::cout << "!!! MapBoardCtrl::set_pgprop_tex " << texture->path.GetFullPath() << " !!!" << std::endl;
+#endif
 			}
 			else
 				pgprop->SetValueFromString("", wxPGPropValFormatFlags::FullValue);
@@ -368,12 +382,18 @@ private:
 
 	void refresh_pgproperty(std::shared_ptr<Cell> cell)
 	{
-		if(m_prgrmgr->GetGrid()->IsFrozen())
-			m_prgrmgr->GetGrid()->Thaw();
-		set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_floor"), m_data->get_texture(cell->texture_floor));
-		set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_wall"), m_data->get_texture(cell->texture_wall));
-		set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("path_roof"), m_data->get_texture(cell->texture_roof));
-		wxPGProperty* prop_wt = m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetProperty("wall_type");
+		if(!m_prgrmgr->GetGrid()->IsFrozen())
+			m_prgrmgr->GetGrid()->Freeze();
+		std::shared_ptr<Texture> tex = m_data->get_texture(cell->texture_floor);
+		if(tex)
+			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetPropertyByNameA("path_floor"), tex);
+		tex = m_data->get_texture(cell->texture_wall);
+		if(tex)
+			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetPropertyByNameA("path_wall"), tex);
+		tex = m_data->get_texture(cell->texture_roof);
+		if(tex)
+			set_pgprop_tex(m_prgrmgr->GetGrid()->wxPropertyGridInterface::GetPropertyByNameA("path_roof"), tex);
+		wxPGProperty* prop_wt = m_prgrmgr->GetGrid()->wxPropertyGridInterface::	GetPropertyByNameA("wall_type");
 		wxAny v = prop_wt->GetValue();
 		if(v.As<int>() != (int)cell->wtp)
 			prop_wt->SetValue(WXVARIANT((int)cell->wtp));
@@ -389,6 +409,8 @@ private:
 			prop_script->SetValueFromString(wxString(""));
 		else
 			prop_script->SetValueFromString(wxString(cell->script));
+		if(m_prgrmgr->GetGrid()->IsFrozen())
+			m_prgrmgr->GetGrid()->Thaw();
 	}
 
 	void store_currents()
@@ -496,7 +518,9 @@ private:
 			m_current_texture = m_data->add_texture(m_current_cell_position, wxFileName(path_result), m_current_texture_type);
 			if(m_current_texture->IsOk())
 				SetCursor(wxCursor(m_current_texture->thumbnail));
-			//refresh_pgproperty(m_current_texture);
+#if DEBUG
+			std::cout << "!!! MapBoardCtrl::OpenTexureFile " << path_result << " !!!" << std::endl;
+#endif
 			refresh_pgproperty(m_data->cell(m_current_cell_position));
 			m_eraser = ET_NONE;
 			wxLogMessage(path_result);

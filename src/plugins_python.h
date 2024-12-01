@@ -52,6 +52,88 @@ static PyObject* log_warning(PyObject* self, PyObject* args)
 	Py_RETURN_NONE;
 }
 
+///////////////// MapTexture /////////////////
+typedef struct
+{
+	PyObject_HEAD
+	std::shared_ptr<Texture> ptr;
+	PyObject* idx;
+	PyObject* path;
+} MapTexture;
+
+static PyObject* MapTexture_new(PyTypeObject* type, PyObject* Py_UNUSED(args) = nullptr, PyObject* Py_UNUSED(kwds) = nullptr)
+{
+	MapTexture* self = (MapTexture*)type->tp_alloc(type, 0);
+	return (PyObject*)self;
+}
+
+static void MapTexture_dealloc(MapTexture* self)
+{
+#if DEBUG
+	std::cout << "!!! MapTexture_dealloc " << self->idx << std::endl;
+#endif
+	Py_XDECREF(self->path);
+	Py_TYPE(self)->tp_free((PyObject*) self);
+#if DEBUG
+	std::cout << "	MapTexture_dealloc !!!" << std::endl;
+#endif
+}
+
+static int MapTexture_init(MapTexture* self, PyObject* args, PyObject* Py_UNUSED(kwds) = nullptr)
+{
+	self->idx = PyTuple_GetItem(args, 0);
+	self->path = PyTuple_GetItem(args, 1);
+	return 0;
+}
+
+static PyMemberDef MapTexture_members[] =
+{
+	{"idx", Py_T_OBJECT_EX, offsetof(MapTexture, idx), 0, "texture index"},
+	{"path", Py_T_OBJECT_EX, offsetof(MapTexture, path), 0, "texture path"},
+	{NULL}
+};
+
+static PyObject* MapTexture_is_ok(MapTexture* self, PyObject* Py_UNUSED(ignored))
+{
+	if (self->ptr == NULL)
+	{
+		PyErr_SetString(PyExc_AttributeError, "ptr");
+		return NULL;
+	}
+	return self->ptr->IsOk() ? Py_True : Py_False;
+}
+
+static PyObject* MapTexture_change_image(MapTexture* self, PyObject* args)
+{
+	if (self->ptr == NULL)
+	{
+		PyErr_SetString(PyExc_AttributeError, "ptr");
+		return NULL;
+	}
+	Py_ssize_t size;
+	return self->ptr->change_image(PyUnicode_AsWideCharString(PyTuple_GetItem(args, 0), &size)) ? Py_True : Py_False;
+}
+
+static PyMethodDef MapTexture_methods[] = {
+	{"is_ok", (PyCFunction) MapTexture_is_ok, METH_NOARGS, "check texture"},
+	{"change_image", (PyCFunction) MapTexture_change_image, METH_VARARGS, "change image of texture"},
+	{NULL}
+};
+
+static PyTypeObject MapTextureType = {
+	.ob_base = PyVarObject_HEAD_INIT(NULL, 0)
+	.tp_name = "MapTexture",
+	.tp_basicsize = sizeof(MapTexture),
+	.tp_itemsize = 0,
+	.tp_dealloc = (destructor) MapTexture_dealloc,
+	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.tp_doc = PyDoc_STR("Texture objects"),
+	.tp_methods = MapTexture_methods,
+	.tp_members = MapTexture_members,
+	.tp_init = (initproc) MapTexture_init,
+	.tp_new = MapTexture_new
+};
+
 ///////////////// MapCell /////////////////
 typedef struct
 {
@@ -66,14 +148,9 @@ typedef struct
 	PyObject* script;
 } MapCell;
 
-static PyObject* MapCell_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+static PyObject* MapCell_new(PyTypeObject* type, PyObject* Py_UNUSED(args) = nullptr, PyObject* Py_UNUSED(kwds) = nullptr)
 {
 	MapCell* self = (MapCell*)type->tp_alloc(type, 0);
-	// if (self != NULL)
-	// {
-	// 	self->ptr = (std::shared_ptr<Cell>)args[0];
-	// 	self->script = PyUnicode_FromString(self->ptr->script.c_str());
-	// }
 	return (PyObject*)self;
 }
 
@@ -200,7 +277,23 @@ static PyObject* MainFrame_levels(MainFrame* self, PyObject* Py_UNUSED(ignored))
 	PyObject* levels = PyDict_New();//Py_BuildValue("{}");
 	for(const auto& [idx, level_data] : self->ptr->GetDatas())
 	{
-		PyObject* level = PyDict_New();
+		PyObject* textures = PyDict_New();
+		for(const auto& [id, texture] : level_data->get_textures())
+		{
+			if(texture)
+			{
+				PyObject* map_texture = MapTexture_new(&MapTextureType, nullptr, nullptr);
+				((MapTexture*)map_texture)->ptr = texture;
+				PyObject* args = PyTuple_Pack(2, PyLong_FromLong(texture->id), PyUnicode_FromString(texture->path.GetFullPath().c_str()));
+				MapTexture_init((MapTexture*)map_texture, args);
+				PyDict_SetItem(textures, PyLong_FromLong(id), map_texture);
+			}
+#if DEBUG
+			else
+				std::cout << "!!! MainFrame_levels texture is nullptr !!!" << std::endl;
+#endif
+		}
+		PyObject* cells = PyDict_New();
 		for(const auto& [point, cell] : level_data->get_cells())
 		{
 			PyObject* map_cell = MapCell_new(&MapCellType, nullptr, nullptr);
@@ -208,10 +301,11 @@ static PyObject* MainFrame_levels(MainFrame* self, PyObject* Py_UNUSED(ignored))
 			PyObject* args = PyTuple_Pack(7, PyLong_FromLong(cell->id), PyLong_FromLong(cell->side), PyLong_FromLong(cell->texture_floor), PyLong_FromLong(cell->texture_wall), PyLong_FromLong(cell->texture_roof), PyLong_FromLong(cell->wtp), PyUnicode_FromString(cell->script.c_str()));
 			MapCell_init((MapCell*)map_cell, args);
 			std::string key = std::to_string(point.x) + "-" + std::to_string(point.x);
-			//PyDict_SetItemString(level, key.c_str(), PyLong_FromLong(cell->id));
-			//PyDict_SetItemString(level, key.c_str(), (PyObject*) &MapCellType);
-			PyDict_SetItemString(level, key.c_str(), map_cell);
+			PyDict_SetItemString(cells, key.c_str(), map_cell);
 		}
+		PyObject* level = PyDict_New();
+		PyDict_SetItemString(level, "textures", textures);
+		PyDict_SetItemString(level, "cells", cells);
 		if(PyDict_SetItem(levels, PyLong_FromLong(idx), level) < 0)
 			return NULL;
 	}
@@ -279,6 +373,8 @@ static PyModuleDef GbModule =
 PyMODINIT_FUNC PyInit_gb(void)
 {
 	PyObject* m;
+	if (PyType_Ready(&MapTextureType) < 0)
+		return NULL;
 	if (PyType_Ready(&MapCellType) < 0)
 		return NULL;
 	if (PyType_Ready(&MainFrameType) < 0)
@@ -315,7 +411,6 @@ void run_plugin(wxString plugin_filename)
 	config.isolated = 1;
 	config.module_search_paths_set = 1;
 
-	//config.home = (wchar_t*).wc_str();
 	status = PyConfig_SetString(&config, &config.home, (wxGetCwd()+"/python").wc_str());
 	if (PyStatus_Exception(status)) {exception(config, status);}
 
@@ -347,11 +442,15 @@ void run_plugin(wxString plugin_filename)
 		wxLogInfo(wxT("PyImport_AppendInittab error: table of built-in modules could not be extended"));
 
 	status = Py_InitializeFromConfig(&config);
-	//std::cout << "Py_InitializeFromConfig" << std::endl;
+#if DEBUG
+	std::cout << "!!! Py_InitializeFromConfig !!!" << std::endl;
+#endif
 	if (PyStatus_Exception(status)) {exception(config, status);}
 	PyConfig_Clear(&config);
 
-	//std::cout << "PyRun_SimpleFile" << std::endl;
+#if DEBUG
+	std::cout << "!!! PyRun_SimpleFile !!!" << std::endl;
+#endif
 	wxLogInfo(wxString::Format("PyRun_SimpleFile result = %d", PyRun_SimpleFile(pfp, plugin_filename)));
 
 	wxLogInfo(wxString::Format("Py_FinalizeEx result = %d", Py_FinalizeEx()));

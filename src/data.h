@@ -37,16 +37,19 @@ enum WallType
 class Texture
 {
 public:
-	Texture(const wxString& own = "Data")
+	Texture(const wxString& class_creator = wxEmptyString)
 	{
-		owner = own;
+		if(!class_creator.IsEmpty())
+			cls_creator = class_creator;
 #if DEBUG
-		std::cout << "!!! new Texture() " << owner << " !!!" << std::endl;
+		std::cout << "!!! new Texture(); creator = " << cls_creator << " !!!" << std::endl;
 #endif
 	}
 
-	Texture(int index, const wxFileName& fullpath, const wxSize& size)
+	Texture(int index, const wxFileName& fullpath, const wxSize& size, const wxString& class_creator = wxEmptyString)
 	{
+		if(!class_creator.IsEmpty())
+			cls_creator = class_creator;
 		id = index;
 		path = fullpath;
 		//wxImage image(path.GetFullPath());//LOSS ALPHA
@@ -63,7 +66,7 @@ public:
 			}
 		}
 #if DEBUG
-		std::cout << "!!! new Texture(...) " << path.GetFullPath() << " !!!" << std::endl;
+		std::cout << "!!! new Texture( " << path.GetFullPath() << "); creator = " << cls_creator << " !!!" << std::endl;
 #endif
 	}
 
@@ -75,8 +78,43 @@ public:
 		path.Clear();
 		thumbnail.Destroy();
 #if DEBUG
-		std::cout << owner << "	~Texture !!!" << std::endl;
+		std::cout << cls_creator << "	~Texture !!!" << std::endl;
 #endif
+	}
+
+	bool change_image(const wchar_t* file_name_path, int width=0, int height=0)
+	{
+		bool result = false;
+		if(thumbnail.IsOk() || (width && height))
+		{
+			if(!width || !height)
+			{
+				width = thumbnail.GetWidth();
+				height = thumbnail.GetHeight();
+			}
+			path = wxFileName(file_name_path);
+			bitmap = wxBitmap(path.GetFullPath());
+			if(bitmap.IsOk())
+			{
+				thumbnail = bitmap.ConvertToImage();
+				if(thumbnail.IsOk())
+				{
+					thumbnail = thumbnail.Rescale(width, height);
+					thumbnail.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_X, width/2);
+					thumbnail.SetOption(wxIMAGE_OPTION_CUR_HOTSPOT_Y, height/2);
+					bitmap = wxBitmap(thumbnail);
+					result = true;
+				}
+			}
+		}
+#if DEBUG
+		else
+		{
+			std::cout << "ALSO PLEASE SET WIDTH AND HEIGHT" << std::endl;
+		}
+		std::cout << "!!! Texture change_image " << path.GetFullPath() << " !!!" << std::endl;
+#endif
+		return result;
 	}
 
 	bool IsOk()
@@ -88,7 +126,7 @@ public:
 	wxFileName path;
 	wxImage thumbnail = wxNullImage;
 	wxBitmap bitmap;
-	wxString owner = wxString("Data");
+	wxString cls_creator = wxString("Data");
 };
 
 typedef std::unordered_map<int, std::shared_ptr<Texture>> TextureContainer;
