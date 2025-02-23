@@ -3,11 +3,11 @@ exec_prefix = ${prefix}
 datarootdir = ${prefix}/share
 INSTALL = /usr/bin/install -c
 NM = nm
-CUR_DIR = $(shell pwd)
-srcdir = $(CUR_DIR)/src
-top_srcdir = $(CUR_DIR)/wxWidgets
-wx_top_builddir = $(CUR_DIR)/wxWidgets
-BK_DEPS = $(CUR_DIR)/wxWidgets/bk-deps
+THIRD_PARTY_DIR = $(realpath -s $(subst $(notdir $(CURDIR)),,$(CURDIR)))
+srcdir = $(CURDIR)/src
+top_srcdir = $(THIRD_PARTY_DIR)/wxWidgets
+wx_top_builddir = $(THIRD_PARTY_DIR)/wxWidgets
+BK_DEPS = $(THIRD_PARTY_DIR)/wxWidgets/bk-deps
 LIBS = -lz -lcurl -lm
 LDFLAGS_GUI =
 CXX = g++
@@ -29,7 +29,7 @@ EXTRALIBS_GUI = -lgtk-3 -lgdk-3 -lpangocairo-1.0 -lpango-1.0 -latk-1.0 -lcairo-g
 WX_CPPFLAGS = -DwxUSE_UNICODE -DwxUSE_EXCEPTIONS -DwxUSE_DEBUGREPORT -DwxUSE_ON_FATAL_EXCEPTION -I${wx_top_builddir}/lib/wx/include/gtk3-unicode-3.3 -I${top_srcdir}/include -I/usr/include/gtk-3.0 -I/usr/include/gtk-3.0/unix-print -I/usr/include/at-spi2-atk/2.0 -I/usr/include/at-spi-2.0 -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include -I/usr/include/gio-unix-2.0 -I/usr/include/cairo -I/usr/include/pango-1.0 -I/usr/include/harfbuzz -I/usr/include/fribidi -I/usr/include/atk-1.0 -I/usr/include/pixman-1 -I/usr/include/uuid -I/usr/include/freetype2 -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/libpng16 -I/usr/include/x86_64-linux-gnu -I/usr/include/libmount -I/usr/include/blkid -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/gstreamer-1.0 -I/usr/include/orc-0.4 -I/usr/include/webp
 
 PLUGINS_PYTHON = 1
-PY_ROOT_DIR = $(CUR_DIR)/Python-3.13.0
+PY_ROOT_DIR = $(THIRD_PARTY_DIR)/Python-3.13.0
 
 ifeq ($(PLUGINS_PYTHON), 1)
 WX_CPPFLAGS += -DPLUGINS_PYTHON -I$(PY_ROOT_DIR) -I$(PY_ROOT_DIR)/Include
