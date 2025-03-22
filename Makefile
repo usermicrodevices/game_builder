@@ -1,7 +1,4 @@
-prefix = /usr/local
-exec_prefix = ${prefix}
-datarootdir = ${prefix}/share
-INSTALL = /usr/bin/install -c
+#INSTALL = /usr/bin/install -c
 NM = nm
 THIRD_PARTY_DIR = $(realpath -s $(subst $(notdir $(CURDIR)),,$(CURDIR)))
 srcdir = $(CURDIR)/src

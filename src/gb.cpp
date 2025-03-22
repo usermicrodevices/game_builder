@@ -957,7 +957,7 @@ void GBFrame::ParseJsonBoards(wxTextFile& f, int id_level)
                 tag = "path";
                 tex_path = r_path.GetMatch(str, 1);
                 wxLogDebug(wxString("🎨🗂") << tex_path);
-                if(data->has_data() && id_texture > -1)
+                if(data && id_texture > -1)
                 {
                     data->append_texture(id_texture, tex_path);
                     id_texture = -1;
@@ -973,7 +973,7 @@ void GBFrame::ParseJsonBoards(wxTextFile& f, int id_level)
         }
         else if((str == "}" || str == "},") && tag == "cells")
         {
-            if(data->has_data())
+            if(data && cell_point != wxDefaultPosition)
             {
                 data->append_cell(cell_point.x, cell_point.y, default_side_size, id_floor, id_wall, id_roof, wall_type, script.utf8_string());
             }
@@ -1071,7 +1071,7 @@ void GBFrame::OnSave(wxCommandEvent& WXUNUSED(event))
         {
             f.Write("{\n\t\"levels\":\n\t{\n");
             bool first_line = true;
-			for(const auto& [k, map_board] : m_boards)
+            for(const auto& [k, map_board] : m_boards)
             {
                 if(map_board->HasData())
                 {

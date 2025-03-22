@@ -455,8 +455,11 @@ public:
 		{
 			for(const auto& [k, v] : m_textures)
 			{
-				if(!v->path.GetFullPath().IsEmpty())
-					content.Append(indentation+"\t\t"<<k<<":\n"+indentation+"\t\t{\n"+indentation+"\t\t\t\"path\":\""<<v->path.GetFullPath()<<"\"\n"+indentation+"\t\t},\n");
+				if(v)
+				{
+					if(!v->path.GetFullPath().IsEmpty())
+						content.Append(indentation+"\t\t"<<k<<":\n"+indentation+"\t\t{\n"+indentation+"\t\t\t\"path\":\""<<v->path.GetFullPath()<<"\"\n"+indentation+"\t\t},\n");
+				}
 			}
 		}
 		content.Append(indentation+"\t},\n");

@@ -290,7 +290,7 @@ static PyObject* MainFrame_levels(MainFrame* self, PyObject* Py_UNUSED(ignored))
 			}
 #if DEBUG
 			else
-				std::cout << "!!! MainFrame_levels texture is nullptr !!!" << std::endl;
+				std::cout << "!!! MainFrame_levels texture " << id << " is nullptr !!!" << std::endl;
 #endif
 		}
 		PyObject* cells = PyDict_New();
