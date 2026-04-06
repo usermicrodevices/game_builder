@@ -9,6 +9,8 @@
 
 #include "gb.h"
 
+wxIMPLEMENT_APP(GBApp);
+
 void GBApp::OnInitCmdLine(wxCmdLineParser& parser)
 {
 	wxApp::OnInitCmdLine(parser);
@@ -221,6 +223,10 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     menu_perspectives->Append(ID_FirstPerspective+0, _("Default Startup"));
     menu_perspectives->Append(ID_FirstPerspective+1, _("All Panes"));
 
+    menu_build = new wxMenu;
+    menu_build->Append(ID_BuildGcc, _("Build gcc (NIX*)"));
+    menu_build->Append(ID_BuildMingw, _("Build mingw (Windows)"));
+
     menu_plugins = new wxMenu;
     wxArrayString files;
     if(wxDir::GetAllFiles(wxGetApp().path_plugins, &files, "*.py"))
@@ -243,6 +249,7 @@ GBFrame::GBFrame(wxWindow* parent, wxWindowID id, const wxString& title, const w
     mb->Append(menu_options, _("&Options"));
     mb->Append(menu_notebook, _("&Notebook"));
     mb->Append(menu_plugins, _("P&lugins"));
+    mb->Append(menu_build, _("&Build"));
     mb->Append(help_menu, _("&Help"));
 
     SetMenuBar(mb);
@@ -1051,8 +1058,9 @@ void GBFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
     wxFileDialog dlg(this, "Open JSON project", wxEmptyString, wxEmptyString, wildCard, wxFD_OPEN);
     if(dlg.ShowModal() == wxID_OK)
     {
-        wxLogDebug(dlg.GetPath());
-        wxTextFile f(dlg.GetPath());
+        m_currentProjectFile = dlg.GetPath();
+        wxLogDebug(m_currentProjectFile);
+        wxTextFile f(m_currentProjectFile);
         if(f.Open())
             ParseJsonFile(f);
         else
@@ -1130,6 +1138,403 @@ void GBFrame::OnExit(wxCommandEvent& WXUNUSED(event))
 #if DEBUG
     std::cout << "!!! GBFrame::OnExit " << t << " ms" << std::endl;
 #endif
+}
+
+wxString GBFrame::GetCurrentProjectName()
+{
+    wxString projectName;
+
+    // Try to get project name from current open file
+    if (m_currentProjectFile.IsEmpty())
+    {
+        // Look for project.json in current directory
+        wxFileName projFile(wxGetCwd(), "project.json");
+        if (projFile.FileExists())
+        {
+            m_currentProjectFile = projFile.GetFullPath();
+            projectName = projFile.GetName();
+        }
+    }
+    else
+    {
+        wxFileName projFile(m_currentProjectFile);
+        projectName = projFile.GetName();
+    }
+
+    // If still empty, check if any board has data
+    if (projectName.IsEmpty())
+    {
+        for (const auto& [name, board] : m_boards)
+        {
+            if (board && board->HasData())
+            {
+                projectName = "game_project";
+                break;
+            }
+        }
+    }
+
+    return projectName;
+}
+
+wxString GBFrame::GetSourceFiles()
+{
+    wxString sources_dir = wxGetCwd()+"/game_core/irrlicht3d/";
+    wxLogInfo("SOURCES DIR: " + sources_dir);
+
+    wxString sources = sources_dir + "default.cpp";
+
+    // Add any additional source files from the project
+    wxArrayString additionalSources;
+    wxDir::GetAllFiles(sources_dir, &additionalSources, "*.cpp", wxDIR_FILES);
+
+    for (const auto& src : additionalSources)
+    {
+        wxFileName fn(src);
+        wxString filename = fn.GetFullName();
+        if (filename != "default.cpp" &&
+            filename != "gb.cpp" &&
+            filename != "map_reader.cpp")
+        {
+            sources += " " + src;
+        }
+    }
+
+    return sources;
+}
+
+wxString GBFrame::GetIncludePaths()
+{
+    wxString includes = "-I./game_core/irrlicht3d";
+
+    // Add standard include directories
+    wxArrayString includeDirs = {"./libs/include", "./irrlicht/include"};
+
+    for (const auto& dir : includeDirs)
+    {
+        if (wxFileName::DirExists(dir))
+            includes += " -I" + dir;
+    }
+
+    return includes;
+}
+
+wxString GBFrame::GetLibraryPaths()
+{
+    wxString libPaths = "-L./lib";
+
+    // Add standard library directories
+    wxArrayString libDirs = {"./libs", "./irrlicht/lib"};
+
+    for (const auto& dir : libDirs)
+    {
+        if (wxFileName::DirExists(dir))
+            libPaths += " -L" + dir;
+    }
+
+    return libPaths;
+}
+
+wxString GBFrame::GetLibraries()
+{
+    return "-lirrlicht -lbass -lGL -lX11 -lXxf86vm -lpthread";
+}
+
+wxString GBFrame::GetLibrariesWindows()
+{
+    return "-lirrlicht -lbass -lgdi32 -lopengl32 -lwinmm -lws2_32";
+}
+
+wxString GBFrame::GetCompilerFlags()
+{
+    wxString flags = "-Wall -Wextra -Wno-unused-parameter";
+
+    #ifdef DEBUG
+    flags += " -g -DDEBUG";
+    #else
+    flags += " -O2 -DNDEBUG";
+    #endif
+
+    return flags;
+}
+
+void GBFrame::CopyResourcesToBuild(const wxString& resourcesDir)
+{
+    // Copy assets directory
+    wxString assetsSrc = wxGetCwd() + "/assets";
+    wxString assetsDst = resourcesDir + "/assets";
+
+    if (wxFileName::DirExists(assetsSrc))
+    {
+        wxLogMessage(_("Copying assets to %s"), assetsDst);
+        CopyDirectory(assetsSrc, assetsDst);
+    }
+
+    // Copy graphics directory
+    wxString graphicsSrc = wxGetCwd() + "/graphics";
+    wxString graphicsDst = resourcesDir + "/graphics";
+
+    if (wxFileName::DirExists(graphicsSrc))
+    {
+        wxLogMessage(_("Copying graphics to %s"), graphicsDst);
+        CopyDirectory(graphicsSrc, graphicsDst);
+    }
+
+    // Copy fonts if they exist
+    wxString fontsSrc = wxGetCwd() + "/fonts";
+    wxString fontsDst = resourcesDir + "/fonts";
+
+    if (wxFileName::DirExists(fontsSrc))
+    {
+        wxLogMessage(_("Copying fonts to %s"), fontsDst);
+        CopyDirectory(fontsSrc, fontsDst);
+    }
+
+    // Copy sounds if they exist
+    wxString soundsSrc = wxGetCwd() + "/sounds";
+    wxString soundsDst = resourcesDir + "/sounds";
+
+    if (wxFileName::DirExists(soundsSrc))
+    {
+        wxLogMessage(_("Copying sounds to %s"), soundsDst);
+        CopyDirectory(soundsSrc, soundsDst);
+    }
+
+    // Copy project.json if exists
+    wxString projFile = wxGetCwd() + "/project.json";
+    if (wxFileName::FileExists(projFile))
+    {
+        wxString projDst = resourcesDir + "/project.json";
+        wxCopyFile(projFile, projDst);
+        wxLogMessage(_("Copied project.json to %s"), projDst);
+    }
+
+    // Also copy from any board data
+    for (const auto& [name, board] : m_boards)
+    {
+        if (board && board->HasData())
+        {
+            // Copy any referenced images
+        }
+    }
+}
+
+void GBFrame::CopyDirectory(const wxString& src, const wxString& dst)
+{
+    if (!wxFileName::DirExists(dst))
+        wxFileName::Mkdir(dst, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+    wxDir dir(src);
+    wxString filename;
+
+    bool cont = dir.GetFirst(&filename);
+    while (cont)
+    {
+        wxString srcPath = src + wxFileName::GetPathSeparator() + filename;
+        wxString dstPath = dst + wxFileName::GetPathSeparator() + filename;
+
+        if (wxFileName::DirExists(srcPath))
+        {
+            CopyDirectory(srcPath, dstPath);
+        }
+        else
+        {
+            wxCopyFile(srcPath, dstPath);
+        }
+
+        cont = dir.GetNext(&filename);
+    }
+}
+
+void GBFrame::CreateRunScript(const wxString& projectName, const wxString& binDir)
+{
+    // Create shell script for Linux/Unix
+    wxString scriptPath = binDir + "/run.sh";
+    wxFile script(scriptPath, wxFile::write);
+
+    if (script.IsOpened())
+    {
+        script.Write("#!/bin/bash\n");
+        script.Write("# Run script for " + projectName + "\n\n");
+        script.Write("# Set resources directory\n");
+        script.Write("RESOURCES_DIR=\"../resources\"\n\n");
+        script.Write("# Change to script directory\n");
+        script.Write("cd \"$(dirname \"$0\")\"\n\n");
+        script.Write("# Run the game\n");
+        script.Write("./" + projectName + ".out --resources=\"$RESOURCES_DIR\"\n");
+        script.Close();
+
+        // Make executable
+        wxString chmodCmd = "chmod +x " + scriptPath;
+        wxExecute(chmodCmd, wxEXEC_SYNC);
+
+        wxLogMessage(_("Created run script: %s"), scriptPath);
+    }
+}
+
+void GBFrame::CreateBatchFile(const wxString& projectName, const wxString& binDir)
+{
+    // Create batch file for Windows
+    wxString batchPath = binDir + "/run.bat";
+    wxFile batch(batchPath, wxFile::write);
+
+    if (batch.IsOpened())
+    {
+        batch.Write("@echo off\n");
+        batch.Write("REM Run script for " + projectName + "\n\n");
+        batch.Write("REM Set resources directory\n");
+        batch.Write("set RESOURCES_DIR=..\\resources\n\n");
+        batch.Write("REM Run the game\n");
+        batch.Write(projectName + ".exe --resources=\"%RESOURCES_DIR%\"\n");
+        batch.Write("pause\n");
+        batch.Close();
+
+        wxLogMessage(_("Created batch file: %s"), batchPath);
+    }
+}
+
+// build for NIX*
+void GBFrame::OnBuildGcc(wxCommandEvent& WXUNUSED(event))
+{
+    // Get project name from current file or dialog
+    wxString projectName = GetCurrentProjectName();
+    if (projectName.IsEmpty())
+    {
+        wxTextEntryDialog dlg(this, _("Enter project name:"), _("Build Project"),
+                              _("mygame"));
+        if (dlg.ShowModal() != wxID_OK)
+            return;
+        projectName = dlg.GetValue();
+    }
+
+    // Create build directory structure
+    wxString buildDir = wxGetCwd() + "/build/" + projectName;
+    wxString binDir = buildDir + "/bin";
+    wxString resourcesDir = buildDir + "/resources";
+
+    if (!wxFileName::DirExists(buildDir))
+        wxFileName::Mkdir(buildDir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+    if (!wxFileName::DirExists(binDir))
+        wxFileName::Mkdir(binDir);
+    if (!wxFileName::DirExists(resourcesDir))
+        wxFileName::Mkdir(resourcesDir);
+
+    // Copy resources to build directory
+    CopyResourcesToBuild(resourcesDir);
+
+    // Build command with proper flags
+    wxString cmd;
+    wxString sourceFiles = GetSourceFiles();
+    wxString includePaths = GetIncludePaths();
+    wxString libPaths = GetLibraryPaths();
+    wxString libs = GetLibraries();
+
+    cmd.Printf("g++ -std=c++11 -O2 %s %s -L%s -o %s/%s %s %s",
+               includePaths,
+               sourceFiles,
+               libPaths,
+               binDir,
+               projectName + ".out",
+               libs,
+               GetCompilerFlags());
+
+    wxLogMessage(_("Build command: %s"), cmd);
+
+    // Execute build
+    wxArrayString output, errors;
+    long result = wxExecute(cmd, output, errors, wxEXEC_SYNC);
+
+    if (result == 0)
+    {
+        // Create run script
+        CreateRunScript(projectName, binDir);
+
+        wxString successMsg = wxString::Format(
+            _("Build completed successfully!\n\nExecutable: %s/%s.out\nRun script: %s/run.sh"),
+                                               binDir, projectName, binDir);
+        wxMessageBox(successMsg, _("Success"), wxOK | wxICON_INFORMATION, this);
+    }
+    else
+    {
+        wxString errorMsg = _("Build failed with code: ") + wxString::Format(wxT("%ld"), result) + wxT("\n\n");
+        if (!errors.IsEmpty())
+            errorMsg += _("Errors:\n") + wxJoin(errors, wxT('\n'));
+        else if (!output.IsEmpty())
+            errorMsg += _("Output:\n") + wxJoin(output, wxT('\n'));
+        wxMessageBox(errorMsg, _("Build Error"), wxOK | wxICON_ERROR, this);
+    }
+}
+
+// build for Windows
+void GBFrame::OnBuildMingw(wxCommandEvent& WXUNUSED(event))
+{
+    // Get project name from current file or dialog
+    wxString projectName = GetCurrentProjectName();
+    if (projectName.IsEmpty())
+    {
+        wxTextEntryDialog dlg(this, _("Enter project name:"), _("Build Project"),
+                              _("mygame"));
+        if (dlg.ShowModal() != wxID_OK)
+            return;
+        projectName = dlg.GetValue();
+    }
+
+    // Create build directory structure
+    wxString buildDir = wxGetCwd() + "/build/" + projectName;
+    wxString binDir = buildDir + "/bin";
+    wxString resourcesDir = buildDir + "/resources";
+
+    if (!wxFileName::DirExists(buildDir))
+        wxFileName::Mkdir(buildDir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+    if (!wxFileName::DirExists(binDir))
+        wxFileName::Mkdir(binDir);
+    if (!wxFileName::DirExists(resourcesDir))
+        wxFileName::Mkdir(resourcesDir);
+
+    // Copy resources to build directory
+    CopyResourcesToBuild(resourcesDir);
+
+    // Build command for MinGW (Windows)
+    wxString cmd;
+    wxString sourceFiles = GetSourceFiles();
+    wxString includePaths = GetIncludePaths();
+    wxString libPaths = GetLibraryPaths();
+    wxString libs = GetLibrariesWindows();
+
+    cmd.Printf("g++ -std=c++11 -O2 %s %s -L%s -o %s/%s.exe %s %s -static-libgcc -static-libstdc++",
+               includePaths,
+               sourceFiles,
+               libPaths,
+               binDir,
+               projectName,
+               libs,
+               GetCompilerFlags());
+
+    wxLogMessage(_("Build command: %s"), cmd);
+
+    // Execute build
+    wxArrayString output, errors;
+    long result = wxExecute(cmd, output, errors, wxEXEC_SYNC);
+
+    if (result == 0)
+    {
+        // Create batch file for Windows
+        CreateBatchFile(projectName, binDir);
+
+        wxString successMsg = wxString::Format(
+            _("Build completed successfully!\n\nExecutable: %s/%s.exe\nRun script: %s/run.bat"),
+                                               binDir, projectName, binDir);
+        wxMessageBox(successMsg, _("Success"), wxOK | wxICON_INFORMATION, this);
+    }
+    else
+    {
+        wxString errorMsg = _("Build failed with code: ") + wxString::Format(wxT("%ld"), result) + wxT("\n\n");
+        if (!errors.IsEmpty())
+            errorMsg += _("Errors:\n") + wxJoin(errors, wxT('\n'));
+        else if (!output.IsEmpty())
+            errorMsg += _("Output:\n") + wxJoin(output, wxT('\n'));
+        wxMessageBox(errorMsg, _("Build Error"), wxOK | wxICON_ERROR, this);
+    }
 }
 
 void GBFrame::OnAbout(wxCommandEvent& WXUNUSED(event))

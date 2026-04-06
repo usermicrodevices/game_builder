@@ -53,6 +53,8 @@
 #include "wx/wxhtml.h"
 #include <wx/dir.h>
 #include <wx/filedlg.h>
+#include <wx/filename.h>
+#include <wx/process.h>
 
 #include "wx/aui/aui.h"
 
@@ -79,6 +81,8 @@ static bool g_loadedCoreutilsMO = false;
 
 #include <map>
 #include <string>
+#include <memory>
+#include <unordered_map>
 
 #include "map_settings_dialog.h"
 
@@ -96,7 +100,6 @@ private:
 };
 
 wxDECLARE_APP(GBApp);
-wxIMPLEMENT_APP(GBApp);
 
 class MapBoardCtrl;
 #include "data.h"
@@ -111,6 +114,8 @@ class GBFrame : public wxFrame {
     PGID = 1,
     ID_AddLevel = wxID_HIGHEST,
     ID_OpenLevel,
+    ID_BuildGcc,
+    ID_BuildMingw,
     ID_ShowLog,
     ID_ShowTree,
     ID_ShowNotebook,
@@ -173,7 +178,7 @@ private:
   long m_notebook_style;
   long m_notebook_theme;
   wxArrayString m_perspectives;
-  wxMenu *menu_perspectives, *menu_plugins;
+  wxMenu *menu_perspectives, *menu_plugins, *menu_build;
   wxTreeCtrl *m_tree_ctrl;
   wxTextCtrl *m_logTextCtrl;
   wxAuiManager m_mgr;
@@ -183,6 +188,7 @@ private:
   wxPropertyGridManager *m_propGridManager;
   MapSettingsData m_map_settings_data;
   PluginContainer m_plugins = {};
+  wxString m_currentProjectFile;
 
   wxTextCtrl *CreateTextCtrl(const wxString &text = wxEmptyString);
 
@@ -218,8 +224,13 @@ private:
   void OnNotebookPageClose(wxAuiNotebookEvent &evt);
   void OnNotebookPageClosed(wxAuiNotebookEvent &evt);
   // void OnNotebookPageChanging(wxAuiNotebookEvent &evt);
+
+  void OnBuildGcc(wxCommandEvent &evt);
+  void OnBuildMingw(wxCommandEvent &evt);
+
   void OnExit(wxCommandEvent &evt);
   void OnAbout(wxCommandEvent &evt);
+
   void OnTabAlignment(wxCommandEvent &evt);
 
   void OnGradient(wxCommandEvent &evt);
@@ -240,183 +251,121 @@ private:
 
   void OnPluginRun(wxCommandEvent &event);
 
+  // Build helper methods
+  wxString GetCurrentProjectName();
+  wxString GetSourceFiles();
+  wxString GetIncludePaths();
+  wxString GetLibraryPaths();
+  wxString GetLibraries();
+  wxString GetLibrariesWindows();
+  wxString GetCompilerFlags();
+  void CopyResourcesToBuild(const wxString &resourcesDir);
+  void CopyDirectory(const wxString &src, const wxString &dst);
+  void CreateRunScript(const wxString &projectName, const wxString &binDir);
+  void CreateBatchFile(const wxString &projectName, const wxString &binDir);
+
   wxDECLARE_EVENT_TABLE();
 };
 
-wxBEGIN_EVENT_TABLE(GBFrame, wxFrame) EVT_MENU(wxID_OPEN, GBFrame::OnOpen) EVT_MENU(
-    GBFrame::ID_OpenLevel,
-    GBFrame::OnOpenLevel) EVT_MENU(wxID_SAVE,
-                                   GBFrame::OnSave) EVT_MENU(wxID_FILE,
-                                                             GBFrame::
-                                                                 OnSaveLevel)
-    EVT_MENU(wxID_EXIT, GBFrame::OnExit) EVT_MENU(
-        wxID_ABOUT,
-        GBFrame::OnAbout) EVT_MENU(GBFrame::ID_AddLevel,
-                                   GBFrame::
-                                       OnAddLevel) EVT_MENU(GBFrame::ID_ShowLog,
-                                                            GBFrame::OnShowLog)
-        EVT_MENU(GBFrame::ID_ShowTree, GBFrame::OnShowTree) EVT_MENU(
-            GBFrame::ID_ShowNotebook,
-            GBFrame::OnShowNotebook) EVT_MENU(GBFrame::ID_ShowProperties,
-                                              GBFrame::OnShowProperties)
-            EVT_MENU(GBFrame::ID_DrawCellCoords, GBFrame::OnDrawCellCoords) EVT_MENU(
-                GBFrame::ID_CreatePerspective,
-                GBFrame::
-                    OnCreatePerspective) EVT_MENU(GBFrame::
-                                                      ID_CopyPerspectiveCode,
-                                                  GBFrame::
-                                                      OnCopyPerspectiveCode)
-                EVT_MENU(ID_AllowFloating, GBFrame::OnManagerFlag) EVT_MENU(
-                    ID_TransparentHint,
-                    GBFrame::OnManagerFlag) EVT_MENU(ID_VenetianBlindsHint,
-                                                     GBFrame::OnManagerFlag)
-                    EVT_MENU(ID_RectangleHint, GBFrame::OnManagerFlag) EVT_MENU(
-                        ID_NoHint,
-                        GBFrame::OnManagerFlag) EVT_MENU(ID_HintFade,
-                                                         GBFrame::OnManagerFlag)
-                        EVT_MENU(ID_NoVenetianFade, GBFrame::OnManagerFlag) EVT_MENU(
-                            ID_TransparentDrag,
-                            GBFrame::OnManagerFlag) EVT_MENU(ID_LiveUpdate,
-                                                             GBFrame::
-                                                                 OnManagerFlag)
-                            EVT_MENU(ID_AllowActivePane, GBFrame::OnManagerFlag) EVT_MENU(
-                                ID_NotebookTabFixedWidth,
-                                GBFrame::
-                                    OnNotebookFlag) EVT_MENU(ID_NotebookNoCloseButton,
-                                                             GBFrame::
-                                                                 OnNotebookFlag)
-                                EVT_MENU(
-                                    ID_NotebookCloseButton,
-                                    GBFrame::
-                                        OnNotebookFlag) EVT_MENU(ID_NotebookCloseButtonAll,
-                                                                 GBFrame::
-                                                                     OnNotebookFlag)
-                                    EVT_MENU(
-                                        ID_NotebookCloseButtonActive,
-                                        GBFrame::
-                                            OnNotebookFlag) EVT_MENU(ID_NotebookAllowTabMove,
-                                                                     GBFrame::
-                                                                         OnNotebookFlag)
-                                        EVT_MENU(
-                                            ID_NotebookAllowTabExternalMove,
-                                            GBFrame::OnNotebookFlag)
-                                            EVT_MENU(ID_NotebookAllowTabSplit,
-                                                     GBFrame::OnNotebookFlag)
-                                                EVT_MENU(
-                                                    ID_NotebookScrollButtons,
-                                                    GBFrame::OnNotebookFlag)
-                                                    EVT_MENU(
-                                                        ID_NotebookWindowList,
-                                                        GBFrame::OnNotebookFlag)
-                                                        EVT_MENU(
-                                                            ID_NotebookArtGloss,
-                                                            GBFrame::
-                                                                OnNotebookFlag)
-                                                            EVT_MENU(
-                                                                ID_NotebookArtSimple,
-                                                                GBFrame::
-                                                                    OnNotebookFlag)
-                                                                EVT_MENU(
-                                                                    ID_NotebookAlignTop,
-                                                                    GBFrame::
-                                                                        OnTabAlignment)
-                                                                    EVT_MENU(
-                                                                        ID_NotebookAlignBottom,
-                                                                        GBFrame::
-                                                                            OnTabAlignment)
-    // EVT_MENU(ID_NotebookNewTab, GBFrame::OnNotebookNewTab)
-    // EVT_MENU(ID_NotebookDeleteTab, GBFrame::OnNotebookDeleteTab)
-    EVT_MENU(ID_NoGradient, GBFrame::OnGradient) EVT_MENU(
-        ID_VerticalGradient,
-        GBFrame::
-            OnGradient) EVT_MENU(ID_HorizontalGradient,
-                                 GBFrame::
-                                     OnGradient) EVT_MENU(ID_AllowToolbarResizing,
-                                                          GBFrame::
-                                                              OnToolbarResizing)
-        EVT_MENU(ID_Settings, GBFrame::OnSettings) EVT_UPDATE_UI(
-            ID_NotebookTabFixedWidth,
-            GBFrame::
-                OnUpdateUI) EVT_UPDATE_UI(ID_NotebookNoCloseButton, GBFrame::OnUpdateUI)
-            EVT_UPDATE_UI(ID_NotebookCloseButton, GBFrame::OnUpdateUI) EVT_UPDATE_UI(
-                ID_NotebookCloseButtonAll,
-                GBFrame::OnUpdateUI) EVT_UPDATE_UI(ID_NotebookCloseButtonActive,
-                                                   GBFrame::OnUpdateUI)
-                EVT_UPDATE_UI(ID_NotebookAllowTabMove, GBFrame::OnUpdateUI) EVT_UPDATE_UI(
-                    ID_NotebookAllowTabExternalMove,
-                    GBFrame::
-                        OnUpdateUI) EVT_UPDATE_UI(ID_NotebookAllowTabSplit, GBFrame::OnUpdateUI)
-                    EVT_UPDATE_UI(ID_NotebookScrollButtons, GBFrame::OnUpdateUI) EVT_UPDATE_UI(
-                        ID_NotebookWindowList,
-                        GBFrame::
-                            OnUpdateUI) EVT_UPDATE_UI(ID_AllowFloating, GBFrame::OnUpdateUI)
-                        EVT_UPDATE_UI(ID_TransparentHint, GBFrame::OnUpdateUI) EVT_UPDATE_UI(
-                            ID_VenetianBlindsHint,
-                            GBFrame::
-                                OnUpdateUI) EVT_UPDATE_UI(ID_RectangleHint, GBFrame::OnUpdateUI)
-                            EVT_UPDATE_UI(ID_NoHint, GBFrame::OnUpdateUI) EVT_UPDATE_UI(
-                                ID_HintFade,
-                                GBFrame::OnUpdateUI)
-                                EVT_UPDATE_UI(ID_NoVenetianFade, GBFrame::OnUpdateUI) EVT_UPDATE_UI(
-                                    ID_TransparentDrag,
-                                    GBFrame::OnUpdateUI)
-                                    EVT_UPDATE_UI(ID_LiveUpdate, GBFrame::OnUpdateUI) EVT_UPDATE_UI(
-                                        ID_NoGradient,
-                                        GBFrame::OnUpdateUI)
-                                        EVT_UPDATE_UI(ID_VerticalGradient,
-                                                      GBFrame::OnUpdateUI)
-                                            EVT_UPDATE_UI(ID_HorizontalGradient,
-                                                          GBFrame::OnUpdateUI)
-                                                EVT_UPDATE_UI(
-                                                    ID_AllowToolbarResizing,
-                                                    GBFrame::OnUpdateUI)
-                                                    EVT_MENU_RANGE(
-                                                        GBFrame::
-                                                            ID_FirstPerspective,
-                                                        GBFrame::
-                                                                ID_FirstPerspective +
-                                                            1000,
-                                                        GBFrame::
-                                                            OnRestorePerspective)
-                                                        EVT_MENU_RANGE(
-                                                            GBFrame::
-                                                                ID_FirstPlugin,
-                                                            GBFrame::
-                                                                    ID_FirstPlugin +
-                                                                1000,
-                                                            GBFrame::
-                                                                OnPluginRun)
-                                                            EVT_AUITOOLBAR_TOOL_DROPDOWN(
-                                                                ID_DropDownToolbarItem,
-                                                                GBFrame::
-                                                                    OnDropDownToolbarItem)
+wxBEGIN_EVENT_TABLE(GBFrame, wxFrame)
+    EVT_MENU(wxID_OPEN, GBFrame::OnOpen)
+    EVT_MENU(GBFrame::ID_OpenLevel, GBFrame::OnOpenLevel)
+    EVT_MENU(wxID_SAVE, GBFrame::OnSave)
+    EVT_MENU(wxID_FILE, GBFrame::OnSaveLevel)
+    EVT_MENU(wxID_EXIT, GBFrame::OnExit)
+    EVT_MENU(wxID_ABOUT, GBFrame::OnAbout)
+    EVT_MENU(GBFrame::ID_AddLevel, GBFrame::OnAddLevel)
+    EVT_MENU(GBFrame::ID_BuildGcc, GBFrame::OnBuildGcc)
+    EVT_MENU(GBFrame::ID_BuildMingw, GBFrame::OnBuildMingw)
+    EVT_MENU(GBFrame::ID_ShowLog, GBFrame::OnShowLog)
+    EVT_MENU(GBFrame::ID_ShowTree, GBFrame::OnShowTree)
+    EVT_MENU(GBFrame::ID_ShowNotebook, GBFrame::OnShowNotebook)
+    EVT_MENU(GBFrame::ID_ShowProperties, GBFrame::OnShowProperties)
+    EVT_MENU(GBFrame::ID_DrawCellCoords, GBFrame::OnDrawCellCoords)
+    EVT_MENU(GBFrame::ID_CreatePerspective, GBFrame::OnCreatePerspective)
+    EVT_MENU(GBFrame::ID_CopyPerspectiveCode, GBFrame::OnCopyPerspectiveCode)
+    EVT_MENU(ID_AllowFloating, GBFrame::OnManagerFlag)
+    EVT_MENU(ID_TransparentHint, GBFrame::OnManagerFlag)
+    EVT_MENU(ID_VenetianBlindsHint, GBFrame::OnManagerFlag)
+    EVT_MENU(ID_RectangleHint, GBFrame::OnManagerFlag)
+    EVT_MENU(ID_NoHint, GBFrame::OnManagerFlag)
+    EVT_MENU(ID_HintFade, GBFrame::OnManagerFlag)
+    EVT_MENU(ID_NoVenetianFade, GBFrame::OnManagerFlag)
+    EVT_MENU(ID_TransparentDrag, GBFrame::OnManagerFlag)
+    EVT_MENU(ID_LiveUpdate, GBFrame::OnManagerFlag)
+    EVT_MENU(ID_AllowActivePane, GBFrame::OnManagerFlag)
+    EVT_MENU(ID_NotebookTabFixedWidth, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookNoCloseButton, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookCloseButton, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookCloseButtonAll, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookCloseButtonActive, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookAllowTabMove, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookAllowTabExternalMove, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookAllowTabSplit, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookScrollButtons, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookWindowList, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookArtGloss, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookArtSimple, GBFrame::OnNotebookFlag)
+    EVT_MENU(ID_NotebookAlignTop, GBFrame::OnTabAlignment)
+    EVT_MENU(ID_NotebookAlignBottom, GBFrame::OnTabAlignment)
+    EVT_MENU(ID_NoGradient, GBFrame::OnGradient)
+    EVT_MENU(ID_VerticalGradient, GBFrame::OnGradient)
+    EVT_MENU(ID_HorizontalGradient, GBFrame::OnGradient)
+    EVT_MENU(ID_AllowToolbarResizing, GBFrame::OnToolbarResizing)
+    EVT_MENU(ID_Settings, GBFrame::OnSettings)
+    EVT_UPDATE_UI(ID_NotebookTabFixedWidth, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NotebookNoCloseButton, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NotebookCloseButton, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NotebookCloseButtonAll, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NotebookCloseButtonActive, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NotebookAllowTabMove, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NotebookAllowTabExternalMove, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NotebookAllowTabSplit, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NotebookScrollButtons, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NotebookWindowList, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_AllowFloating, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_TransparentHint, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_VenetianBlindsHint, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_RectangleHint, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NoHint, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_HintFade, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NoVenetianFade, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_TransparentDrag, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_LiveUpdate, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_NoGradient, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_VerticalGradient, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_HorizontalGradient, GBFrame::OnUpdateUI)
+    EVT_UPDATE_UI(ID_AllowToolbarResizing, GBFrame::OnUpdateUI)
+    EVT_MENU_RANGE(GBFrame::ID_FirstPerspective, GBFrame::ID_FirstPerspective + 1000, GBFrame::OnRestorePerspective)
+    EVT_MENU_RANGE(GBFrame::ID_FirstPlugin, GBFrame::ID_FirstPlugin + 1000, GBFrame::OnPluginRun)
+    EVT_AUITOOLBAR_TOOL_DROPDOWN(ID_DropDownToolbarItem, GBFrame::OnDropDownToolbarItem)
     // EVT_AUI_PANE_CLOSE(GBFrame::OnPaneClose)
     EVT_AUINOTEBOOK_ALLOW_DND(wxID_ANY, GBFrame::OnAllowNotebookDnD)
-        EVT_AUINOTEBOOK_PAGE_CLOSE(wxID_ANY, GBFrame::OnNotebookPageClose)
-            EVT_AUINOTEBOOK_PAGE_CLOSED(wxID_ANY, GBFrame::OnNotebookPageClosed)
+    EVT_AUINOTEBOOK_PAGE_CLOSE(wxID_ANY, GBFrame::OnNotebookPageClose)
+    EVT_AUINOTEBOOK_PAGE_CLOSED(wxID_ANY, GBFrame::OnNotebookPageClosed)
     // EVT_AUINOTEBOOK_PAGE_CHANGING(wxID_ANY, GBFrame::OnNotebookPageChanging)
     EVT_ERASE_BACKGROUND(GBFrame::OnEraseBackground) EVT_SIZE(GBFrame::OnSize)
-        EVT_PG_CHANGING(PGID, GBFrame::OnPropertyGridChanging)
-            wxEND_EVENT_TABLE()
+    EVT_PG_CHANGING(PGID, GBFrame::OnPropertyGridChanging)
+wxEND_EVENT_TABLE()
 
 #include "map_board.h"
 
-                class SettingsPanel : public wxPanel {
-  enum {
-    ID_PaneBorderSize = wxID_HIGHEST,
-    ID_SashSize,
-    ID_CaptionSize,
-    ID_BackgroundColor,
-    ID_SashColor,
-    ID_InactiveCaptionColor,
-    ID_InactiveCaptionGradientColor,
-    ID_InactiveCaptionTextColor,
-    ID_ActiveCaptionColor,
-    ID_ActiveCaptionGradientColor,
-    ID_ActiveCaptionTextColor,
-    ID_BorderColor,
-    ID_GripperColor
-  };
+class SettingsPanel : public wxPanel {
+    enum {
+        ID_PaneBorderSize = wxID_HIGHEST,
+        ID_SashSize,
+        ID_CaptionSize,
+        ID_BackgroundColor,
+        ID_SashColor,
+        ID_InactiveCaptionColor,
+        ID_InactiveCaptionGradientColor,
+        ID_InactiveCaptionTextColor,
+        ID_ActiveCaptionColor,
+        ID_ActiveCaptionGradientColor,
+        ID_ActiveCaptionTextColor,
+        ID_BorderColor,
+        ID_GripperColor
+    };
 
 public:
   SettingsPanel(wxWindow *parent, GBFrame *frame)
@@ -428,8 +377,7 @@ public:
     wxBoxSizer *s1 = new wxBoxSizer(wxHORIZONTAL);
     m_border_size = new wxSpinCtrl(
         this, ID_PaneBorderSize,
-        wxString::Format("%d", frame->GetDockArt()->GetMetric(
-                                   wxAUI_DOCKART_PANE_BORDER_SIZE)),
+        wxString::Format("%d", frame->GetDockArt()->GetMetric( wxAUI_DOCKART_PANE_BORDER_SIZE)),
         wxDefaultPosition, wxDefaultSize, wxSP_ARROW_KEYS, 0, FromDIP(100),
         frame->GetDockArt()->GetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE));
     s1->Add(FromDIP(1), FromDIP(1), 1, wxEXPAND);
@@ -597,22 +545,22 @@ public:
   }
 
 private:
-  wxBitmap CreateColorBitmap(const wxColour &c) {
-    wxImage image;
-    wxSize size = FromDIP(wxSize(25, 14));
-    image.Create(size);
-    for (int x = 0; x < size.x; ++x) {
-      for (int y = 0; y < size.y; ++y) {
-        wxColour pixcol = c;
-        if (x == 0 || x == size.x || y == 0 || y == size.y)
-          pixcol = *wxBLACK;
-        image.SetRGB(x, y, pixcol.Red(), pixcol.Green(), pixcol.Blue());
-      }
+    wxBitmap CreateColorBitmap(const wxColour &c) {
+        wxImage image;
+        wxSize size = FromDIP(wxSize(25, 14));
+        image.Create(size);
+        for (int x = 0; x < size.x; ++x) {
+            for (int y = 0; y < size.y; ++y) {
+            wxColour pixcol = c;
+            if (x == 0 || x == size.x || y == 0 || y == size.y)
+                pixcol = *wxBLACK;
+            image.SetRGB(x, y, pixcol.Red(), pixcol.Green(), pixcol.Blue());
+            }
+        }
+        return wxBitmap(image);
     }
-    return wxBitmap(image);
-  }
 
-  void UpdateColors() {
+    void UpdateColors() {
     wxColour bk =
         m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_BACKGROUND_COLOUR);
     m_background_color->SetBitmapLabel(CreateColorBitmap(bk));
@@ -653,116 +601,104 @@ private:
     wxColour gripper =
         m_frame->GetDockArt()->GetColor(wxAUI_DOCKART_GRIPPER_COLOUR);
     m_gripper_color->SetBitmapLabel(CreateColorBitmap(gripper));
-  }
-
-  void OnPaneBorderSize(wxSpinEvent &event) {
-    m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE,
-                                     event.GetPosition());
-    m_frame->DoUpdate();
-  }
-
-  void OnSashSize(wxSpinEvent &event) {
-    m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_SASH_SIZE,
-                                     event.GetPosition());
-    m_frame->DoUpdate();
-  }
-
-  void OnCaptionSize(wxSpinEvent &event) {
-    m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_CAPTION_SIZE,
-                                     event.GetPosition());
-    m_frame->DoUpdate();
-  }
-
-  void OnSetColor(wxCommandEvent &event) {
-    wxColourDialog dlg(m_frame);
-    dlg.SetTitle(_("Color Picker"));
-    if (dlg.ShowModal() != wxID_OK)
-      return;
-
-    int var = 0;
-    switch (event.GetId()) {
-    case ID_BackgroundColor:
-      var = wxAUI_DOCKART_BACKGROUND_COLOUR;
-      break;
-    case ID_SashColor:
-      var = wxAUI_DOCKART_SASH_COLOUR;
-      break;
-    case ID_InactiveCaptionColor:
-      var = wxAUI_DOCKART_INACTIVE_CAPTION_COLOUR;
-      break;
-    case ID_InactiveCaptionGradientColor:
-      var = wxAUI_DOCKART_INACTIVE_CAPTION_GRADIENT_COLOUR;
-      break;
-    case ID_InactiveCaptionTextColor:
-      var = wxAUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR;
-      break;
-    case ID_ActiveCaptionColor:
-      var = wxAUI_DOCKART_ACTIVE_CAPTION_COLOUR;
-      break;
-    case ID_ActiveCaptionGradientColor:
-      var = wxAUI_DOCKART_ACTIVE_CAPTION_GRADIENT_COLOUR;
-      break;
-    case ID_ActiveCaptionTextColor:
-      var = wxAUI_DOCKART_ACTIVE_CAPTION_TEXT_COLOUR;
-      break;
-    case ID_BorderColor:
-      var = wxAUI_DOCKART_BORDER_COLOUR;
-      break;
-    case ID_GripperColor:
-      var = wxAUI_DOCKART_GRIPPER_COLOUR;
-      break;
-    default:
-      return;
     }
 
-    m_frame->GetDockArt()->SetColor(var, dlg.GetColourData().GetColour());
-    m_frame->DoUpdate();
-    UpdateColors();
-  }
+    void OnPaneBorderSize(wxSpinEvent &event) {
+        m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_PANE_BORDER_SIZE, event.GetPosition());
+        m_frame->DoUpdate();
+    }
+
+    void OnSashSize(wxSpinEvent &event) {
+        m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_SASH_SIZE, event.GetPosition());
+        m_frame->DoUpdate();
+    }
+
+    void OnCaptionSize(wxSpinEvent &event) {
+        m_frame->GetDockArt()->SetMetric(wxAUI_DOCKART_CAPTION_SIZE, event.GetPosition());
+        m_frame->DoUpdate();
+    }
+
+    void OnSetColor(wxCommandEvent &event) {
+        wxColourDialog dlg(m_frame);
+        dlg.SetTitle(_("Color Picker"));
+        if (dlg.ShowModal() != wxID_OK)
+            return;
+
+        int var = 0;
+        switch (event.GetId()) {
+        case ID_BackgroundColor:
+            var = wxAUI_DOCKART_BACKGROUND_COLOUR;
+            break;
+        case ID_SashColor:
+            var = wxAUI_DOCKART_SASH_COLOUR;
+            break;
+        case ID_InactiveCaptionColor:
+            var = wxAUI_DOCKART_INACTIVE_CAPTION_COLOUR;
+            break;
+        case ID_InactiveCaptionGradientColor:
+            var = wxAUI_DOCKART_INACTIVE_CAPTION_GRADIENT_COLOUR;
+            break;
+        case ID_InactiveCaptionTextColor:
+            var = wxAUI_DOCKART_INACTIVE_CAPTION_TEXT_COLOUR;
+            break;
+        case ID_ActiveCaptionColor:
+            var = wxAUI_DOCKART_ACTIVE_CAPTION_COLOUR;
+            break;
+        case ID_ActiveCaptionGradientColor:
+            var = wxAUI_DOCKART_ACTIVE_CAPTION_GRADIENT_COLOUR;
+            break;
+        case ID_ActiveCaptionTextColor:
+            var = wxAUI_DOCKART_ACTIVE_CAPTION_TEXT_COLOUR;
+            break;
+        case ID_BorderColor:
+            var = wxAUI_DOCKART_BORDER_COLOUR;
+            break;
+        case ID_GripperColor:
+            var = wxAUI_DOCKART_GRIPPER_COLOUR;
+            break;
+        default:
+            return;
+        }
+
+        m_frame->GetDockArt()->SetColor(var, dlg.GetColourData().GetColour());
+        m_frame->DoUpdate();
+        UpdateColors();
+    }
 
 private:
-  GBFrame *m_frame;
-  wxSpinCtrl *m_border_size;
-  wxSpinCtrl *m_sash_size;
-  wxSpinCtrl *m_caption_size;
-  wxBitmapButton *m_inactive_caption_text_color;
-  wxBitmapButton *m_inactive_caption_gradient_color;
-  wxBitmapButton *m_inactive_caption_color;
-  wxBitmapButton *m_active_caption_text_color;
-  wxBitmapButton *m_active_caption_gradient_color;
-  wxBitmapButton *m_active_caption_color;
-  wxBitmapButton *m_sash_color;
-  wxBitmapButton *m_background_color;
-  wxBitmapButton *m_border_color;
-  wxBitmapButton *m_gripper_color;
+    GBFrame *m_frame;
+    wxSpinCtrl *m_border_size;
+    wxSpinCtrl *m_sash_size;
+    wxSpinCtrl *m_caption_size;
+    wxBitmapButton *m_inactive_caption_text_color;
+    wxBitmapButton *m_inactive_caption_gradient_color;
+    wxBitmapButton *m_inactive_caption_color;
+    wxBitmapButton *m_active_caption_text_color;
+    wxBitmapButton *m_active_caption_gradient_color;
+    wxBitmapButton *m_active_caption_color;
+    wxBitmapButton *m_sash_color;
+    wxBitmapButton *m_background_color;
+    wxBitmapButton *m_border_color;
+    wxBitmapButton *m_gripper_color;
 
-  wxDECLARE_EVENT_TABLE();
+    wxDECLARE_EVENT_TABLE();
 };
 
-wxBEGIN_EVENT_TABLE(SettingsPanel,
-                    wxPanel) EVT_SPINCTRL(ID_PaneBorderSize,
-                                          SettingsPanel::OnPaneBorderSize)
-    EVT_SPINCTRL(ID_SashSize, SettingsPanel::OnSashSize)
-        EVT_SPINCTRL(ID_CaptionSize, SettingsPanel::OnCaptionSize) EVT_BUTTON(
-            ID_BackgroundColor,
-            SettingsPanel::OnSetColor) EVT_BUTTON(ID_SashColor,
-                                                  SettingsPanel::OnSetColor)
-            EVT_BUTTON(ID_InactiveCaptionColor, SettingsPanel::OnSetColor)
-                EVT_BUTTON(ID_InactiveCaptionGradientColor,
-                           SettingsPanel::OnSetColor)
-                    EVT_BUTTON(ID_InactiveCaptionTextColor,
-                               SettingsPanel::OnSetColor)
-                        EVT_BUTTON(ID_ActiveCaptionColor,
-                                   SettingsPanel::OnSetColor)
-                            EVT_BUTTON(ID_ActiveCaptionGradientColor,
-                                       SettingsPanel::OnSetColor)
-                                EVT_BUTTON(ID_ActiveCaptionTextColor,
-                                           SettingsPanel::OnSetColor)
-                                    EVT_BUTTON(ID_BorderColor,
-                                               SettingsPanel::OnSetColor)
-                                        EVT_BUTTON(ID_GripperColor,
-                                                   SettingsPanel::OnSetColor)
-                                            wxEND_EVENT_TABLE()
+wxBEGIN_EVENT_TABLE(SettingsPanel, wxPanel)
+EVT_SPINCTRL(ID_PaneBorderSize, SettingsPanel::OnPaneBorderSize)
+EVT_SPINCTRL(ID_SashSize, SettingsPanel::OnSashSize)
+EVT_SPINCTRL(ID_CaptionSize, SettingsPanel::OnCaptionSize)
+EVT_BUTTON(ID_BackgroundColor, SettingsPanel::OnSetColor)
+EVT_BUTTON(ID_SashColor, SettingsPanel::OnSetColor)
+EVT_BUTTON(ID_InactiveCaptionColor, SettingsPanel::OnSetColor)
+EVT_BUTTON(ID_InactiveCaptionGradientColor, SettingsPanel::OnSetColor)
+EVT_BUTTON(ID_InactiveCaptionTextColor, SettingsPanel::OnSetColor)
+EVT_BUTTON(ID_ActiveCaptionColor, SettingsPanel::OnSetColor)
+EVT_BUTTON(ID_ActiveCaptionGradientColor, SettingsPanel::OnSetColor)
+EVT_BUTTON(ID_ActiveCaptionTextColor, SettingsPanel::OnSetColor)
+EVT_BUTTON(ID_BorderColor, SettingsPanel::OnSetColor)
+EVT_BUTTON(ID_GripperColor, SettingsPanel::OnSetColor)
+wxEND_EVENT_TABLE()
 
 #ifdef PLUGINS_PYTHON
 #include <plugins_python.h>
