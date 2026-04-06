@@ -3,6 +3,7 @@
 
 Map and logic editor.
 Create game without programming, but optional you always can replace core engine (source code included).
+![image](./gb.png "main screen")
 
 # Dependencies
 - wxWidgets
